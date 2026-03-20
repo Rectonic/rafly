@@ -32,7 +32,7 @@ function localeReducer(state: LocaleState, action: LocaleAction): LocaleState {
 interface LocaleContextValue {
   locale: Locale;
   t: MobileTranslations;
-  setLocale: (locale: Locale) => void;
+  setLocale: (locale: Locale) => Promise<void>;
   loaded: boolean;
 }
 
@@ -47,10 +47,14 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   // Load persisted locale on mount
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      const locale = (stored === 'en' || stored === 'ru') ? stored : DEFAULT_LOCALE;
-      dispatch({ type: 'LOADED', locale });
-    });
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        const locale = (stored === 'en' || stored === 'ru') ? stored : DEFAULT_LOCALE;
+        dispatch({ type: 'LOADED', locale });
+      })
+      .catch(() => {
+        dispatch({ type: 'LOADED', locale: DEFAULT_LOCALE });
+      });
   }, []);
 
   const setLocale = async (locale: Locale) => {
@@ -71,7 +75,7 @@ export function useT(): MobileTranslations {
   return ctx.t;
 }
 
-export function useLocale(): { locale: Locale; setLocale: (l: Locale) => void; loaded: boolean } {
+export function useLocale(): { locale: Locale; setLocale: (l: Locale) => Promise<void>; loaded: boolean } {
   const ctx = useContext(LocaleContext);
   if (!ctx) throw new Error('useLocale must be used inside LocaleProvider');
   return { locale: ctx.locale, setLocale: ctx.setLocale, loaded: ctx.loaded };
