@@ -77,6 +77,17 @@ describe('filterAndSort — favorites filter', () => {
     });
     expect(result).toHaveLength(0);
   });
+
+  it('returns empty when showFavoritesOnly is true and favoriteIds is omitted', () => {
+    const result = filterAndSort(offers, {
+      category: 'All',
+      searchQuery: '',
+      sortMode: 'expiry',
+      showFavoritesOnly: true,
+      // no favoriteIds
+    });
+    expect(result).toHaveLength(0);
+  });
 });
 
 describe('filterAndSort — sort modes', () => {

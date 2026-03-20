@@ -30,8 +30,8 @@ export function filterAndSort(offers: Offer[], options: FilterOptions): Offer[] 
   }
 
   // 2. Favorites filter (Favorites screen only)
-  if (showFavoritesOnly && favoriteIds) {
-    const favSet = new Set(favoriteIds);
+  if (showFavoritesOnly) {
+    const favSet = new Set(favoriteIds ?? []);
     result = result.filter((o) => favSet.has(o.id));
   }
 

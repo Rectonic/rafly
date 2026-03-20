@@ -3,18 +3,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY = 'lastbite-favorites';
 
+interface FavoritesState {
+  ids: string[];
+  loaded: boolean;
+}
+
 type FavoritesAction =
   | { type: 'TOGGLE'; id: string }
   | { type: 'LOAD'; ids: string[] };
 
-export function favoritesReducer(state: string[], action: FavoritesAction): string[] {
+export function favoritesReducer(state: FavoritesState, action: FavoritesAction): FavoritesState {
   switch (action.type) {
     case 'TOGGLE':
-      return state.includes(action.id)
-        ? state.filter((id) => id !== action.id)
-        : [...state, action.id];
+      return {
+        ...state,
+        ids: state.ids.includes(action.id)
+          ? state.ids.filter((id) => id !== action.id)
+          : [...state.ids, action.id],
+      };
     case 'LOAD':
-      return action.ids;
+      return { ids: action.ids, loaded: true };
     default:
       return state;
   }
@@ -28,30 +36,37 @@ interface FavoritesContextValue {
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, dispatch] = useReducer(favoritesReducer, []);
+  const [state, dispatch] = useReducer(favoritesReducer, { ids: [], loaded: false });
 
+  // Load from AsyncStorage on mount
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((stored) => {
-      try {
-        const ids = stored ? JSON.parse(stored) : [];
-        dispatch({ type: 'LOAD', ids: Array.isArray(ids) ? ids : [] });
-      } catch {
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((stored) => {
+        try {
+          const ids = stored ? JSON.parse(stored) : [];
+          dispatch({ type: 'LOAD', ids: Array.isArray(ids) ? ids : [] });
+        } catch {
+          dispatch({ type: 'LOAD', ids: [] });
+        }
+      })
+      .catch(() => {
         dispatch({ type: 'LOAD', ids: [] });
-      }
-    });
+      });
   }, []);
 
-  const toggleFavorite = (id: string) => {
-    dispatch({ type: 'TOGGLE', id });
-  };
-
-  // Write to AsyncStorage whenever favorites state changes (avoids stale closure)
+  // Write to AsyncStorage only after loading completes (avoids overwriting on mount)
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+    if (state.loaded) {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state.ids));
+    }
+  }, [state.ids, state.loaded]);
+
+  const toggleFavorite = React.useCallback((id: string) => {
+    dispatch({ type: 'TOGGLE', id });
+  }, []);
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFavorite }}>
+    <FavoritesContext.Provider value={{ favorites: state.ids, toggleFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );

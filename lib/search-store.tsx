@@ -15,7 +15,7 @@ const SearchContext = createContext<SearchContextValue | null>(null);
 
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, dispatch] = useReducer(searchReducer, '');
-  const setSearchQuery = (q: string) => dispatch({ type: 'SET', query: q });
+  const setSearchQuery = React.useCallback((q: string) => dispatch({ type: 'SET', query: q }), []);
 
   return (
     <SearchContext.Provider value={{ searchQuery, setSearchQuery }}>

@@ -22,7 +22,7 @@ export function calcCountdown(endTime: string, now: Date = new Date()): Countdow
   const hours = Math.floor(totalMins / 60);
   const mins = totalMins % 60;
 
-  return { hours, mins, urgent: diff < 30 * 60 * 1000 };
+  return { hours, mins, urgent: totalMins < 30 };
 }
 
 export function useCountdown(endTime: string): CountdownResult & { label: string } {
