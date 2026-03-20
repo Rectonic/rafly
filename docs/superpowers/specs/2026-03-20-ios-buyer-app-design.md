@@ -14,7 +14,7 @@ A native iOS buyer app built with **Expo (managed workflow)** and **React Native
 | Data | Local-first, Supabase-ready later | Bundle seed data, AsyncStorage for state, structure for future sync |
 | Notifications | Local only (expo-notifications) | 30-min pickup reminder on reserve, no server needed |
 | Navigation | 3-tab bar (Feed, Favorites, Settings) | Room to grow, clean separation of concerns |
-| Default language | Russian (`"ru"`) | Primary user base is in Tashkent |
+| Default language | Russian (`"ru"`) | Primary user base is in Tashkent. Intentional departure from web default (`"en"`) |
 
 ---
 
@@ -60,8 +60,8 @@ These files are plain TypeScript with no React/Next.js dependencies:
 
 - `types/offer.ts` — `Offer`, `OfferCategory`, `OfferFilterCategory`, `OfferLocation`
 - `data/offers.ts` — `OFFERS` array, `OFFER_FILTERS` array
-- `i18n/types.ts` — `Translations` interface (strip `seller`, `auth`, `nav` namespaces; add `mobile` namespace)
-- `i18n/en.ts` and `i18n/ru.ts` — buyer-relevant keys only, plus new `mobile` keys
+- `i18n/types.ts` — `Translations` interface (strip `seller`, `auth`, `nav` namespaces; strip `home.map` sub-namespace since no theme picker; add `mobile` namespace)
+- `i18n/en.ts` and `i18n/ru.ts` — buyer-relevant keys only, excluding `home.map` and `home.stats` (impact banner omitted on mobile for screen real estate), plus new `mobile` keys
 - `pluralRu` helper from `ru.ts`
 
 ---
@@ -92,7 +92,7 @@ Top to bottom:
 
 1. **Header bar** — "LastBite" branding + search input
 2. **Map section** — 250px height, Apple Maps, circular teal markers, tap-to-select
-3. **Filter chips** — horizontal `ScrollView`: All, Meals, Baked Goods, Groceries, Vegan, Surprise Bags
+3. **Filter chips** — horizontal `ScrollView`: All, Meals, Baked Goods, Groceries, Vegan, Surprise Bags. No "Saved" chip here — favorites are fully delegated to the Favorites tab
 4. **Sort pill** — dropdown: Expiring Soon, Lowest Price, Biggest Discount, Closest First
 5. **Offer cards** — vertical `FlatList`, full-width cards, tap → offer detail modal
 
@@ -114,25 +114,28 @@ All stores use **React Context + useReducer**. AsyncStorage replaces localStorag
 |-------|------------|-----|---------|-----|
 | Favorites | AsyncStorage | `lastbite-favorites` | `[]` | `useFavorites()`, `toggleFavorite(id)` |
 | Search | In-memory | — | `""` | `useSearchQuery()`, `setSearchQuery(q)` |
-| Marketplace | AsyncStorage | `lastbite-seller-workspace` | `{ publishedOffers: [] }` | `usePublishedSellerOffers()` |
+| Marketplace | None (stub) | — | `[]` | `usePublishedSellerOffers()` |
+
+**Marketplace store (MVP):** A no-op stub that always returns `[]`. There is no seller surface on mobile and no cross-device sync, so nothing writes seller data. The hook exists to preserve the interface — when Supabase sync is added later, the stub is replaced with real queries without changing consumers.
 
 ### Data merge
 
 ```ts
-const marketplaceOffers = useMemo(
+const allOffers = useMemo(
   () => [...publishedOffers, ...OFFERS],
   [publishedOffers]
 );
+// MVP: publishedOffers is always [], so allOffers === OFFERS
 ```
 
-For MVP, `publishedOffers` is empty (no cross-platform sync). Buyer sees seed data only. When Supabase is added later, published seller offers flow in through the same interface.
+For MVP, the buyer sees seed data only. When Supabase is added later, published seller offers flow in through the same `usePublishedSellerOffers()` interface.
 
 ### Filtering & sorting (`lib/filters.ts`)
 
 Identical algorithms to web `page.tsx`:
 
 1. Filter by category (or show all)
-2. Filter by favorites toggle
+2. On Favorites screen only: filter to favorited offers
 3. Filter by search query (case-insensitive match on title, restaurant, category)
 4. Sort by mode:
    - `expiry`: parse `"HH:MM"` → minutes from now → ascending
@@ -173,9 +176,9 @@ Native MapKit callout on tap:
 ### Card State (in FlatList)
 
 - 200px image with overlay badges:
-  - Top-right: discount badge (`-X%`, orange) + surprise badge (if applicable, red)
+  - Top-right: discount badge (`-X%`, orange) + surprise badge (if `isSurpriseBag`, red) + low stock badge ("Only N left!" amber, if `quantityAvailable <= 3`)
   - Top-left: favorite heart button (tap to toggle)
-  - Bottom-left: countdown badge (black/60 normal, red/80 if <30min)
+  - Bottom-left: countdown badge (black/60 normal, red/80 if <30min). Live-updating every 30 seconds via a `useCountdown` hook. If `endTime` has passed today, wraps to next day.
 - Card body:
   - Restaurant name (uppercase, small, muted)
   - Star rating
@@ -190,7 +193,7 @@ Native MapKit callout on tap:
 - Countdown alert box (amber or red if urgent)
 - Pickup window: "Between HH:MM and HH:MM"
 - Portions available row with stock indicator
-- "What you might get" — contents list or surprise bag description
+- "What you might get" section: if `offer.contents` is non-empty, render as a bulleted list. If `offer.isSurpriseBag`, show the surprise bag description string. Otherwise, show the generic regular description.
 - Impact teaser (green banner): CO2 + water savings
 - Sticky bottom bar: price + savings + "Reserve Now" button
 
@@ -247,7 +250,7 @@ Pill toggle matching web navbar style: `RU | EN`. Active language gets primary b
   - EN: `"Your pickup at {restaurant} ends in 30 minutes!"`
   - RU: `"Самовывоз в {restaurant} заканчивается через 30 минут!"`
 - **Permission:** Request on first reserve attempt (iOS requires explicit opt-in)
-- **Cancellation:** Cancel scheduled notification if user dismisses the reservation
+- **Cancellation:** Cancel scheduled notification on any modal close after reservation (swipe-down or X button). There is no explicit "unreserve" action — dismissing the modal resets the ephemeral reservation state (same as web)
 - **Storage:** Notification IDs stored in AsyncStorage keyed by offer ID
 - **Cleanup:** On app launch, remove references to expired notifications
 
@@ -269,6 +272,8 @@ Pill toggle matching web navbar style: `RU | EN`. Active language gets primary b
 | Card | `#FFFFFF` | `#09090B` |
 | Border | `#E4E4E7` | `#27272A` |
 
+**Note on dark mode colors:** The web app's dark mode remaps primary/secondary to neutral grays (via oklch CSS tokens). The mobile app intentionally keeps the branded teal/orange in both modes. This is a deliberate departure — native iOS apps typically preserve brand colors in dark mode while only swapping surface/text tokens. The result is a stronger brand identity on mobile.
+
 ### Dark mode
 
 `useColorScheme()` from React Native. Token values swap based on system setting. Defined in `constants/colors.ts` as a `Colors.light` / `Colors.dark` object.
@@ -289,7 +294,7 @@ System font (San Francisco on iOS). No custom fonts.
 ### Animations
 
 - `react-native-reanimated` for card entrance: staggered fade-up (delay `index * 40ms`, duration 250ms)
-- Shared element transition: card image → detail modal image (scales up smoothly)
+- **Stretch goal:** Shared element transition (card image → detail modal image scales up). Requires `react-navigation-shared-element` or reanimated layout animations — adds complexity. Skip for MVP; add as polish pass.
 
 ### Component primitives
 
