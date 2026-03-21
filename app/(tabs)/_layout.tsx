@@ -25,7 +25,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabFeed,
           tabBarIcon: ({ color, size }) => (
-            <Utensils color={color} size={size} />
+            <Utensils strokeColor={color} size={size} />
           ),
         }}
       />
@@ -34,7 +34,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabFavorites,
           tabBarIcon: ({ color, size }) => (
-            <Heart color={color} size={size} />
+            <Heart strokeColor={color} size={size} />
           ),
         }}
       />
@@ -43,7 +43,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabSettings,
           tabBarIcon: ({ color, size }) => (
-            <Settings color={color} size={size} />
+            <Settings strokeColor={color} size={size} />
           ),
         }}
       />
