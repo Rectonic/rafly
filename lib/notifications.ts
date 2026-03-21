@@ -6,11 +6,10 @@ const STORAGE_KEY = 'lastbite-notification-ids';
 // Configure how notifications appear when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
     shouldShowBanner: true,
     shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
   }),
 });
 
@@ -24,7 +23,12 @@ async function loadNotificationIds(): Promise<Record<string, string>> {
 }
 
 async function saveNotificationIds(ids: Record<string, string>): Promise<void> {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // Write failure is non-fatal — worst case, cancel won't find the ID next time
+    console.warn('[notifications] Failed to persist notification IDs');
+  }
 }
 
 /**
@@ -36,6 +40,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return status === 'granted';
 }
 
+// NOTE(MVP): Concurrent calls for the same offerId can produce an orphaned notification
+// if two reserve actions race. Acceptable for single-tap UX; fix with a lock if needed.
 /**
  * Schedule a local notification 30 minutes before endTime for an offer.
  * Cancels any existing notification for the same offer first.

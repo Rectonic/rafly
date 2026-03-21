@@ -35,7 +35,8 @@ export function Button({
         styles.base,
         isPrimary && { backgroundColor: colors.primary },
         isOutline && { borderWidth: 1.5, borderColor: colors.primary },
-        (pressed || disabled) && styles.pressed,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
         style,
       ]}
       disabled={disabled || loading}
@@ -68,5 +69,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   pressed: { opacity: 0.75 },
+  disabled: { opacity: 0.45 },
   label: { fontSize: 16, fontWeight: '600' },
 });

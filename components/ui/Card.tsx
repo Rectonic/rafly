@@ -7,26 +7,35 @@ export function Card({ style, children, ...rest }: ViewProps) {
   return (
     <View
       style={[
-        styles.card,
-        { backgroundColor: colors.card, borderColor: colors.border },
-        style,
+        styles.shadow,
+        { shadowColor: colors.foreground },
       ]}
-      {...rest}
     >
-      {children}
+      <View
+        style={[
+          styles.clip,
+          { backgroundColor: colors.card, borderColor: colors.border },
+          style,
+        ]}
+        {...rest}
+      >
+        {children}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  shadow: {
     borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    // iOS shadow
-    shadowColor: '#000',
+    // iOS shadow on outer view (not clipped by overflow:hidden)
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
+  },
+  clip: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
 });

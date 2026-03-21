@@ -27,6 +27,8 @@ const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
+    // Dark scrim for use over images (e.g. offer card photo).
+    // Override via `style` prop when using on plain backgrounds.
     backgroundColor: 'rgba(0,0,0,0.55)',
   },
   pressed: { opacity: 0.7 },
