@@ -25,8 +25,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabFeed,
           tabBarIcon: ({ color, size }) => (
-            // @ts-ignore - lucide-react-native accepts color prop but types may be outdated
-            <Utensils color={color} size={size} />
+            <Utensils stroke={color} size={size} />
           ),
         }}
       />
@@ -35,8 +34,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabFavorites,
           tabBarIcon: ({ color, size }) => (
-            // @ts-ignore - lucide-react-native accepts color prop but types may be outdated
-            <Heart color={color} size={size} />
+            <Heart stroke={color} size={size} />
           ),
         }}
       />
@@ -45,8 +43,7 @@ export default function TabLayout() {
         options={{
           title: t.mobile.tabSettings,
           tabBarIcon: ({ color, size }) => (
-            // @ts-ignore - lucide-react-native accepts color prop but types may be outdated
-            <Settings color={color} size={size} />
+            <Settings stroke={color} size={size} />
           ),
         }}
       />
