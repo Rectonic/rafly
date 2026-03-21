@@ -49,12 +49,19 @@ export function OfferCard({ offer, index, isActive }: OfferCardProps) {
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 40).duration(250)}
-      style={[
-        styles.wrapper,
-        { backgroundColor: colors.card, borderColor: isActive ? colors.primary : colors.border },
-        isActive && { borderWidth: 2 },
-      ]}
+      style={[styles.shadow]}
     >
+      {/* Inner view clips content (overflow:hidden) without clipping the iOS shadow */}
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.card,
+            borderColor: isActive ? colors.primary : colors.border,
+            borderWidth: isActive ? 2 : 1,
+          },
+        ]}
+      >
       <Pressable onPress={() => router.push(`/offer/${offer.id}`)}>
         {/* Image */}
         <View style={styles.imageContainer}>
@@ -162,21 +169,26 @@ export function OfferCard({ offer, index, isActive }: OfferCardProps) {
           </View>
         </View>
       </Pressable>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  // Outer view: shadow only (NOT overflow:hidden — that clips the shadow on iOS)
+  shadow: {
     borderRadius: 16,
-    overflow: 'hidden',
     marginHorizontal: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
-    borderWidth: 1,
+  },
+  // Inner view: clips image to rounded corners
+  card: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   imageContainer: { height: 200, position: 'relative' },
   image: { width: '100%', height: '100%' },
