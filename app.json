@@ -16,10 +16,11 @@
     "plugins": [
       "expo-router",
       [
-        "expo-notifications",
+        "expo-build-properties",
         {
-          "icon": "./assets/images/notification-icon.png",
-          "color": "#16C79A"
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
         }
       ]
     ]

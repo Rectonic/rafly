@@ -1,0 +1,12 @@
+{
+  "extends": "expo/tsconfig.base",
+  "include": ["types/offer.ts", "data/offers.ts"],
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "noEmit": true
+  }
+}

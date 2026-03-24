@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import MapView, { Marker, Callout, type Region } from 'react-native-maps';
 import { Text } from 'react-native';
+import type { OffersMapProps } from '@/components/OffersMap.types';
 import type { Offer } from '@/types/offer';
 
 const TASHKENT_REGION: Region = {
@@ -10,15 +11,6 @@ const TASHKENT_REGION: Region = {
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };
-
-interface OffersMapProps {
-  offers: Offer[];
-  activeOfferId: string | null;
-  onMarkerPress: (offerId: string) => void;
-  onCalloutPress: (offerId: string) => void;
-  formatCalloutMeta: (offer: Offer) => string;
-  height?: number;
-}
 
 export function OffersMap({
   offers,
