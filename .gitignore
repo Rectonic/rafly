@@ -49,3 +49,7 @@ next-env.d.ts
 # local AI tooling artifacts
 .claude/
 .superpowers/
+.worktrees/
+
+# supabase local
+supabase/.temp/

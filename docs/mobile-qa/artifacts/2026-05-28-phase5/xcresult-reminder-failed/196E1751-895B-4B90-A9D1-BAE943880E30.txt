@@ -1,0 +1,4 @@
+Query chain:
+ →Find: Target Application 'com.lastbite.app'
+  ↪︎Find: Descendants matching type Any
+    ↪︎Find: Elements matching predicate '"offer-detail-screen" IN identifiers'

@@ -20,6 +20,20 @@
                ReferencedContainer = "container:LastBite.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A10000000000000000000008"
+               BuildableName = "LastBiteUITests.xctest"
+               BlueprintName = "LastBiteUITests"
+               ReferencedContainer = "container:LastBite.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -32,13 +46,22 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "LastBiteTests.xctest"
-               BlueprintName = "LastBiteTests"
+               BlueprintIdentifier = "A10000000000000000000008"
+               BuildableName = "LastBiteUITests.xctest"
+               BlueprintName = "LastBiteUITests"
                ReferencedContainer = "container:LastBite.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
+            BuildableName = "LastBite.app"
+            BlueprintName = "LastBite"
+            ReferencedContainer = "container:LastBite.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

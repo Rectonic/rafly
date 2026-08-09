@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "LastBite",
+    "slug": "lastbite-mobile",
+    "scheme": "lastbite",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "buildReactNativeFromSource": true,
+            "deploymentTarget": "15.5"
+          }
+        }
+      ],
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#16C79A",
+          "defaultChannel": "pickup-reminders"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.lastbite.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "LastBite uses the camera to scan product barcodes for seller inventory.",
+        "NSLocationWhenInUseUsageDescription": "LastBite uses your location to show nearby offers on the map.",
+        "NSPhotoLibraryUsageDescription": "LastBite lets sellers choose product label photos for expiry detection."
+      }
+    },
+    "android": {},
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

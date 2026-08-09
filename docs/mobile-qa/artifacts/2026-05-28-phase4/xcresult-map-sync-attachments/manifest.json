@@ -1,0 +1,26 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "E5F76667-2A74-40C5-A957-2F6454CFCD3C.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer map selected offer after location tap_0_3335BB37-3A7B-4C36-A18F-87D7B46337E7.png",
+        "timestamp" : 1779971681.005
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "26E254A0-C7A2-4D1D-B472-45D1AA8B12AA.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer map aligned before location tap_0_E14B607B-5B44-46CC-BBEF-EAAC980A7472.png",
+        "timestamp" : 1779971679.129
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerMapLocationTapSelectsVisibleOffer()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerMapLocationTapSelectsVisibleOffer"
+  }
+]

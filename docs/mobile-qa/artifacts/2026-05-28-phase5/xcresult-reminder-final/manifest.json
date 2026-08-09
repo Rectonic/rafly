@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "5B3C584C-E4AE-4182-965A-5512EED1CBD3.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer pickup reminder scheduled_0_DD6D8AF8-4F3E-4B1E-B478-93D268A0BBE8.png",
+        "timestamp" : 1779975274.227
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerPickupReminderStatusFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerPickupReminderStatusFlow"
+  }
+]

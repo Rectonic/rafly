@@ -1,0 +1,151 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "D6D3A756-798B-4AA2-B820-04732C6F0439.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "App UI hierarchy for com.lastbite_0_7466E1BD-1FC9-40AD-9757-43012D4649A5.app",
+        "timestamp" : 1779974305.905
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "CA85A618-6C83-42CD-8BC0-FC52714D4DA5",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-05-28 at 06.18.25 PM",
+        "timestamp" : 1779974305.905
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "7AF7E9B1-4E25-4651-8529-4EFB544AF75E.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_3F6BE1E9-2D22-41E7-AE75-9080E53A0CF1.txt",
+        "timestamp" : 1779974305.809
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "3A994468-AE72-4C62-8899-D20E054DEE04.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_0E7597BF-6D18-4610-9110-B9BD37B1C10F.txt",
+        "timestamp" : 1779974304.913
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "BC758E75-F436-4758-B77E-6A13450FC9BB.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_BFE9207B-F360-4986-8EF3-355532A84C16.txt",
+        "timestamp" : 1779974303.901
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "3162FA56-3B39-4B31-84B3-440F2D8EAB04.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_C74053C6-8DA7-4580-97F9-0DFDF1A71D6B.txt",
+        "timestamp" : 1779974302.903
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "722445BC-C674-488D-A310-4B627F876235.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_FAAF1F55-F9CF-45FA-A234-0CE684F6F2F0.txt",
+        "timestamp" : 1779974301.896
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "196E1751-895B-4B90-A9D1-BAE943880E30.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_196F748E-8054-4B31-B389-E29E6BBF5BA8.txt",
+        "timestamp" : 1779974300.867
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "A89C37B9-6A11-464C-A19B-047148EA491F.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_219D2566-C6C4-4B2E-8529-D163B70A663C.txt",
+        "timestamp" : 1779974299.886
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "EB58A239-7292-4F54-A20B-C3E092261D46.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_87F7D1EE-A117-4FE4-8376-5750891C6131.txt",
+        "timestamp" : 1779974298.881
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "96585414-BA71-4191-A900-7ACB888E3F20.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_C1C31B79-95E1-4D0C-85EE-CC5AA432A1C9.txt",
+        "timestamp" : 1779974297.899
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "75716217-2831-4922-BC91-5D06ED97606E.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Debug description for `\"offer-detail-screen\" Any`_0_D7F99E3D-F53E-4E94-9A21-D8FB3B08EFC6.txt",
+        "timestamp" : 1779974296.885
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "119BFE73-A22A-45A9-9A8F-66F3F498F169",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-05-28 at 06.18.15 PM",
+        "timestamp" : 1779974295.743
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "E5721009-9D22-45C5-954E-23458A9841A6",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-05-28 at 06.18.14 PM",
+        "timestamp" : 1779974294.046
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "6F6D0D95-69AA-4F28-B355-3DD10B053DD4.mp4",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Screen Recording 2026-05-28 at 06.18.06 PM.mp4",
+        "timestamp" : 1779974286.445
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "D48DF92E-7598-4FAC-A0BF-EED751BDE0B0.txt",
+        "isAssociatedWithFailure" : true,
+        "suggestedHumanReadableName" : "Complete Issue Description.txt"
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerPickupReminderStatusFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerPickupReminderStatusFlow"
+  }
+]

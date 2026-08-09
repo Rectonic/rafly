@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "00E6AB67-6F4B-4350-B7A6-0DA596225D62.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Offer detail product info_0_C632E73B-35B0-40AC-9D95-A9B039B754FE.png",
+        "timestamp" : 1779969574.674
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerOfferDetailCloseButtonFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerOfferDetailCloseButtonFlow"
+  }
+]

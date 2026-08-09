@@ -1,0 +1,44 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "0E00F2A3-659C-4101-8688-C0C918B8FDCD.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller profile_0_633B2B02-8E5D-495A-A89A-DC32D1FDF393.png",
+        "timestamp" : 1779979342.746
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "8105440A-1EB8-40E3-AC67-7B5D27846DB3.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller scanner modal_0_F9A25FAE-3244-485D-AB69-094E9C78B604.png",
+        "timestamp" : 1779979334.615
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "C2CBE29F-5CC7-4F4A-9467-46850EA8FF58.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller create offer_0_CBB1A9BB-007D-4109-9C91-6B35C8C77FB4.png",
+        "timestamp" : 1779979326.562
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "36BBD840-7F69-4753-A4BB-595E6F607622.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller dashboard_0_24C7FEA0-C9E4-4985-8694-74FD61EF26EC.png",
+        "timestamp" : 1779979321.439
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testAuthenticatedSellerSurfaceFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testAuthenticatedSellerSurfaceFlow"
+  }
+]

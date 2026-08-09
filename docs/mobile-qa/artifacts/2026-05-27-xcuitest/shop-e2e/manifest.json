@@ -1,0 +1,26 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "CAC3F63F-3641-4D9E-B169-6834ACBD6E74.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller inventory scanner modal_0_99BB6926-8047-48A9-850B-B2D474BB4ED0.png",
+        "timestamp" : 1779900977.768
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "9DC021C9-560C-46B2-B21D-AFB8CD53DC36.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Seller inventory_0_8C731883-3B74-4C0C-9C68-9C8D91F6EB27.png",
+        "timestamp" : 1779900974.682
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testAuthenticatedShopInventorySurfaceFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testAuthenticatedShopInventorySurfaceFlow"
+  }
+]

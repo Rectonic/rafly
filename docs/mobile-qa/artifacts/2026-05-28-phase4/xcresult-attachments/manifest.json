@@ -1,0 +1,17 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "95245F93-EC72-48F8-8F62-6C0F894A5374.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer radius filtered discovery_0_4B2694DD-5A36-4DA1-A3AC-5DA86EEF68C0.png",
+        "timestamp" : 1779971285.247
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerDiscoveryRadiusControlsFilterVisibleOffers()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerDiscoveryRadiusControlsFilterVisibleOffers"
+  }
+]

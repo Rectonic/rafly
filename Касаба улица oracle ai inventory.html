@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Касаба улица oracle ai inventory.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="ai-enabled-strategy-for-uzbekistan-small-grocery-systematization-pilot">AI-enabled strategy for Uzbekistan small-grocery systematization pilot</h1>
+<h2 id="1-bottom-line-assessment">1. Bottom-line assessment</h2>
+<p><strong>Yes, AI can materially bolster the inventory/systematization opportunity, but only as a human-in-the-loop accelerator.</strong> It should not be sold first as “AI for grocery,” and it should not start as a standalone POS, automatic ordering engine, or shelf-computer-vision system.</p>
+<p>The strongest first product is still the prior memo’s recommendation: <strong>a service-backed store systematization sprint</strong>. The transcript shows the core pain clearly: the store may hold roughly 250–300 million UZS of goods, cannot afford to close for 7–10 days, struggles with marking/tax/product-code workflows, still uses notebook/manual memory, wants “под ключ” setup, orders by phone, and has losses from expiry/damage/returns. Source context: transcript lines 5–24, 28–47, 132–139, 173–185, 229–244, 256–294.</p>
+<p>AI is useful because it can make the service faster and more repeatable:</p>
+<ol>
+<li><strong>Faster inventory intake:</strong> scan barcodes, OCR invoices, parse supplier receipts, convert photos/voice notes into structured tasks.</li>
+<li><strong>SKU cleanup:</strong> detect duplicates, normalize Uzbek/Russian product names, units, pack sizes, brands, and category labels.</li>
+<li><strong>Exception management:</strong> surface missing barcode, missing supplier, missing cost price, low confidence OCR, negative stock, expiry risk, and marking/category issues.</li>
+<li><strong>Reorder assistant:</strong> start with rules and owner approval, not black-box forecasting.</li>
+<li><strong>Owner dashboard:</strong> summarize the few things the owner cares about: low stock, today’s sales, expiring goods, missing data, supplier follow-ups, and display/shelf deal opportunities.</li>
+</ol>
+<p>The right framing is:</p>
+<blockquote>
+<p><strong>“We systematize your store in 7–10 days using existing POS/tools, field operators, and AI-assisted data cleanup.”</strong></p>
+</blockquote>
+<p>Not:</p>
+<blockquote>
+<p>“We built an AI POS.”</p>
+</blockquote>
+<hr>
+<h2 id="2-what-existing-solution-categories-tell-us">2. What existing solution categories tell us</h2>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Examples / evidence</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Enterprise grocery AI replenishment and fresh optimization</strong></td>
+<td>Afresh positions itself around grocery store ordering, production planning, inventory management, demand forecasting, and fresh/waste optimization. RELEX similarly focuses on grocery forecasting, replenishment, freshness, pricing, promotions, store operations, planogram, and data quality at scale. (<a href="https://www.afresh.com/" title="Afresh - A New Era for Grocery">afresh.com</a>)</td>
+<td><strong>Copy workflows, do not buy/build for MVP.</strong> These validate that grocery ordering, freshness, and replenishment are valuable, but they are too enterprise-heavy for small Uzbek stores with weak data.</td>
+</tr>
+<tr>
+<td><strong>Independent-grocer POS/back office</strong></td>
+<td>Vori is built for independent grocers and connects POS, payments, loyalty, ordering, inventory, invoice processing, supplier data, and pricing automation. It also highlights that go-live depends heavily on data/setup. (<a href="https://www.vori.com/" title="Best Grocery Store POS &amp; All-in-One Operations Software | Vori">vori.com</a>)</td>
+<td><strong>Copy architecture and onboarding philosophy.</strong> The lesson is integrated checkout + back office + ordering, but the first Uzbek wedge should sit around local POS rather than replace it.</td>
+</tr>
+<tr>
+<td><strong>Local Uzbek POS/fiscal/store automation</strong></td>
+<td>E-POS supports fiscalization, QR/card payments, CRM/ERP integrations, grocery/FMCG workflows, scanners, scales, real-time stock, Excel/1C/CRM catalog import, and ASL Belgisi integration. (<a href="https://epos.uz/en" title="A cash register that just works — E-POS Systems">E-POS Systems</a>) REGOS has integrations for barcode/QR receiving, returns, write-off, inventory, labeling/marking, AI product import from documents/files, minimum-stock Telegram bot, item checker, and sales alerts. (<a href="https://apps.regos.uz/?lang=en" title="All integrations - REGOS Integrations Catalog">REGOS Integrations Catalog</a>) Uzbekistan automation vendors also describe Regos, EasyTrade, Optimo, and Sellerpeak24 as already present local software options for convenience stores/minimarkets. (<a href="https://mertech.uz/blog-en/commercial-equipment/store-automation-in-uzbekistan-equipment-and-solutions-for-retail-en/" title="Store Automation in Uzbekistan — Solutions for Retail and Convenience Stores">Mertech.uz</a>)</td>
+<td><strong>Partner/use, do not compete first.</strong> Pick one or two POS systems for pilot compatibility. Build a service/process/data layer around them.</td>
+</tr>
+<tr>
+<td><strong>Online cash register / FDO / accounting ecosystems</strong></td>
+<td>ERA offers online cash register, accounting system, FDO, registration/configuration support, retail accounting, sales/cashier reports, and scanners that read 1D, 2D, and GS1 codes. (<a href="https://pos.era.uz/en/pos" title="Online cash register, trade and catering">pos.era.uz</a>)</td>
+<td><strong>Treat as infrastructure.</strong> The pilot should document which cash register/POS the store already has and whether export/import is possible.</td>
+</tr>
+<tr>
+<td><strong>Asl Belgisi / marking / E-Factura workflows</strong></td>
+<td>Asl Belgisi’s official help center lists regulated product groups and explains that product group affects marking rules, timelines, code format, and circulation rules; listed groups include tobacco, alcohol, beer, household appliances, medicines, water/soft drinks, and fertilizers/plant protection products. (<a href="https://help.crpt-turon.uz/hc/en-us/categories/4416610961809-Legislation" title="Legislation – Help Center Asl Belgisi">help.crpt-turon.uz</a>) Smartup claims an official marking solution integrated with Asl Belgisi and E-Factura for water/drinks workflows. (<a href="https://smartup24.com/tpost/zblhh3xd81-marking-of-water-and-drinks-in-uzbekista" title="Water and Beverage Marking in Uzbekistan">smartup24.com</a>)</td>
+<td><strong>Use specialists/partners. Do not improvise compliance.</strong> For MVP, map the workflow and route to existing tools. Avoid taking legal responsibility for marking submissions.</td>
+</tr>
+<tr>
+<td><strong>Barcode and data capture</strong></td>
+<td>GS1 Digital Link is the standard method for encoding identifiers like GTINs, GLNs, SSCCs, batch numbers, serial numbers, and expiry dates. (<a href="https://www.gs1.org/standards/gs1-digital-link?utm_source=chatgpt.com" title="GS1 Digital Link">GS1</a>) Scandit ShelfView combines image recognition, barcode scanning, cloud analytics, and hybrid capture. (<a href="https://www.scandit.com/products/shelfview/" title="ShelfView: Vision AI-Powered Shelf Intelligence">scandit.com</a>)</td>
+<td><strong>Use basic scanning now; advanced barcode/vision later.</strong> A 2D scanner or phone scan is more realistic than shelf CV in the first pilot.</td>
+</tr>
+<tr>
+<td><strong>Invoice/OCR/document extraction</strong></td>
+<td>Google Document AI extracts structured and unstructured data from documents and supports custom extractors/OCR. (<a href="https://cloud.google.com/document-ai" title="Document AI | Google Cloud">Google Cloud</a>) OpenAI Structured Outputs can force model responses to match a JSON schema, which is useful for turning invoice/product text into validated structured records. (<a href="https://developers.openai.com/api/docs/guides/structured-outputs" title="Structured model outputs | OpenAI API">OpenAI Developers</a>)</td>
+<td><strong>Use off-the-shelf AI now, but always validate.</strong> OCR should create draft line items; a human approves before POS import.</td>
+</tr>
+<tr>
+<td><strong>Shelf intelligence / computer vision / robots</strong></td>
+<td>Scandit, Trax, Simbe, and Pensa all target shelf visibility, out-of-stock detection, planogram compliance, and shelf analytics. Scandit explicitly uses mobile, fixed cameras, and robots as capture options. (<a href="https://www.scandit.com/products/shelfview/" title="ShelfView: Vision AI-Powered Shelf Intelligence">scandit.com</a>)</td>
+<td><strong>Avoid as core MVP.</strong> Shelf CV is seductive but fragile in small shops: lighting, angles, occlusion, mixed shelves, and staff workflow will likely break reliability.</td>
+</tr>
+<tr>
+<td><strong>Expiry and markdown systems</strong></td>
+<td>Shelflife focuses on expiration-date capture, batch-level inventory, targeted markdowns, and AI optimization by freshness window. (<a href="https://www.shelflife.ai/" title="Shelflife | Automated Expiration Date Tracking for Grocery Stores">shelflife.ai</a>)</td>
+<td><strong>Copy workflow manually first.</strong> Record expiry for selected high-risk categories; automate only after the store proves it can maintain batch/date data.</td>
+</tr>
+<tr>
+<td><strong>Supplier/deal/trade-marketing workflows</strong></td>
+<td>Smartup has FMCG/distributor and trade-marketing capabilities, including marking and AI shelf recognition modules. (<a href="https://smartup24.com/tpost/zblhh3xd81-marking-of-water-and-drinks-in-uzbekista" title="Water and Beverage Marking in Uzbekistan">smartup24.com</a>) The transcript strongly emphasizes supplier contacts, shelves, displays, fridges, bank panels, Pepsi/Red Bull/water/cigarette shelves, and extra income opportunities. Source context: transcript lines 57–93, 178–185, 197–200.</td>
+<td><strong>Manual CRM first.</strong> This may be as valuable as inventory software. Capture supplier contacts, display terms, return policies, and delivery schedules.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-practical-ai-enabled-workflow-architecture-for-the-first-pilot-store">3. Practical AI-enabled workflow architecture for the first pilot store</h2>
+<h3 id="core-principle">Core principle</h3>
+<p>The pilot should have <strong>three layers</strong>:</p>
+<ol>
+<li><strong>Existing systems layer:</strong> current POS/cash register, scanner, Excel export/import, Asl Belgisi/E-Factura tools, supplier invoices, Telegram/phone ordering.</li>
+<li><strong>Systematization service layer:</strong> field team, checklists, data cleanup, SKU census, supplier map, expiry process, training.</li>
+<li><strong>AI accelerator layer:</strong> OCR, SKU matching, duplicate detection, structured extraction, reorder suggestions, dashboard summaries, exception queue.</li>
+</ol>
+<p>AI should not directly change legal records, POS inventory, supplier orders, or prices without human approval.</p>
+<hr>
+<h2 id="4-data-model-for-the-pilot">4. Data model for the pilot</h2>
+<p>Use a simple database, Airtable, Google Sheets, Retool, AppSheet, or a lightweight internal web app. The goal is not elegance; it is repeatability.</p>
+<h3 id="a-sku-master">A. SKU master</h3>
+<p>Fields:</p>
+<ul>
+<li>Internal SKU ID</li>
+<li>Product name, Uzbek/Russian variants</li>
+<li>Brand</li>
+<li>Category / subcategory</li>
+<li>Unit: piece, kg, liter, bottle, pack, block, carton</li>
+<li>Pack size</li>
+<li>Barcode / GTIN</li>
+<li>Marking required? yes/no/unknown</li>
+<li>Asl Belgisi product group, if relevant</li>
+<li>Supplier</li>
+<li>Cost price</li>
+<li>Sale price</li>
+<li>Margin estimate</li>
+<li>Current stock</li>
+<li>Minimum stock</li>
+<li>Reorder multiple</li>
+<li>Shelf/fridge/display location</li>
+<li>Expiry tracking required? yes/no</li>
+<li>Confidence score: verified / AI-suggested / needs review</li>
+<li>Last updated date</li>
+</ul>
+<h3 id="b-inventory-batch-table">B. Inventory batch table</h3>
+<p>For expiry-sensitive goods:</p>
+<ul>
+<li>SKU ID</li>
+<li>Quantity</li>
+<li>Batch/lot, if available</li>
+<li>Expiry date</li>
+<li>Purchase date</li>
+<li>Supplier</li>
+<li>Invoice ID</li>
+<li>Purchase price</li>
+<li>Shelf/fridge location</li>
+<li>Status: normal / watch / markdown / remove / returned / written off</li>
+</ul>
+<h3 id="c-invoice--receiving-table">C. Invoice / receiving table</h3>
+<ul>
+<li>Invoice ID</li>
+<li>Supplier</li>
+<li>Date</li>
+<li>Document photo/PDF</li>
+<li>OCR status</li>
+<li>Total invoice value</li>
+<li>Line items</li>
+<li>Matched SKU ID</li>
+<li>Quantity</li>
+<li>Unit cost</li>
+<li>Suggested sale price</li>
+<li>Validation status</li>
+<li>Exceptions</li>
+</ul>
+<h3 id="d-salespos-table">D. Sales/POS table</h3>
+<ul>
+<li>Date</li>
+<li>SKU ID</li>
+<li>Quantity sold</li>
+<li>Revenue</li>
+<li>Discount</li>
+<li>Gross margin proxy, if cost is known</li>
+<li>Cashier/shift, if available</li>
+</ul>
+<h3 id="e-supplier-crm">E. Supplier CRM</h3>
+<ul>
+<li>Supplier/company</li>
+<li>Rep name</li>
+<li>Phone/Telegram</li>
+<li>Categories supplied</li>
+<li>Delivery days</li>
+<li>Minimum order</li>
+<li>Payment terms</li>
+<li>Return policy</li>
+<li>Near-expiry/damaged return policy</li>
+<li>E-Factura/Asl Belgisi support</li>
+<li>Shelf/display/fridge deal potential</li>
+<li>Last contact</li>
+<li>Next action</li>
+</ul>
+<h3 id="f-task--exception-queue">F. Task / exception queue</h3>
+<p>Every systemization sprint should end with a daily task list:</p>
+<ul>
+<li>Missing barcode</li>
+<li>Duplicate SKU</li>
+<li>Missing supplier</li>
+<li>Missing cost price</li>
+<li>Missing sale price</li>
+<li>Marking category uncertain</li>
+<li>Invoice OCR mismatch</li>
+<li>Count mismatch</li>
+<li>Low stock</li>
+<li>Near expiry</li>
+<li>Supplier follow-up</li>
+<li>Display/fridge/shelf deal follow-up</li>
+<li>Staff training issue</li>
+</ul>
+<p>This task queue is where AI is most useful: not replacing the operator, but telling the operator where to focus.</p>
+<hr>
+<h2 id="5-recommended-pilot-workflow">5. Recommended pilot workflow</h2>
+<h3 id="step-1-pre-visit-intake">Step 1: Pre-visit intake</h3>
+<p>Before entering the store, collect:</p>
+<ul>
+<li>Current POS name and version</li>
+<li>Whether the store uses POS for all sales or only some sales</li>
+<li>POS export/import capability</li>
+<li>Existing Excel/catalog file, if any</li>
+<li>10–30 recent supplier invoices/receipts</li>
+<li>Photos of shelves only as context, not as a primary CV input</li>
+<li>List of main suppliers and phone numbers</li>
+<li>Owner’s top 20 “always must be in stock” products</li>
+<li>Known problem categories: cigarettes, water/drinks, dairy, sweets, sausage/meat, alcohol/beer if applicable, household goods, etc.</li>
+<li>Current ordering method: phone, Telegram, agent visit, app, paper</li>
+</ul>
+<h3 id="step-2-inventory-intake">Step 2: Inventory intake</h3>
+<p>Use a field team with phones/scanners.</p>
+<p>Process:</p>
+<ol>
+<li>Walk category by category.</li>
+<li>Scan barcode where present.</li>
+<li>Enter quantity.</li>
+<li>Take one product photo only when name/barcode/pack size is ambiguous.</li>
+<li>Mark shelf/fridge/display location.</li>
+<li>Flag whether expiry tracking is needed.</li>
+<li>For marked categories, scan or note the code type, but do not attempt legal submission unless using the store’s existing approved workflow.</li>
+</ol>
+<p>AI role:</p>
+<ul>
+<li>Suggest normalized product name.</li>
+<li>Detect duplicate names/barcodes.</li>
+<li>Extract pack size from name/photo/invoice text.</li>
+<li>Translate/standardize Uzbek/Russian labels.</li>
+<li>Flag missing fields.</li>
+</ul>
+<p>Human role:</p>
+<ul>
+<li>Approve SKU identity.</li>
+<li>Confirm unit and pack size.</li>
+<li>Confirm quantity.</li>
+<li>Confirm category and sale price.</li>
+</ul>
+<h3 id="step-3-sku-cleanup">Step 3: SKU cleanup</h3>
+<p>Create a clean catalog that can be imported into the POS or used alongside it.</p>
+<p>Prioritize:</p>
+<ol>
+<li>Top-selling / high-turnover products.</li>
+<li>High-value products.</li>
+<li>Marked/compliance-sensitive products.</li>
+<li>Expiry-sensitive products.</li>
+<li>Supplier-deal products: drinks, cigarettes where legal, snacks, branded fridges/displays.</li>
+</ol>
+<p>Do not try to perfect the entire store in the first week. The first pilot should prove that the team can clean and maintain the <strong>top 100–300 SKUs</strong> first, then expand.</p>
+<h3 id="step-4-barcode-and-marking-scan">Step 4: Barcode and marking scan</h3>
+<p>Use 1D/2D scanners or phone scanning. Do not build custom marking compliance logic initially.</p>
+<p>Workflow:</p>
+<ul>
+<li>Record barcode/GTIN for normal products.</li>
+<li>Record “marking-relevant” status for Asl Belgisi categories.</li>
+<li>Route marked product handling to the existing POS/Asl Belgisi/E-Factura/Smartup/E-POS/REGOS workflow.</li>
+<li>Build an SOP: “When receiving marked water/drinks/tobacco/alcohol/beer/etc., staff must do X in the approved system.”</li>
+</ul>
+<p>Reason: Asl Belgisi product groups affect marking rules and code formats, so this is a compliance workflow, not just a database field. (<a href="https://help.crpt-turon.uz/hc/en-us/articles/15528687847057--Product-Group-Reference-Value-Mandatory" title="⚠️ Product Group (Reference Value, Mandatory) – Help Center Asl Belgisi">help.crpt-turon.uz</a>)</p>
+<h3 id="step-5-ocr-invoice-intake">Step 5: OCR invoice intake</h3>
+<p>Use Google Document AI, OpenAI vision + structured outputs, Azure/OpenAI, REGOS Didox import, or similar.</p>
+<p>Workflow:</p>
+<ol>
+<li>
+<p>Staff photographs invoice/receipt.</p>
+</li>
+<li>
+<p>OCR extracts supplier, date, invoice number, line items, quantities, unit costs, totals.</p>
+</li>
+<li>
+<p>AI matches line items to existing SKU master.</p>
+</li>
+<li>
+<p>System flags mismatches:</p>
+<ul>
+<li>New SKU</li>
+<li>Unmatched barcode</li>
+<li>Quantity mismatch</li>
+<li>Unit mismatch</li>
+<li>Total does not reconcile</li>
+<li>Suspicious price change</li>
+</ul>
+</li>
+<li>
+<p>Human validates.</p>
+</li>
+<li>
+<p>Approved rows are imported into POS or stored in the pilot database.</p>
+</li>
+</ol>
+<p>Rule: <strong>OCR creates drafts, not truth.</strong> The validation screen is the product.</p>
+<h3 id="step-6-pos-sync">Step 6: POS sync</h3>
+<p>Do not start with deep integration.</p>
+<p>Phase 1:</p>
+<ul>
+<li>Export POS catalog/sales as Excel/CSV where possible.</li>
+<li>Import cleaned SKU catalog manually if POS supports it.</li>
+<li>Record sales manually for top SKUs if export is impossible.</li>
+</ul>
+<p>Phase 2:</p>
+<ul>
+<li>Build one adapter for the most common POS found in visits.</li>
+<li>Use API only if the vendor supports it reliably.</li>
+</ul>
+<p>Phase 3:</p>
+<ul>
+<li>Partner with POS vendor for formal integration.</li>
+</ul>
+<p>The local market already has systems with stock tracking, catalog import, fiscalization, scanners, and integrations, so the pilot should not rebuild those basics. (<a href="https://epos.uz/en" title="A cash register that just works — E-POS Systems">E-POS Systems</a>)</p>
+<h3 id="step-7-reorder-assistant">Step 7: Reorder assistant</h3>
+<p>Start with a simple, conservative reorder assistant.</p>
+<p>Inputs:</p>
+<ul>
+<li>Current stock</li>
+<li>Minimum stock</li>
+<li>Sales velocity over last 7/14/30 days, if available</li>
+<li>Supplier delivery day</li>
+<li>Minimum order quantity</li>
+<li>Owner’s manual override</li>
+<li>Cash constraint</li>
+<li>Seasonality note, if obvious</li>
+</ul>
+<p>Output:</p>
+<ul>
+<li>Draft order by supplier</li>
+<li>“Why” explanation</li>
+<li>Risk level: stockout risk / normal / overstock risk</li>
+<li>Telegram/WhatsApp-ready message</li>
+<li>Owner approval button/checklist</li>
+</ul>
+<p>Do not auto-send orders in the pilot. The transcript shows desire for automatic supplier ordering, but current ordering still happens by phone/agent calls. Source context: transcript lines 256–294. The first reliable version should be <strong>order drafts</strong>, not autonomous orders.</p>
+<h3 id="step-8-expiry-and-markdown-workflow">Step 8: Expiry and markdown workflow</h3>
+<p>Start narrow.</p>
+<p>Track expiry only for categories where the pain is visible:</p>
+<ul>
+<li>Dairy</li>
+<li>Sausage/meat/chilled goods</li>
+<li>Cakes/sweets</li>
+<li>Water/drinks where relevant</li>
+<li>Frozen/chilled products</li>
+<li>High-value slow movers</li>
+</ul>
+<p>Workflow:</p>
+<ol>
+<li>
+<p>Record expiry date at receiving or weekly shelf check.</p>
+</li>
+<li>
+<p>Create FEFO list: first-expiring, first-out.</p>
+</li>
+<li>
+<p>Trigger tasks:</p>
+<ul>
+<li>14 days left: watch</li>
+<li>7 days left: owner review</li>
+<li>3 days left: markdown/display</li>
+<li>expired: remove/write-off/return if supplier accepts</li>
+</ul>
+</li>
+<li>
+<p>Record outcome: sold, returned, discounted, discarded.</p>
+</li>
+</ol>
+<p>Do not begin with AI dynamic markdown optimization. Copy the Shelflife concept of batch-level expiry and targeted markdowns, but implement it manually first. (<a href="https://www.shelflife.ai/" title="Shelflife | Automated Expiration Date Tracking for Grocery Stores">shelflife.ai</a>)</p>
+<h3 id="step-9-supplier-contactdeal-crm">Step 9: Supplier contact/deal CRM</h3>
+<p>This may become a major differentiator because the transcript repeatedly points to hidden revenue from shelves, displays, fridges, bank panels, and supplier relationships.</p>
+<p>Workflow:</p>
+<ul>
+<li>
+<p>Build supplier list.</p>
+</li>
+<li>
+<p>Record rep contacts.</p>
+</li>
+<li>
+<p>Ask each supplier:</p>
+<ul>
+<li>Do you provide fridge/display/shelf support?</li>
+<li>Do you pay for placement?</li>
+<li>Do you accept returns?</li>
+<li>Do you accept near-expiry swaps?</li>
+<li>Do you support E-Factura/Asl Belgisi?</li>
+<li>Do you have an app or Telegram ordering channel?</li>
+</ul>
+</li>
+<li>
+<p>Create a deal pipeline:</p>
+<ul>
+<li>Pepsi/water/fridge/display</li>
+<li>Red Bull/snacks</li>
+<li>Bank/card/payment panel</li>
+<li>Cigarette shelf only if legally appropriate</li>
+<li>Ice cream/freezer</li>
+<li>Dairy/branded fridge</li>
+<li>Local bakery/bread delivery</li>
+</ul>
+</li>
+</ul>
+<p>AI role:</p>
+<ul>
+<li>Draft call scripts and Telegram messages.</li>
+<li>Summarize supplier terms.</li>
+<li>Flag follow-ups.</li>
+</ul>
+<p>Human role:</p>
+<ul>
+<li>Negotiate.</li>
+<li>Verify legality.</li>
+<li>Avoid conflicts of interest.</li>
+</ul>
+<h3 id="step-10-owner-dashboard">Step 10: Owner dashboard</h3>
+<p>The dashboard should be very simple.</p>
+<p>Daily owner view:</p>
+<ul>
+<li>Yesterday/today sales</li>
+<li>Top 10 sellers</li>
+<li>Low-stock list</li>
+<li>“Products that will run out before next delivery”</li>
+<li>Near-expiry value</li>
+<li>Items needing markdown/removal</li>
+<li>Missing data tasks</li>
+<li>Supplier orders awaiting approval</li>
+<li>Supplier/display deal opportunities</li>
+<li>Cash needed for tomorrow’s replenishment</li>
+</ul>
+<p>The owner does not need “AI forecast accuracy.” The owner needs: <strong>what to buy, what is missing, what is expiring, who to call, and what money is at risk.</strong></p>
+<hr>
+<h2 id="6-ai-feature-decision-table">6. AI feature decision table</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th style="text-align:right">Decision</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SKU normalization, duplicate detection, Uzbek/Russian name cleanup</td>
+<td style="text-align:right"><strong>Build now</strong></td>
+<td>High leverage for field team; low risk if human approves.</td>
+</tr>
+<tr>
+<td>Barcode scanning</td>
+<td style="text-align:right"><strong>Use off-the-shelf</strong></td>
+<td>Hardware/POS/mobile scanning already exists; build only the cleanup workflow around it.</td>
+</tr>
+<tr>
+<td>Product lookup from barcode</td>
+<td style="text-align:right"><strong>Manual first / later</strong></td>
+<td>Useful, but Uzbek/local product data may be incomplete. Validate coverage before relying on it.</td>
+</tr>
+<tr>
+<td>Asl Belgisi / marking workflow</td>
+<td style="text-align:right"><strong>Use off-the-shelf / partner</strong></td>
+<td>Compliance-sensitive. Map the process; do not become the compliance engine in MVP.</td>
+</tr>
+<tr>
+<td>E-Factura integration</td>
+<td style="text-align:right"><strong>Use off-the-shelf / partner</strong></td>
+<td>Smartup and local systems already address parts of this workflow. (<a href="https://smartup24.com/tpost/zblhh3xd81-marking-of-water-and-drinks-in-uzbekista" title="Water and Beverage Marking in Uzbekistan">smartup24.com</a>)</td>
+</tr>
+<tr>
+<td>OCR invoice extraction</td>
+<td style="text-align:right"><strong>Use off-the-shelf now</strong></td>
+<td>Strong value; do not train a custom model. Build validation and POS import around it.</td>
+</tr>
+<tr>
+<td>Invoice-to-SKU matching</td>
+<td style="text-align:right"><strong>Build now</strong></td>
+<td>This is your operational glue: OCR row → SKU master → exception queue.</td>
+</tr>
+<tr>
+<td>POS replacement</td>
+<td style="text-align:right"><strong>Avoid</strong></td>
+<td>Existing local POS/fiscal products already exist; replacing them slows discovery.</td>
+</tr>
+<tr>
+<td>POS CSV/API adapter</td>
+<td style="text-align:right"><strong>Build now, but narrow</strong></td>
+<td>Build for only the pilot POS. Avoid generic integrations until evidence shows which systems dominate.</td>
+</tr>
+<tr>
+<td>Reorder assistant</td>
+<td style="text-align:right"><strong>Build now, rules-based</strong></td>
+<td>Start with min/max + sales velocity + supplier schedule + owner approval.</td>
+</tr>
+<tr>
+<td>AI demand forecasting</td>
+<td style="text-align:right"><strong>Later</strong></td>
+<td>Needs clean sales history, reliable stock counts, and stable POS usage.</td>
+</tr>
+<tr>
+<td>Auto-sending supplier orders</td>
+<td style="text-align:right"><strong>Later</strong></td>
+<td>Owner must approve. Supplier acceptance and cash constraints must be validated first.</td>
+</tr>
+<tr>
+<td>Expiry tracking</td>
+<td style="text-align:right"><strong>Manual first</strong></td>
+<td>Valuable, but only if staff reliably records expiry dates.</td>
+</tr>
+<tr>
+<td>Expiry OCR/date capture</td>
+<td style="text-align:right"><strong>Later</strong></td>
+<td>Test manually before automating. Expiry labels vary and can be hard to capture.</td>
+</tr>
+<tr>
+<td>Markdown recommendations</td>
+<td style="text-align:right"><strong>Manual first / later AI</strong></td>
+<td>Start with simple rules. AI markdown optimization requires sell-through data.</td>
+</tr>
+<tr>
+<td>Shelf photo product extraction</td>
+<td style="text-align:right"><strong>Avoid now</strong></td>
+<td>The market scan already warns about shelf angle, resolution, occlusion, and item separation problems.</td>
+</tr>
+<tr>
+<td>Shelf CV / robots</td>
+<td style="text-align:right"><strong>Avoid for MVP</strong></td>
+<td>Better suited to chains or CPG field teams, not first small-store pilot.</td>
+</tr>
+<tr>
+<td>Supplier CRM</td>
+<td style="text-align:right"><strong>Build now, simple</strong></td>
+<td>High value and low technical risk.</td>
+</tr>
+<tr>
+<td>Supplier Telegram/message drafts</td>
+<td style="text-align:right"><strong>Build now optional</strong></td>
+<td>Useful as staff accelerator, but not core.</td>
+</tr>
+<tr>
+<td>Owner dashboard</td>
+<td style="text-align:right"><strong>Build now</strong></td>
+<td>Forces clarity and makes value visible.</td>
+</tr>
+<tr>
+<td>AI “chat with my store” assistant</td>
+<td style="text-align:right"><strong>Later</strong></td>
+<td>Nice demo, but first make the underlying data correct.</td>
+</tr>
+<tr>
+<td>Autonomous price changes</td>
+<td style="text-align:right"><strong>Avoid now</strong></td>
+<td>Too risky for margin, customer trust, and staff control.</td>
+</tr>
+<tr>
+<td>Legal/tax advice bot</td>
+<td style="text-align:right"><strong>Avoid</strong></td>
+<td>Use accountants/POS/marking specialists instead.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-main-risks">7. Main risks</h2>
+<h3 id="1-bad-source-data">1. Bad source data</h3>
+<p>If sales are not consistently recorded in POS, inventory counts are wrong, or invoices are missing, AI will produce confident nonsense. This is the biggest risk.</p>
+<p>Mitigation: build an exception queue and confidence labels. Never hide uncertainty.</p>
+<h3 id="2-pos-integration-friction">2. POS integration friction</h3>
+<p>Local POS systems may have limited APIs, inconsistent exports, or difficult catalog import rules.</p>
+<p>Mitigation: start with CSV/manual import. Build only one integration after the pilot identifies the dominant POS.</p>
+<h3 id="3-markingcompliance-liability">3. Marking/compliance liability</h3>
+<p>Asl Belgisi and E-Factura workflows can affect legal circulation of goods. The transcript’s “markirovka / eco-code / Soliq base” pain is real, but the ASR is noisy and should not be treated as a legal specification.</p>
+<p>Mitigation: document the workflow with a POS/marking specialist. Use existing approved tools.</p>
+<h3 id="4-staff-discipline">4. Staff discipline</h3>
+<p>A system fails if cashiers bypass scans, receiving is not recorded, or expiry dates are not entered.</p>
+<p>Mitigation: design the process around the store’s real behavior. Use daily checklists and owner dashboard, not complex software.</p>
+<h3 id="5-reorder-assistant-overstock-risk">5. Reorder assistant overstock risk</h3>
+<p>If the assistant recommends too much inventory, the store’s cash gets trapped.</p>
+<p>Mitigation: owner approval, conservative minimum stock, cash constraint field, and “why this order” explanation.</p>
+<h3 id="6-ocr-error-risk">6. OCR error risk</h3>
+<p>Uzbek/Russian invoices, stamps, supplier formats, handwriting, low-quality photos, and mixed units will produce errors.</p>
+<p>Mitigation: OCR only drafts. Validate totals and line items before import.</p>
+<h3 id="7-expiry-tracking-labor-burden">7. Expiry tracking labor burden</h3>
+<p>Recording expiry by batch can be too much work for a small store.</p>
+<p>Mitigation: only track high-risk categories first. Do not attempt all SKUs.</p>
+<h3 id="8-supplier-cooperation">8. Supplier cooperation</h3>
+<p>Suppliers may prefer phone calls, agent visits, or their own apps. They may not accept auto-orders or return near-expiry goods.</p>
+<p>Mitigation: supplier CRM first; integration later.</p>
+<h3 id="9-shelf-cv-disappointment">9. Shelf CV disappointment</h3>
+<p>The user’s market scan already identifies the problem: shelf photos are hard because of angle, occlusion, lighting, resolution, and mixed products. Starting here would create a “cool demo, bad operations” risk.</p>
+<p>Mitigation: avoid shelf CV as core MVP.</p>
+<h3 id="10-unit-economics">10. Unit economics</h3>
+<p>A service-heavy sprint can become labor-intensive. The business only works if a repeatable playbook reduces implementation time and if stores pay enough.</p>
+<p>Mitigation: track minutes per SKU, total field hours, correction rate, and willingness to pay from the first pilot.</p>
+<hr>
+<h2 id="8-validation-tests-for-35-store-visits">8. Validation tests for 3–5 store visits</h2>
+<h3 id="a-inventorysku-census-test">A. Inventory/SKU census test</h3>
+<p>For each store, sample 100 SKUs.</p>
+<p>Measure:</p>
+<ul>
+<li>Minutes per SKU to scan/count/clean</li>
+<li>% with barcode</li>
+<li>% with duplicate or inconsistent names</li>
+<li>% missing cost price</li>
+<li>% missing supplier</li>
+<li>% requiring marking attention</li>
+<li>% expiry-sensitive</li>
+<li>% not present in POS</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>Field team can clean 100 SKUs in a predictable time.</li>
+<li>Owner sees value immediately from duplicate/missing/low-stock findings.</li>
+</ul>
+<h3 id="b-ocr-invoice-test">B. OCR invoice test</h3>
+<p>Collect 10–30 invoices/receipts across suppliers.</p>
+<p>Measure:</p>
+<ul>
+<li>Header extraction accuracy: supplier/date/invoice number/total</li>
+<li>Line item extraction accuracy</li>
+<li>Quantity/unit/cost accuracy</li>
+<li>Total reconciliation success</li>
+<li>Human correction time per invoice</li>
+<li>% rows matched to existing SKU</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>OCR + validation is at least 40–60% faster than manual entry.</li>
+<li>Validated totals reconcile reliably.</li>
+</ul>
+<h3 id="c-barcodemarking-test">C. Barcode/marking test</h3>
+<p>Scan 200 products across categories.</p>
+<p>Measure:</p>
+<ul>
+<li>% 1D barcode readable</li>
+<li>% 2D/marking code readable</li>
+<li>% products with no usable code</li>
+<li>Which categories trigger Asl Belgisi workflows</li>
+<li>Whether current POS can process those codes</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>Basic scanning materially speeds intake.</li>
+<li>Marked-category handling can be documented without custom compliance development.</li>
+</ul>
+<h3 id="d-pos-sync-test">D. POS sync test</h3>
+<p>For each store:</p>
+<ul>
+<li>Export catalog</li>
+<li>Export 7–30 days sales, if possible</li>
+<li>Try importing 20 cleaned SKUs</li>
+<li>Check whether stock updates after sales</li>
+<li>Check whether cashiers actually scan items</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>At least one local POS path supports practical export/import.</li>
+<li>Store behavior matches POS records enough to support reorder alerts.</li>
+</ul>
+<h3 id="e-reorder-assistant-test">E. Reorder assistant test</h3>
+<p>Pick 30–50 fast-moving SKUs.</p>
+<p>For 7–14 days:</p>
+<ul>
+<li>Compare owner’s actual orders vs assistant draft orders</li>
+<li>Track stockouts</li>
+<li>Track overstock</li>
+<li>Track supplier delivery delay</li>
+<li>Ask owner whether the draft saved time</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>Owner accepts or edits the assistant’s order draft.</li>
+<li>Assistant catches stockouts earlier than current manual process.</li>
+</ul>
+<h3 id="f-expiry-test">F. Expiry test</h3>
+<p>Pick 30–50 high-risk SKUs.</p>
+<p>Measure:</p>
+<ul>
+<li>Time to record expiry dates</li>
+<li>% products with clearly visible dates</li>
+<li>Current value at risk within 3/7/14 days</li>
+<li>Number of items discounted/returned/discarded</li>
+<li>Whether staff can maintain the list weekly</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>The process finds real money at risk.</li>
+<li>Staff can maintain it without daily consultant involvement.</li>
+</ul>
+<h3 id="g-supplier-crm-test">G. Supplier CRM test</h3>
+<p>For each store:</p>
+<ul>
+<li>List top 10 suppliers</li>
+<li>Record contacts and order method</li>
+<li>Ask return policy</li>
+<li>Ask display/fridge/shelf deal policy</li>
+<li>Ask whether they accept Telegram/app/structured orders</li>
+<li>Identify 3 monetization opportunities</li>
+</ul>
+<p>Pass signal:</p>
+<ul>
+<li>At least one supplier/display/fridge/payment-panel opportunity is actionable.</li>
+<li>Supplier data becomes part of the store systematization offer, not a side note.</li>
+</ul>
+<hr>
+<h2 id="9-evidence-needed-from-the-next-35-store-visits">9. Evidence needed from the next 3–5 store visits</h2>
+<p>Collect these in a structured form.</p>
+<h3 id="store-profile">Store profile</h3>
+<ul>
+<li>Store size</li>
+<li>Approximate SKU count</li>
+<li>Approximate inventory value</li>
+<li>Daily revenue estimate</li>
+<li>Number of employees</li>
+<li>Owner involvement</li>
+<li>Opening hours</li>
+<li>Nearby competition</li>
+</ul>
+<h3 id="current-system">Current system</h3>
+<ul>
+<li>POS/cash register name</li>
+<li>Is every sale scanned?</li>
+<li>Is inventory tracked or only sales?</li>
+<li>Can catalog be exported?</li>
+<li>Can catalog be imported?</li>
+<li>Is there a scanner?</li>
+<li>Are scales integrated?</li>
+<li>Is there Excel/1C/CRM?</li>
+<li>Is there notebook/manual tracking?</li>
+</ul>
+<h3 id="data-quality">Data quality</h3>
+<ul>
+<li>Number of duplicate SKUs</li>
+<li>Missing barcode rate</li>
+<li>Missing cost rate</li>
+<li>Missing supplier rate</li>
+<li>Negative/incorrect stock examples</li>
+<li>Product categories not in POS</li>
+<li>Local/unbarcoded goods: bread, produce, unpacked goods, repacked goods</li>
+</ul>
+<h3 id="receiving-process">Receiving process</h3>
+<ul>
+<li>How goods arrive</li>
+<li>Who receives goods</li>
+<li>How invoice is handled</li>
+<li>Whether E-Factura is used</li>
+<li>Whether marked codes are checked</li>
+<li>Time to receive goods</li>
+<li>Error examples</li>
+</ul>
+<h3 id="ordering-process">Ordering process</h3>
+<ul>
+<li>Number of daily/weekly supplier calls</li>
+<li>Who decides orders</li>
+<li>Supplier delivery frequency</li>
+<li>Minimum order constraints</li>
+<li>Common stockouts</li>
+<li>Products the owner fears running out of</li>
+</ul>
+<h3 id="expirydamage-process">Expiry/damage process</h3>
+<ul>
+<li>Categories with expiry losses</li>
+<li>Monthly write-off estimate</li>
+<li>Damaged/water-damaged products</li>
+<li>Return policy by supplier</li>
+<li>Discounting practices</li>
+<li>Whether near-expiry products are currently tracked</li>
+</ul>
+<h3 id="supplierdeal-economics">Supplier/deal economics</h3>
+<ul>
+<li>Existing fridges/displays/shelves</li>
+<li>Any placement income</li>
+<li>Bank/payment panel income</li>
+<li>Supplier-provided equipment</li>
+<li>Conditions required for deals</li>
+<li>Untapped contacts</li>
+</ul>
+<h3 id="willingness-to-pay">Willingness to pay</h3>
+<p>Ask directly:</p>
+<ul>
+<li>Would you pay for a 7–10 day cleanup sprint?</li>
+<li>What result would make it worth paying?</li>
+<li>Would you pay monthly support?</li>
+<li>Would you pay success fee from supplier/display deals?</li>
+<li>Would you prefer fixed price, monthly, or commission?</li>
+</ul>
+<p>Do not rely on the transcript’s dollar amounts yet. Treat them as hypotheses, because the ASR is noisy and context is inconsistent.</p>
+<hr>
+<h2 id="10-next-7-days">10. Next 7 days</h2>
+<h3 id="day-1-define-the-pilot-offer">Day 1: Define the pilot offer</h3>
+<p>Create a one-page offer:</p>
+<blockquote>
+<p><strong>“Store Systematization Sprint: inventory cleanup, POS/catalog setup, invoice intake, reorder list, expiry control, supplier CRM, and owner dashboard in 7–10 days.”</strong></p>
+</blockquote>
+<p>Deliverables:</p>
+<ol>
+<li>Cleaned SKU master for priority SKUs.</li>
+<li>POS/export/import review.</li>
+<li>Invoice OCR + validation workflow.</li>
+<li>Low-stock/reorder sheet for top SKUs.</li>
+<li>Expiry watchlist for high-risk products.</li>
+<li>Supplier contact/deal CRM.</li>
+<li>Owner dashboard.</li>
+<li>Staff checklist and training.</li>
+</ol>
+<h3 id="days-24-visit-35-stores">Days 2–4: Visit 3–5 stores</h3>
+<p>Run the validation tests above. Do not sell software. Sell/validate the sprint.</p>
+<p>Specific goal:</p>
+<ul>
+<li>Find whether the pain repeats.</li>
+<li>Find which POS systems dominate.</li>
+<li>Find whether stores will pay for implementation.</li>
+<li>Find whether AI reduces implementation labor.</li>
+</ul>
+<h3 id="days-35-prepare-pilot-kit">Days 3–5: Prepare pilot kit</h3>
+<p>Pilot kit:</p>
+<ul>
+<li>Phone with good camera</li>
+<li>2D barcode scanner or scanner-enabled Android device</li>
+<li>Google Sheet/Airtable/Retool base</li>
+<li>Invoice upload form</li>
+<li>OCR extraction template</li>
+<li>SKU cleanup template</li>
+<li>Supplier CRM template</li>
+<li>Expiry checklist</li>
+<li>Reorder calculator</li>
+<li>Owner dashboard mockup</li>
+<li>Printed staff SOP</li>
+</ul>
+<h3 id="days-57-start-one-live-micro-pilot">Days 5–7: Start one live micro-pilot</h3>
+<p>Scope:</p>
+<ul>
+<li>Top 100–300 SKUs</li>
+<li>10–30 invoices</li>
+<li>30–50 reorder SKUs</li>
+<li>30–50 expiry-sensitive SKUs</li>
+<li>Top 10 suppliers</li>
+</ul>
+<p>Success by end of week:</p>
+<ul>
+<li>Owner sees a before/after catalog.</li>
+<li>At least one invoice is OCR’d and validated.</li>
+<li>Low-stock list is generated.</li>
+<li>Expiry risk list is generated.</li>
+<li>Supplier CRM has real contacts and next actions.</li>
+<li>You know whether this can be a paid sprint.</li>
+</ul>
+<hr>
+<h2 id="11-next-30-days">11. Next 30 days</h2>
+<h3 id="week-12-complete-one-full-pilot">Week 1–2: Complete one full pilot</h3>
+<p>Deliver a complete store systematization package for one store:</p>
+<ul>
+<li>Cleaned catalog for priority assortment</li>
+<li>POS import/export method</li>
+<li>Invoice intake process</li>
+<li>Reorder assistant for top items</li>
+<li>Expiry workflow</li>
+<li>Supplier/deal CRM</li>
+<li>Owner dashboard</li>
+<li>Staff training</li>
+<li>Before/after case study</li>
+</ul>
+<p>Track:</p>
+<ul>
+<li>Field hours</li>
+<li>Minutes per SKU</li>
+<li>OCR correction time</li>
+<li>Number of missing/duplicate SKUs fixed</li>
+<li>Low-stock items found</li>
+<li>Expiry value found</li>
+<li>Supplier deal opportunities found</li>
+<li>Owner willingness to pay</li>
+</ul>
+<h3 id="week-23-build-the-internal-systematization-console">Week 2–3: Build the internal “systematization console”</h3>
+<p>This should be an internal operator tool, not a customer-facing SaaS yet.</p>
+<p>Modules:</p>
+<ol>
+<li>SKU master</li>
+<li>Invoice OCR validation</li>
+<li>POS import/export</li>
+<li>Reorder assistant</li>
+<li>Expiry task list</li>
+<li>Supplier CRM</li>
+<li>Owner dashboard</li>
+<li>Exception queue</li>
+</ol>
+<h3 id="week-34-partner-and-price">Week 3–4: Partner and price</h3>
+<p>Do not scale until you have partners.</p>
+<p>Target partners:</p>
+<ul>
+<li>1–2 POS vendors or implementers</li>
+<li>1 fiscal/marking specialist</li>
+<li>1 hardware/scanner supplier</li>
+<li>5–10 supplier reps in beverage/snack/dairy/ice cream/bank/payment categories</li>
+<li>1 accountant/tax workflow advisor</li>
+</ul>
+<p>Pricing tests:</p>
+<ul>
+<li>One-time cleanup fee</li>
+<li>Monthly support fee</li>
+<li>Supplier/display success fee</li>
+<li>Combined setup + support package</li>
+</ul>
+<p>Possible offer structure:</p>
+<ol>
+<li><strong>Audit only:</strong> low-cost, 1–2 days.</li>
+<li><strong>Systematization sprint:</strong> 7–10 days, fixed fee.</li>
+<li><strong>Monthly support:</strong> reorder/expiry/invoice/POS hygiene.</li>
+<li><strong>Supplier monetization add-on:</strong> success fee or commission where legal and transparent.</li>
+</ol>
+<h3 id="30-day-gono-go-criteria">30-day go/no-go criteria</h3>
+<p>Proceed only if most of these are true:</p>
+<ul>
+<li>At least 3 of 5 visited stores confirm the pain.</li>
+<li>At least 1 store pays or gives a serious commitment.</li>
+<li>Top 100–300 SKU cleanup can be done predictably.</li>
+<li>OCR reduces invoice entry effort materially after validation.</li>
+<li>POS data can be exported/imported or worked around.</li>
+<li>Owner uses the dashboard or reorder list for at least 1–2 weeks.</li>
+<li>Expiry tracking finds real at-risk value.</li>
+<li>Supplier CRM produces at least one tangible deal or operational improvement.</li>
+<li>Delivery economics suggest the sprint can be profitable with trained field staff.</li>
+</ul>
+<hr>
+<h2 id="12-final-strategic-recommendation">12. Final strategic recommendation</h2>
+<p>The best AI-enabled path is:</p>
+<blockquote>
+<p><strong>A human-in-the-loop store systematization service, powered by AI data-capture and cleanup tools, integrated around existing Uzbek POS/fiscal/marking systems.</strong></p>
+</blockquote>
+<p>Build now:</p>
+<ul>
+<li>SKU cleanup assistant</li>
+<li>Invoice OCR validation workflow</li>
+<li>Reorder draft assistant</li>
+<li>Expiry task list</li>
+<li>Supplier CRM</li>
+<li>Owner dashboard</li>
+<li>Exception queue</li>
+</ul>
+<p>Use off-the-shelf:</p>
+<ul>
+<li>POS/cash register</li>
+<li>Scanners</li>
+<li>OCR/document AI</li>
+<li>Asl Belgisi/E-Factura-capable tools</li>
+<li>Existing POS integrations where available</li>
+</ul>
+<p>Manual first:</p>
+<ul>
+<li>Expiry tracking</li>
+<li>Supplier negotiation</li>
+<li>Marking workflow SOP</li>
+<li>Store layout/display monetization</li>
+<li>Staff training</li>
+</ul>
+<p>Later:</p>
+<ul>
+<li>Forecasting</li>
+<li>Auto-ordering</li>
+<li>Expiry OCR</li>
+<li>Deeper POS integrations</li>
+<li>Supplier integrations</li>
+</ul>
+<p>Avoid for MVP:</p>
+<ul>
+<li>Full POS replacement</li>
+<li>Autonomous compliance</li>
+<li>Shelf computer vision as the core product</li>
+<li>AI dynamic pricing</li>
+<li>“AI knows your inventory from photos” claims</li>
+</ul>
+<p>The opportunity is not that small Uzbek stores lack AI. The opportunity is that they lack <strong>clean operating systems, disciplined data, supplier workflows, and trained implementers</strong>. AI can make the implementers faster, but the product should be sold as operational cleanup and profit control, not as AI magic.</p>
+
+</body>
+</html>

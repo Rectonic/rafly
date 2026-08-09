@@ -26,5 +26,18 @@ Add a real backend/auth foundation without breaking the current front-end protot
 3. Create a Supabase project and run `supabase/schema.sql` in the SQL editor.
 4. In Supabase Auth settings, add the site URL and callback URL: `http://localhost:3000/auth/callback` for local development.
 
+## Mobile App Setup
+1. Set `EXPO_PUBLIC_SUPABASE_URL` to the Supabase project root URL, not the `/rest/v1` URL.
+2. Set `EXPO_PUBLIC_SUPABASE_ANON_KEY` to the public anon key.
+3. For backend smoke testing, set `LASTBITE_BACKEND_E2E_SELLER_EMAIL` and `LASTBITE_BACKEND_E2E_SELLER_PASSWORD` to a known test seller account.
+4. Run the SQL in `supabase/schema.sql` from the Supabase SQL editor before expecting mobile seller login to complete. Password auth can succeed while the app still fails if `public.seller_profiles` has not been created.
+5. Verify the read-only auth/schema path with:
+
+```bash
+npm run backend:auth-smoke -- --require
+```
+
+The expected production-ready result is `status: "passed"` for a seller with an existing profile, or `status: "auth_ok_profile_missing"` for a valid seller account that still needs onboarding. `status: "schema_missing"` means the SQL schema has not been applied or PostgREST has not reloaded its schema cache.
+
 ## Next Backend Step
 Replace the seeded pickup-order placeholder flow with real buyer reservations and connect order creation to the marketplace checkout path.

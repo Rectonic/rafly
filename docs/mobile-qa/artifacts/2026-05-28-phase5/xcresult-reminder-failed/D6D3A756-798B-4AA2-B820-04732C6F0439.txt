@@ -1,0 +1,113 @@
+Application, 0x114c99e00, pid: 60081, label: 'LastBite' <App element pid: 60081>
+  Window (Main), 0x114c99f40, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4435936256.4>
+    Other, 0x114c9a080, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4488743424.5>
+      Other, 0x114c9a1c0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4489284736.6>
+        Other, 0x114c9a300, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4489282176.7>
+          Other, 0x114c9a440, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4436999488.8>
+            Other, 0x114c9a580, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4489691136.9>
+              Other, 0x114c9a6c0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4436557824.10>
+                Other, 0x114c9a800, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4436558720.11>
+                  Other, 0x114c9a940, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4436559616.12>
+                    Other, 0x114c9aa80, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4488149888.13>
+                      Other, 0x114c9abc0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4488169664.14>
+                        Other, 0x114c9ad00, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4488173248.16>
+                          Other, 0x114c9ae40, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4435904000.18>
+                            Other, 0x114c9af80, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4489692672.19>
+                              Other, 0x114c9b0c0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4436560512.20>
+                                Other, 0x114c9b200, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4436561408.21>
+                                  Other, 0x114c9b340, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4437238080.23>
+                                    Other, 0x114c9b480, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4437240320.29>
+                                      Other, 0x114c9b5c0, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4488176384.31>
+                                        Other, 0x114c9b700, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4435907072.33>
+                                          Other, 0x114c9b840, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4489694976.34>
+                                            Other, 0x114c9b980, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4489695744.35>
+                                            Other, 0x114c9bac0, {{0.0, 62.0}, {402.0, 729.0}}, identifier: 'feed-screen' <AX element pid: 60081, elementOrHash.elementID: 4435942400.36>
+                                              ScrollView, 0x114c9bc00, {{0.0, 62.0}, {402.0, 729.0}} <AX element pid: 60081, elementOrHash.elementID: 4435443712.37>
+                                                Other, 0x114c9bd40, {{0.0, 62.0}, {402.0, 942.7}} <AX element pid: 60081, elementOrHash.elementID: 4437307648.38>
+                                                  Other, 0x114c27340, {{0.0, 62.0}, {402.0, 942.7}} <AX element pid: 60081, elementOrHash.elementID: 4489696512.41>
+                                                    StaticText, 0x114c27980, {{16.0, 78.0}, {370.0, 67.0}}, label: 'Найдите ближайшие предложения лишней еды' <AX element pid: 60081, elementOrHash.elementID: 4436563200.44>
+                                                      StaticText, 0x114c27ac0, {{16.0, 78.0}, {370.0, 67.0}}, label: 'Найдите ближайшие предложения лишней еды' <AX element pid: 60081, elementOrHash.elementID: 4777864688.122>
+                                                    Other, 0x114c25540, {{16.0, 157.0}, {370.0, 43.0}} <AX element pid: 60081, elementOrHash.elementID: 4436564096.45>
+                                                      TextField, 0x114c25680, {{17.0, 158.0}, {368.0, 41.0}}, identifier: 'feed-search-input', placeholderValue: 'Поиск ресторанов, пекарен или конкретной еды...' <AX element pid: 60081, elementOrHash.elementID: 4436038656.74>
+                                                    Other, 0x114c257c0, {{16.0, 200.0}, {370.0, 45.0}} <AX element pid: 60081, elementOrHash.elementID: 4435943424.46>
+                                                      ScrollView, 0x114c25900, {{16.0, 200.0}, {370.0, 45.0}} <AX element pid: 60081, elementOrHash.elementID: 4435448832.75>
+                                                        Other, 0x114c25a40, {{16.0, 200.0}, {575.3, 45.0}} <AX element pid: 60081, elementOrHash.elementID: 4488136896.91>
+                                                          Other, 0x114c25b80, {{16.0, 200.0}, {575.3, 45.0}} <AX element pid: 60081, elementOrHash.elementID: 4726758144.98>
+                                                            Other, 0x114c25cc0, {{16.0, 212.0}, {49.7, 33.0}}, identifier: 'category-filter-All', label: 'Все' <AX element pid: 60081, elementOrHash.elementID: 4726758912.106>
+                                                            Other, 0x114c25e00, {{73.7, 212.0}, {69.0, 33.0}}, identifier: 'category-filter-Meals', label: 'Блюда' <AX element pid: 60081, elementOrHash.elementID: 4726759680.107>
+                                                            Other, 0x114c25f40, {{150.7, 212.0}, {84.0, 33.0}}, identifier: 'category-filter-Baked Goods', label: 'Выпечка' <AX element pid: 60081, elementOrHash.elementID: 4726760448.108>
+                                                            Other, 0x114c26080, {{242.7, 212.0}, {93.3, 33.0}}, identifier: 'category-filter-Groceries', label: 'Продукты' <AX element pid: 60081, elementOrHash.elementID: 4726761216.109>
+                                                            Other, 0x114c261c0, {{344.0, 212.0}, {96.3, 33.0}}, identifier: 'category-filter-Vegan', label: 'Веганское' <AX element pid: 60081, elementOrHash.elementID: 4726761984.110>
+                                                            Other, 0x114c26300, {{448.3, 212.0}, {143.0, 33.0}}, identifier: 'category-filter-Surprise Bags', label: 'Сюрприз-пакеты' <AX element pid: 60081, elementOrHash.elementID: 4726762752.111>
+                                                        Other, 0x114c26440, {{353.0, 200.0}, {30.0, 45.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762097664.92>
+                                                          Other, 0x114c26580, {{380.0, 203.0}, {3.0, 39.0}} <AX element pid: 60081, elementOrHash.elementID: 4488177728.99>
+                                                        Other, 0x114c266c0, {{353.0, 200.0}, {30.0, 45.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762097664.92>
+                                                          Other, 0x114c26800, {{380.0, 203.0}, {3.0, 39.0}} <AX element pid: 60081, elementOrHash.elementID: 4488177728.99>
+                                                    Other, 0x114c26940, {{16.0, 245.0}, {370.0, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4435944448.47>
+                                                      ScrollView, 0x114c26a80, {{16.0, 245.0}, {370.0, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4435451392.76>
+                                                        Other, 0x114c26bc0, {{16.0, 245.0}, {594.7, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4488138688.93>
+                                                          Other, 0x114c26d00, {{16.0, 245.0}, {594.7, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4726763520.100>
+                                                            Other, 0x114c26e40, {{16.0, 257.0}, {134.3, 35.0}}, identifier: 'sort-option-expiry', label: 'Скоро истекает' <AX element pid: 60081, elementOrHash.elementID: 4726764288.112>
+                                                            Other, 0x114c26f80, {{158.3, 257.0}, {158.3, 35.0}}, identifier: 'sort-option-price', label: 'Самая низкая цена' <AX element pid: 60081, elementOrHash.elementID: 4726765056.113>
+                                                            Other, 0x114c270c0, {{324.7, 257.0}, {165.0, 35.0}}, identifier: 'sort-option-discount', label: 'Наибольшая скидка' <AX element pid: 60081, elementOrHash.elementID: 4726765824.114>
+                                                            Other, 0x114c27200, {{497.7, 257.0}, {113.0, 35.0}}, identifier: 'sort-option-distance', label: 'Ближе всего' <AX element pid: 60081, elementOrHash.elementID: 4726766592.115>
+                                                        Other, 0x114d34000, {{353.0, 245.0}, {30.0, 47.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762098176.94>
+                                                          Other, 0x114d34140, {{380.0, 248.0}, {3.0, 41.0}} <AX element pid: 60081, elementOrHash.elementID: 4488178176.101>
+                                                        Other, 0x114d34280, {{353.0, 245.0}, {30.0, 47.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762098176.94>
+                                                          Other, 0x114d343c0, {{380.0, 248.0}, {3.0, 41.0}} <AX element pid: 60081, elementOrHash.elementID: 4488178176.101>
+                                                    Button, 0x114d34500, {{316.3, 306.0}, {69.7, 38.0}}, identifier: 'near-me-button', label: 'Рядом' <AX element pid: 60081, elementOrHash.elementID: 4489697280.48>
+                                                    StaticText, 0x114d34640, {{16.0, 316.0}, {55.3, 18.0}}, label: 'Радиус' <AX element pid: 60081, elementOrHash.elementID: 4436564992.49>
+                                                      StaticText, 0x114d34780, {{16.0, 316.0}, {55.3, 18.0}}, label: 'Радиус' <AX element pid: 60081, elementOrHash.elementID: 4763087600.77>
+                                                    Other, 0x114d348c0, {{16.0, 344.0}, {370.0, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4435945472.50>
+                                                      ScrollView, 0x114d34a00, {{16.0, 344.0}, {370.0, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4435453952.78>
+                                                        Other, 0x114d34b40, {{16.0, 344.0}, {349.3, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4488140480.95>
+                                                          Other, 0x114d34c80, {{16.0, 344.0}, {349.3, 47.0}} <AX element pid: 60081, elementOrHash.elementID: 4739629056.102>
+                                                            Button, 0x114d34dc0, {{16.0, 356.0}, {55.0, 35.0}}, identifier: 'radius-filter-1', label: 'Показать предложения в радиусе 1 км' <AX element pid: 60081, elementOrHash.elementID: 4739629824.116>
+                                                            Button, 0x114d34f00, {{79.0, 356.0}, {57.0, 35.0}}, identifier: 'radius-filter-3', label: 'Показать предложения в радиусе 3 км' <AX element pid: 60081, elementOrHash.elementID: 4739630592.117>
+                                                            Button, 0x114d35040, {{144.0, 356.0}, {57.0, 35.0}}, identifier: 'radius-filter-5', label: 'Показать предложения в радиусе 5 км' <AX element pid: 60081, elementOrHash.elementID: 4739631360.118>
+                                                            Button, 0x114d35180, {{209.0, 356.0}, {156.3, 35.0}}, identifier: 'radius-filter-all', label: 'Показать предложения в радиусе Любое расстояние' <AX element pid: 60081, elementOrHash.elementID: 4739632128.119>
+                                                        Other, 0x114d352c0, {{353.0, 344.0}, {30.0, 47.0}}, label: 'Vertical scroll bar, 1 page', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762098688.96>
+                                                          Other, 0x114d35400, {{380.0, 347.0}, {3.0, 41.0}} <AX element pid: 60081, elementOrHash.elementID: 4488178624.103>
+                                                        Other, 0x114d35540, {{353.0, 344.0}, {30.0, 47.0}}, label: 'Vertical scroll bar, 1 page', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762098688.96>
+                                                          Other, 0x114d35680, {{380.0, 347.0}, {3.0, 41.0}} <AX element pid: 60081, elementOrHash.elementID: 4488178624.103>
+                                                    StaticText, 0x114d357c0, {{16.0, 405.0}, {370.0, 15.7}}, identifier: 'feed-offer-count', label: '2 предложения' <AX element pid: 60081, elementOrHash.elementID: 4436565888.51>
+                                                      StaticText, 0x114d35900, {{16.0, 405.0}, {370.0, 15.7}}, label: '2 предложения' <AX element pid: 60081, elementOrHash.elementID: 4777860848.144>
+                                                    Other, 0x114d35a40, {{16.0, 436.7}, {370.0, 220.0}}, identifier: 'offers-map-frame' <AX element pid: 60081, elementOrHash.elementID: 4489698048.52>
+                                                      Other, 0x114d35b80, {{16.0, 436.7}, {370.0, 220.0}} <AX element pid: 60081, elementOrHash.elementID: 4739632896.80>
+                                                        Other, 0x114d35cc0, {{16.0, 436.7}, {370.0, 220.0}} <AX element pid: 60081, elementOrHash.elementID: 4740286976.145>
+                                                          Other, 0x114d35e00, {{157.0, 468.7}, {36.0, 36.0}}, label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4780563968.146>
+                                                          Other, 0x114d35f40, {{208.7, 588.3}, {36.0, 36.0}}, label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4780560896.147>
+                                                          Other, 0x114d36080, {{16.0, 436.7}, {370.0, 220.0}} <AX element pid: 60081, elementOrHash.elementID: 4762106880.148>
+                                                            Map, 0x114d361c0, {{16.0, 436.7}, {370.0, 220.0}} <AX element pid: 60081, elementOrHash.elementID: 4780784640.150>
+                                                              Other, 0x114d36300, {{160.3, 471.7}, {30.0, 30.0}}, identifier: 'VKPointFeature', label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4826052032.152>
+                                                              Other, 0x114d36440, {{162.2, 548.3}, {30.0, 30.0}}, identifier: 'VKPointFeature', label: 'Tashkent' <AX element pid: 60081, elementOrHash.elementID: 4826052352.153>
+                                                              Other, 0x114d36580, {{32.0, 588.0}, {30.0, 30.0}}, identifier: 'VKPointFeature', label: 'Alisher Navoiy nomidagi Milliy Bogi' <AX element pid: 60081, elementOrHash.elementID: 4826052512.154>
+                                                              Other, 0x114d366c0, {{211.7, 591.6}, {30.0, 30.0}}, identifier: 'VKPointFeature', label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4826052192.155>
+                                                            Other, 0x114d36800, {{16.0, 436.7}, {370.0, 220.0}}, identifier: 'AnnotationContainer' <AX element pid: 60081, elementOrHash.elementID: 4803842560.151>
+                                                              Other, 0x114d36940, {{157.0, 468.7}, {36.0, 36.0}}, label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4780563968.146>
+                                                              Other, 0x114d36a80, {{208.7, 588.3}, {36.0, 36.0}}, label: 'Map pin' <AX element pid: 60081, elementOrHash.elementID: 4780560896.147>
+                                                          Link, 0x114d36bc0, {{110.2, 611.9}, {28.6, 10.7}}, label: 'Legal' <AX element pid: 60081, elementOrHash.elementID: 4488219712.149>
+                                                    Button, 0x114d36d00, {{16.0, 656.7}, {370.0, 125.0}}, identifier: 'offer-card-5', label: 'Семейный поднос пасты, Roma Cucina' <AX element pid: 60081, elementOrHash.elementID: 4489705728.61>
+                                                      Button, 0x114d36e40, {{333.3, 676.7}, {35.7, 32.0}}, identifier: 'favorite-toggle-5', label: 'Добавить в избранное: Семейный поднос пасты' <AX element pid: 60081, elementOrHash.elementID: 4739642880.85>
+                                                    Other, 0x114d36f80, {{16.0, 656.7}, {370.0, 137.0}}, identifier: 'offer-card-layout-5' <AX element pid: 60081, elementOrHash.elementID: 4489704960.62>
+                                                    Button, 0x114d370c0, {{16.0, 793.7}, {370.0, 125.0}}, identifier: 'offer-card-3', label: 'Суши-микс, Tokyo Bites' <AX element pid: 60081, elementOrHash.elementID: 4726755840.69>
+                                                      Button, 0x114d37200, {{333.3, 813.7}, {35.7, 32.0}}, identifier: 'favorite-toggle-3', label: 'Добавить в избранное: Суши-микс' <AX element pid: 60081, elementOrHash.elementID: 4761633536.89>
+                                                    Other, 0x114d37340, {{16.0, 793.7}, {370.0, 137.0}}, identifier: 'offer-card-layout-3' <AX element pid: 60081, elementOrHash.elementID: 4726755072.70>
+                                                Other, 0x114d37480, {{369.0, 62.0}, {30.0, 729.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762100224.39>
+                                                  Other, 0x114d375c0, {{396.0, 65.0}, {3.0, 258.7}} <AX element pid: 60081, elementOrHash.elementID: 4488179072.42>
+                                                Other, 0x114d37700, {{0.0, 758.0}, {402.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762099712.40>
+                                                  Other, 0x114d37840, {{3.0, 785.0}, {393.0, 3.0}} <AX element pid: 60081, elementOrHash.elementID: 4488179520.43>
+                                                Other, 0x114d37980, {{369.0, 62.0}, {30.0, 729.0}}, label: 'Vertical scroll bar, 2 pages', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762100224.39>
+                                                  Other, 0x114d37ac0, {{396.0, 65.0}, {3.0, 258.7}} <AX element pid: 60081, elementOrHash.elementID: 4488179072.42>
+                                                Other, 0x114d37c00, {{0.0, 758.0}, {402.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0 % <AX element pid: 60081, elementOrHash.elementID: 4762099712.40>
+                                                  Other, 0x114d37d40, {{3.0, 785.0}, {393.0, 3.0}} <AX element pid: 60081, elementOrHash.elementID: 4488179520.43>
+                                    Other, 0x114d37e80, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4488756736.30>
+                                      Other, 0x114d38000, {{0.0, 0.0}, {402.0, 791.0}} <AX element pid: 60081, elementOrHash.elementID: 4491821568.32>
+                                Other, 0x114d38140, {{0.0, 791.0}, {402.0, 83.0}} <AX element pid: 60081, elementOrHash.elementID: 4489694208.22>
+                                  Button, 0x114d38280, {{0.0, 791.3}, {100.7, 48.7}}, identifier: 'tab-feed', label: 'Лента, tab, 1 of 4', Selected <AX element pid: 60081, elementOrHash.elementID: 4761635840.24>
+                                  Other, 0x114d383c0, {{0.0, 791.3}, {402.0, 82.7}} <AX element pid: 60081, elementOrHash.elementID: 4761635072.25>
+                                  Button, 0x114d38500, {{100.7, 791.3}, {100.3, 48.7}}, identifier: 'tab-favorites', label: 'Избранное, tab, 2 of 4' <AX element pid: 60081, elementOrHash.elementID: 4761636608.26>
+                                  Button, 0x114d38640, {{201.0, 791.3}, {100.7, 48.7}}, identifier: 'tab-reservations', label: 'Брони, tab, 3 of 4' <AX element pid: 60081, elementOrHash.elementID: 4761637376.27>
+                                  Button, 0x114d38780, {{301.7, 791.3}, {100.3, 48.7}}, identifier: 'tab-settings', label: 'Настройки, tab, 4 of 4' <AX element pid: 60081, elementOrHash.elementID: 4761638144.28>
+                      Other, 0x114d388c0, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4762091520.15>
+                        Other, 0x114d38a00, {{0.0, 0.0}, {402.0, 874.0}} <AX element pid: 60081, elementOrHash.elementID: 4762093568.17>

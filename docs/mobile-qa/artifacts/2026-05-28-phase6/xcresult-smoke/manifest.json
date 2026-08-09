@@ -1,0 +1,47 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "FA24B5A9-FD55-468E-88B4-6E7760E1713A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer radius filtered discovery_0_1A3EA661-0CE0-4F6A-B935-4BF4F90F7005.png",
+        "timestamp" : 1779977948.116
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerDiscoveryRadiusControlsFilterVisibleOffers()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerDiscoveryRadiusControlsFilterVisibleOffers"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "E4301A37-467A-44F5-94AB-2D58C4C33FE5.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Offer detail product info_0_77188BAB-A13F-421C-AF5F-6A648F9BC06E.png",
+        "timestamp" : 1779977964.617
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerOfferDetailCloseButtonFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerOfferDetailCloseButtonFlow"
+  },
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "4C77E440-3765-4A8D-B89A-C9908BA5746D",
+        "deviceName" : "LastBite Release Current iPhone 17",
+        "exportedFileName" : "143347BC-A642-4170-8307-8F271122C83A.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Buyer pickup reminder scheduled_0_81A0C090-94DC-4AAB-A47A-92C8CA36484E.png",
+        "timestamp" : 1779977983.923
+      }
+    ],
+    "testIdentifier" : "LastBiteUITests/testBuyerPickupReminderStatusFlow()",
+    "testIdentifierURL" : "test://com.apple.xcode/LastBite/LastBiteUITests/LastBiteUITests/testBuyerPickupReminderStatusFlow"
+  }
+]

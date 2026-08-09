@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Касаба улица oracle strategy.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h2 id="top-line-reading">Top-line reading</h2>
+<p>This is less a “build a POS app” conversation and more a <strong>service + implementation opportunity</strong> for small Uzbek grocery/retail stores that are under-digitized, operationally messy, and increasingly pressured by tax/product-marking workflows. The strongest wedge is a <strong>done-for-you store systematization service</strong>: inventory cleanup, POS/program setup, product/assortment entry, supplier contacts, shelf/display monetization, ordering discipline, and basic analytics.</p>
+<p>The transcript strongly suggests that store owners need <strong>hands-on operators</strong>, not just software.</p>
+<hr>
+<h2 id="1-key-factual-findings-from-the-conversation">1. Key factual findings from the conversation</h2>
+<p><strong>A small store may carry large inventory value.</strong>
+The speaker estimates store goods at roughly <strong>250–300 million UZS</strong> in value, though the ASR is noisy. This matters because even a small neighborhood shop can have enough stock complexity to justify paid systemization. Evidence: lines 9–11.</p>
+<p><strong>Closing the store to clean up operations is costly.</strong>
+They mention that closing for <strong>7–10 days</strong> would be a big hit, and later say stopping operations risks losing customers to competitors. Evidence: lines 5, 28–34.</p>
+<p><strong>Marking, labeling, tax, and “eco-code” workflows are painful.</strong>
+The speaker talks about “markirovka,” “eko kod,” adding items to the Uzbek tax/Soliq base, entering quantities, and dealing with official product flows. The exact legal workflow is unclear from ASR, but the pain is clear: compliance/product registration is operationally burdensome. Evidence: lines 19–24.</p>
+<p><strong>Many stores still run on notebooks or memory.</strong>
+When asked whether they use a notebook, the speaker says they still do, because the system has not yet been implemented. Evidence: lines 132–139.</p>
+<p><strong>The buyer likely wants implementation, not just advice.</strong>
+The speaker repeatedly describes a <strong>“под ключ” / turnkey</strong> service: set up the program, enter the assortment, organize the store, train people, bring supplier contacts, and make the store ready to operate. Evidence: lines 39–47, 51–56, 106–116.</p>
+<p><strong>The pain is not limited to one shop.</strong>
+The speaker says not just many stores, but essentially “every store” has this kind of problem, especially because many new people have entered the retail business without old-school store experience. Evidence: lines 36–42.</p>
+<p><strong>Store economics include more than product margin.</strong>
+A major insight is that shelves, displays, fridges, bank/card panels, cigarette shelves, Pepsi/Red Bull/water displays, and supplier relationships can generate extra income or support. The speaker gives examples of shelf/display payments and upfront annual payments, though exact amounts should be verified. Evidence: lines 57–79, 84–93, 178–185.</p>
+<p><strong>Ordering is manual and inefficient.</strong>
+Current ordering appears to happen by phone with agents/supplier reps. The speaker describes wanting the system to know what is left, generate orders, and notify suppliers automatically. Evidence: lines 256–278, 282–294.</p>
+<p><strong>Expiry, damaged goods, and returns are real problems.</strong>
+They discuss near-expiry products, water-damaged goods, discounting, throwing away goods, and suppliers often refusing returns. The speaker claims roughly 60% of firms refuse returns, but that should be treated as one operator’s estimate. Evidence: lines 229–244, 304–312.</p>
+<p><strong>There is a labor bottleneck.</strong>
+The speaker suggests training developers/young staff with store-domain knowledge and creating multiple teams that can implement stores in 10–15 days each. Evidence: lines 146–164, 220–224, 111–115.</p>
+<hr>
+<h2 id="2-strongest-business-opportunities-implied">2. Strongest business opportunities implied</h2>
+<h3 id="1-turnkey-small-store-systematization-service">1. Turnkey small-store systematization service</h3>
+<p>This is the strongest opportunity. The transcript repeatedly points to a practical, field-heavy service: “we come, set up your store, enter the assortment, install the program, organize supplier relationships, and train your people.”</p>
+<p>This is better supported than a pure SaaS product because the stores appear to lack clean data, discipline, and operational know-how.</p>
+<h3 id="2-existing-store-inventorycompliance-cleanup">2. Existing-store inventory/compliance cleanup</h3>
+<p>Many stores already operate but have incomplete systems, notebook-based records, unentered assortment, messy balances, and marking/tax workflow confusion. A short “cleanup sprint” could be sold to existing stores before trying to sell a full platform.</p>
+<h3 id="3-suppliershelfdisplay-monetization-brokerage">3. Supplier/shelf/display monetization brokerage</h3>
+<p>The speaker sees hidden revenue in shelf space, displays, fridges, bank panels, branded refrigerators, cigarette shelves, Red Bull/Pepsi/water placements, and supplier contracts. A service that helps small shops monetize their retail space could be highly attractive because it creates visible cash benefit.</p>
+<h3 id="4-reordering-low-stock-and-expiry-assistant">4. Reordering, low-stock, and expiry assistant</h3>
+<p>There is clear pain around stockouts, manual calls, low remaining stock, and near-expiry goods. However, this should probably come after manual implementation because the data foundation is weak.</p>
+<h3 id="5-field-implementation-team--store-systematizer-training">5. Field implementation team / “store systematizer” training</h3>
+<p>There is a possible labor-market opportunity: train small teams who know both store operations and POS/digital tools. This can support the first opportunity and become a scalable delivery model.</p>
+<hr>
+<h2 id="3-concrete-pathways-to-pursue">3. Concrete pathways to pursue</h2>
+<table>
+<thead>
+<tr>
+<th>Pathway</th>
+<th>Target customer</th>
+<th>Pain point</th>
+<th>Offer</th>
+<th>First MVP</th>
+<th>Revenue model</th>
+<th>Evidence from transcript</th>
+<th>Key risks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A. Turnkey new-store launch / modernization</strong></td>
+<td>New or renovating neighborhood grocery stores in Uzbekistan</td>
+<td>Owners do not know how to set up a modern store, choose assortment, configure POS, organize shelves, or build supplier relationships</td>
+<td>“Под ключ” store setup: POS/program setup, assortment entry, shelf layout, supplier list, basic analytics, staff workflow</td>
+<td>Pick 1 pilot store and deliver a 10–15 day manual setup using existing POS/tools plus a checklist/playbook</td>
+<td>Setup fee; possible range to test from the transcript: several hundred to a few thousand USD-equivalent, plus monthly support</td>
+<td>Speaker explicitly describes “noldan,” “под ключ,” full assortment entry, store setup, and 10–15 day implementation. Lines 39–47, 51–56, 106–116</td>
+<td>Very service-heavy; hard to scale without trained field teams; quality depends on operators; owners may underpay after seeing effort</td>
+</tr>
+<tr>
+<td><strong>B. Existing-store digitization and compliance cleanup sprint</strong></td>
+<td>Operating small groceries using notebooks, partial POS, or messy inventory</td>
+<td>Store cannot close, inventory is large, tax/marking workflows are confusing, balances are inaccurate</td>
+<td>5–10 day “inventory + system cleanup”: SKU census, product codes/marking workflow, POS balance entry, staff process, reorder basics</td>
+<td>Use the speaker’s store as a live pilot: enter priority SKUs, reconcile stock, document marking/tax steps, train one cashier/manager</td>
+<td>Fixed implementation fee by SKU count/store size; monthly support; optional per-visit audit</td>
+<td>Large inventory estimate, marking/eco-code pain, notebook usage, and system not yet implemented. Lines 9–24, 132–139, 173–178</td>
+<td>Regulatory details may be more complex than transcript suggests; integrations with Soliq/marking/POS may be hard; bad source data slows work</td>
+</tr>
+<tr>
+<td><strong>C. Supplier, shelf, fridge, display, and bank-panel monetization</strong></td>
+<td>Small stores with decent foot traffic but weak supplier negotiation</td>
+<td>Owners may not know that shelves/displays/fridges/panels can generate income or supplier support</td>
+<td>Broker supplier deals: Pepsi/water/fridge/display, Red Bull, tobacco shelf where legal, bank/card terminal/panel, promotional placement</td>
+<td>Build a supplier-deal map for one district: 10–20 supplier contacts, typical terms, required store conditions; close 1–3 deals for pilot store</td>
+<td>Success fee or % of negotiated value; recurring commission; bundle into turnkey setup</td>
+<td>Speaker gives examples of shelf income, Pepsi/display payments, bank panel, supplier contacts, and “daromad olib kelib berish.” Lines 57–93, 178–185, 197–200</td>
+<td>Supplier terms may not generalize; tobacco/advertising has legal risk; relationship-driven market; conflicts of interest if taking commissions</td>
+</tr>
+<tr>
+<td><strong>D. Low-stock, reorder, and expiry assistant</strong></td>
+<td>Stores with daily supplier ordering and frequent stockouts/waste</td>
+<td>Owners manually call suppliers; they do not know what is left; products expire or get damaged; returns are inconsistent</td>
+<td>Simple mobile/Telegram assistant: low-stock alerts, near-expiry list, order drafts by supplier, daily manager view</td>
+<td>Start with top 50–100 SKUs only; use Google Sheets/Telegram/manual stock counts before building deep POS integration</td>
+<td>Monthly subscription; setup fee; supplier-side fee later</td>
+<td>Speaker wants home/mobile visibility of “5 or 10 left,” automatic supplier orders, and expiry handling. Lines 229–260, 265–278, 282–294, 304–312</td>
+<td>Data accuracy; staff discipline; POS integrations; suppliers may already launch their own apps; expiry discounting must be compliant</td>
+</tr>
+<tr>
+<td><strong>E. Field “store systematizer” team</strong></td>
+<td>Your own company, POS vendors, or retail consultants serving many stores</td>
+<td>There are not enough people who understand both store operations and digital systems</td>
+<td>Train implementers who can visit stores, set up programs, enter assortment, teach workflows, and collect supplier data</td>
+<td>Train 2 people inside one real store for one week; create a checklist, SOP, pricing sheet, and quality-control process</td>
+<td>Margin on implementation labor; certification/training fee; subcontracting to POS vendors</td>
+<td>Speaker suggests sending developers/young people to learn, training teams, and eventually running multiple teams. Lines 146–164, 220–224, 111–115</td>
+<td>Trained staff may leave; inconsistent delivery; requires strong SOPs; domain expert dependency</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-strongly-supported-vs-speculative">4. Strongly supported vs. speculative</h2>
+<h3 id="strongly-supported-by-the-transcript">Strongly supported by the transcript</h3>
+<p>The strongest evidence supports these claims:</p>
+<ol>
+<li>
+<p><strong>Small-store operations are messy and under-digitized.</strong>
+Notebook usage and incomplete system adoption are explicitly discussed. Lines 132–139.</p>
+</li>
+<li>
+<p><strong>Marking/tax/product-code workflows are a real pain.</strong>
+The speaker directly mentions markirovka, eco-code, Soliq/tax base, quantities, and official product handling. Lines 19–24.</p>
+</li>
+<li>
+<p><strong>Store owners need hands-on setup, not only software.</strong>
+“Под ключ,” assortment entry, program setup, and physical store setup appear repeatedly. Lines 39–47, 51–56, 106–116.</p>
+</li>
+<li>
+<p><strong>Supplier/display monetization is important.</strong>
+The speaker gives several examples of shelf, display, Pepsi, bank panel, Red Bull, cigarette shelf, and supplier-contact economics. Lines 57–93, 178–185.</p>
+</li>
+<li>
+<p><strong>Ordering and stock visibility are not solved.</strong>
+Manual phone ordering and the desire for automatic low-stock/order generation are clearly discussed. Lines 256–278, 282–294.</p>
+</li>
+<li>
+<p><strong>Expiry/damage/returns create losses.</strong>
+The transcript discusses near-expiry goods, water-damaged goods, discounting, throwing away, and suppliers refusing returns. Lines 229–244, 304–312.</p>
+</li>
+</ol>
+<h3 id="speculative-or-requiring-validation">Speculative or requiring validation</h3>
+<p>These are plausible but not proven:</p>
+<ol>
+<li>
+<p><strong>“Every store has this problem.”</strong>
+The speaker claims it, but this is one person’s view. It needs validation across stores.</p>
+</li>
+<li>
+<p><strong>Exact willingness to pay.</strong>
+The transcript mentions amounts like $700–$800, $2,500, 120k–300k UZS/month, and possible commissions, but ASR is noisy and the context is inconsistent.</p>
+</li>
+<li>
+<p><strong>A scalable SaaS product.</strong>
+The transcript supports a service-heavy model more strongly than a self-serve software product.</p>
+</li>
+<li>
+<p><strong>Automatic supplier ordering feasibility.</strong>
+Desired, but integration with suppliers, POS systems, and cash registers is unknown.</p>
+</li>
+<li>
+<p><strong>Generalizability of supplier/display payments.</strong>
+Pepsi/display/bank-panel examples may depend on location, traffic, relationships, category, and store size.</p>
+</li>
+<li>
+<p><strong>Legal/compliance details.</strong>
+Marking, eco-code, product expiry, tobacco display, tax base integration, and supplier return rules require proper local legal/tax validation.</p>
+</li>
+</ol>
+<hr>
+<h2 id="5-follow-up-questions-and-interviews-to-run-next">5. Follow-up questions and interviews to run next</h2>
+<h3 id="store-owner-interviews">Store-owner interviews</h3>
+<p>Interview 8–12 small grocery owners or managers. Ask:</p>
+<ol>
+<li>What system do you use today: notebook, Excel, POS, Telegram, memory?</li>
+<li>How many SKUs do you carry?</li>
+<li>What is your approximate inventory value?</li>
+<li>How often do you reconcile stock?</li>
+<li>Which products require marking, codes, tax entry, or special compliance?</li>
+<li>What happens when product data is missing or wrong?</li>
+<li>How many hours per week go into receiving goods, entering products, ordering, and reconciliation?</li>
+<li>What are your most common stockouts?</li>
+<li>How much product do you throw away or discount monthly because of expiry/damage?</li>
+<li>What would you pay for someone to clean this up in 7–10 days?</li>
+<li>Would you prefer one-time setup, monthly support, or both?</li>
+</ol>
+<h3 id="pos--program--cash-register-interviews">POS / program / cash-register interviews</h3>
+<p>Interview local POS vendors, fiscal cash-register providers, or implementation specialists:</p>
+<ol>
+<li>Which POS systems are common in small Uzbek groceries?</li>
+<li>Can product lists be imported/exported?</li>
+<li>Are there APIs?</li>
+<li>How do they handle marking/product codes?</li>
+<li>What are the most common onboarding failures?</li>
+<li>How much do stores pay today for setup and monthly support?</li>
+<li>Do vendors have enough field implementers?</li>
+</ol>
+<h3 id="supplier-and-brand-rep-interviews">Supplier and brand-rep interviews</h3>
+<p>Interview reps from beverage, water, snack, tobacco where legal, dairy, ice cream, and bank/payment-terminal providers:</p>
+<ol>
+<li>Do you pay for shelf/display/fridge placement?</li>
+<li>What store conditions are required?</li>
+<li>Do you provide refrigerators, stands, displays, signage?</li>
+<li>Can a third party broker stores for you?</li>
+<li>Do you accept automatic orders?</li>
+<li>What data would make a store more attractive to you?</li>
+<li>What return policies exist for damaged or near-expiry goods?</li>
+</ol>
+<h3 id="live-store-observation">Live store observation</h3>
+<p>Spend one full day inside one store and measure:</p>
+<ol>
+<li>Number of supplier visits/calls.</li>
+<li>Time spent receiving goods.</li>
+<li>Time to enter a new product.</li>
+<li>Number of SKUs missing from the system.</li>
+<li>Daily stockouts.</li>
+<li>Daily expired/damaged goods.</li>
+<li>Cash/POS reconciliation issues.</li>
+<li>Which tasks only the owner knows how to do.</li>
+</ol>
+<hr>
+<h2 id="6-clear-recommendation-what-to-do-first-in-the-next-7-days">6. Clear recommendation: what to do first in the next 7 days</h2>
+<p>Do <strong>not</strong> start by building a full software product.</p>
+<p>Start with a <strong>paid or at least commitment-backed “Store Systematization Pilot”</strong> for one real store, ideally the speaker’s store or a similar small grocery.</p>
+<h3 id="day-1-define-the-pilot-package">Day 1: Define the pilot package</h3>
+<p>Create a one-page offer:</p>
+<p><strong>“We systematize your store in 7–10 days: inventory, POS/product list, supplier ordering, expiry control, and supplier monetization opportunities.”</strong></p>
+<p>Include five deliverables:</p>
+<ol>
+<li>SKU/product list cleanup.</li>
+<li>POS/program setup or improvement.</li>
+<li>Marking/tax/code workflow map.</li>
+<li>Supplier/order process map.</li>
+<li>Shelf/display/fridge/bank-panel income opportunities.</li>
+</ol>
+<h3 id="days-23-visit-35-stores">Days 2–3: Visit 3–5 stores</h3>
+<p>Validate whether the same pains repeat. Look especially for:</p>
+<ul>
+<li>Notebook usage.</li>
+<li>Missing product data.</li>
+<li>Manual supplier ordering.</li>
+<li>Confusion around marking/tax workflows.</li>
+<li>Expired/damaged goods.</li>
+<li>Existing shelf/display deals.</li>
+<li>Willingness to pay for implementation.</li>
+</ul>
+<h3 id="days-35-run-one-manual-pilot">Days 3–5: Run one manual pilot</h3>
+<p>Pick one store and manually implement a small but real scope:</p>
+<ul>
+<li>Enter or clean the top 100–300 SKUs.</li>
+<li>Build a reorder sheet for the top 50 fast-moving items.</li>
+<li>Create a near-expiry tracking sheet.</li>
+<li>Identify 5 supplier/display monetization opportunities.</li>
+<li>Document the current marking/tax/code workflow.</li>
+<li>Train one person in the store to maintain the process.</li>
+</ul>
+<p>Use existing tools: Excel/Google Sheets, Telegram, current POS, and manual checklists. Avoid custom software until the workflow is proven.</p>
+<h3 id="days-67-convert-findings-into-a-repeatable-offer">Days 6–7: Convert findings into a repeatable offer</h3>
+<p>Produce:</p>
+<ol>
+<li>A before/after case study.</li>
+<li>A checklist for future stores.</li>
+<li>A price menu.</li>
+<li>A list of POS/supplier integration requirements.</li>
+<li>A decision on which pathway has the fastest payback.</li>
+</ol>
+<h3 id="my-recommendation">My recommendation</h3>
+<p>The first wedge should be:</p>
+<p><strong>Existing-store digitization and operational cleanup sprint</strong>, bundled with <strong>supplier/display monetization audit</strong>.</p>
+<p>Reason: the transcript gives the strongest evidence for immediate pain around messy systems, notebook operations, product-code/tax workflows, lost customers, and supplier monetization. This lets you earn service revenue now, learn the real workflows, and later decide whether to build software for ordering, expiry, supplier integrations, or POS automation.</p>
+
+</body>
+</html>
