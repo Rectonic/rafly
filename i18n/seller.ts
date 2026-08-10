@@ -84,6 +84,54 @@ export interface SellerTranslations {
     alreadyDecidedTitle: string;
     decisionErrorFallback: string;
   };
+  publish: {
+    title: string;
+    forbiddenTitle: string;
+    forbiddenMessage: string;
+    selectProductTitle: string;
+    noEligibleProducts: string;
+    quantityLabel: string;
+    maxOfferableHint: (n: number) => string;
+    quantityExceedsMaxHint: string;
+    physicalSetAsideLabel: string;
+    physicalSetAsideHint: string;
+    physicalSetAsideRequiredHint: string;
+    titleLabel: string;
+    categoryLabel: string;
+    imageUrlLabel: string;
+    contentsLabel: string;
+    contentsPlaceholder: string;
+    priceLabel: string;
+    referencePriceLabel: string;
+    pickupStartLabel: string;
+    pickupEndLabel: string;
+    pickupWindowInvalidHint: string;
+    allergensLabel: string;
+    dietaryBadgesLabel: string;
+    pickupInstructionsLabel: string;
+    cancellationPolicyLabel: string;
+    reviewButton: string;
+    backButton: string;
+    reviewTitle: string;
+    reviewProduct: (name: string) => string;
+    reviewQuantity: (n: number) => string;
+    reviewPrice: (price: number) => string;
+    reviewReferencePrice: (price: number) => string;
+    reviewNoReferencePrice: string;
+    reviewPickupWindow: (start: string, end: string) => string;
+    reviewSetAsideConfirmed: string;
+    confirmButton: string;
+    publishing: string;
+    publishedTitle: string;
+    publishedQuantity: (n: number) => string;
+    publishedDiscount: (percent: number) => string;
+    publishedNoDiscount: string;
+    errorFallback: string;
+    retry: string;
+    pauseButton: string;
+    pausing: string;
+    pausedLabel: string;
+  };
 }
 
 export const sellerEn: SellerTranslations = {
@@ -159,6 +207,55 @@ export const sellerEn: SellerTranslations = {
     alreadyDecidedTitle: "Already decided",
     decisionErrorFallback: "Unable to save this decision.",
   },
+  publish: {
+    title: "New offer",
+    forbiddenTitle: "Publishing is manager and owner only",
+    forbiddenMessage: "Your role cannot approve or publish an offer for this store.",
+    selectProductTitle: "Select the inventory this offer allocates",
+    noEligibleProducts: "No inventory is currently eligible to publish.",
+    quantityLabel: "Quantity",
+    maxOfferableHint: (n) => `Up to ${n} available without physical set aside`,
+    quantityExceedsMaxHint: "Quantity is above the safe maximum for this product.",
+    physicalSetAsideLabel: "I physically set this quantity aside for pickup",
+    physicalSetAsideHint:
+      "Confidence is not high, publishing requires a confirmed physical set aside.",
+    physicalSetAsideRequiredHint: "Confirm the physical set aside before continuing.",
+    titleLabel: "Offer title",
+    categoryLabel: "Category",
+    imageUrlLabel: "Image URL",
+    contentsLabel: "Contents, one line per item",
+    contentsPlaceholder: "Bread\nPastry",
+    priceLabel: "Offer price, UZS",
+    referencePriceLabel: "Supported reference price, UZS, optional",
+    pickupStartLabel: "Pickup start",
+    pickupEndLabel: "Pickup end",
+    pickupWindowInvalidHint: "Pickup end must be after pickup start.",
+    allergensLabel: "Allergens, one line per item",
+    dietaryBadgesLabel: "Dietary badges, one line per item",
+    pickupInstructionsLabel: "Pickup instructions",
+    cancellationPolicyLabel: "Cancellation policy",
+    reviewButton: "Review before publishing",
+    backButton: "Back to edit",
+    reviewTitle: "Review before you approve",
+    reviewProduct: (name) => `Allocation: ${name}`,
+    reviewQuantity: (n) => `Quantity: ${n}`,
+    reviewPrice: (price) => `Offer price: UZS ${price}`,
+    reviewReferencePrice: (price) => `Reference price: UZS ${price}`,
+    reviewNoReferencePrice: "No reference price, no discount will be shown",
+    reviewPickupWindow: (start, end) => `Pickup ${start} to ${end}`,
+    reviewSetAsideConfirmed: "Physical set aside confirmed",
+    confirmButton: "Approve and publish",
+    publishing: "Publishing...",
+    publishedTitle: "Offer live",
+    publishedQuantity: (n) => `${n} available`,
+    publishedDiscount: (percent) => `${percent}% off the reference price`,
+    publishedNoDiscount: "No discount, no reference price was supplied",
+    errorFallback: "Unable to publish this offer.",
+    retry: "Retry",
+    pauseButton: "Pause offer",
+    pausing: "Pausing...",
+    pausedLabel: "Paused",
+  },
 };
 
 export const sellerRu: SellerTranslations = {
@@ -233,5 +330,54 @@ export const sellerRu: SellerTranslations = {
     staleMessage: "Кто-то другой уже принял решение по этому предложению. Показана последняя версия.",
     alreadyDecidedTitle: "Уже решено",
     decisionErrorFallback: "Не удалось сохранить это решение.",
+  },
+  publish: {
+    title: "Новое предложение",
+    forbiddenTitle: "Публикация доступна только менеджерам и владельцам",
+    forbiddenMessage: "Ваша роль не позволяет одобрять или публиковать предложения для этого магазина.",
+    selectProductTitle: "Выберите товар, под который выделяется предложение",
+    noEligibleProducts: "Сейчас нет товаров, доступных для публикации.",
+    quantityLabel: "Количество",
+    maxOfferableHint: (n) => `Доступно без физического резерва: ${n}`,
+    quantityExceedsMaxHint: "Количество превышает безопасный максимум для этого товара.",
+    physicalSetAsideLabel: "Я физически отложил это количество для выдачи",
+    physicalSetAsideHint:
+      "Уверенность не высокая, публикация требует подтверждённого физического резерва.",
+    physicalSetAsideRequiredHint: "Подтвердите физический резерв, чтобы продолжить.",
+    titleLabel: "Название предложения",
+    categoryLabel: "Категория",
+    imageUrlLabel: "URL изображения",
+    contentsLabel: "Состав, по одному пункту на строку",
+    contentsPlaceholder: "Хлеб\nВыпечка",
+    priceLabel: "Цена предложения, сум",
+    referencePriceLabel: "Подтверждённая базовая цена, сум, необязательно",
+    pickupStartLabel: "Начало самовывоза",
+    pickupEndLabel: "Конец самовывоза",
+    pickupWindowInvalidHint: "Конец самовывоза должен быть позже начала.",
+    allergensLabel: "Аллергены, по одному на строку",
+    dietaryBadgesLabel: "Диетические отметки, по одной на строку",
+    pickupInstructionsLabel: "Инструкции по самовывозу",
+    cancellationPolicyLabel: "Правила отмены",
+    reviewButton: "Проверить перед публикацией",
+    backButton: "Вернуться к редактированию",
+    reviewTitle: "Проверьте перед одобрением",
+    reviewProduct: (name) => `Резерв: ${name}`,
+    reviewQuantity: (n) => `Количество: ${n}`,
+    reviewPrice: (price) => `Цена предложения: ${price} сум`,
+    reviewReferencePrice: (price) => `Базовая цена: ${price} сум`,
+    reviewNoReferencePrice: "Без базовой цены скидка не будет показана",
+    reviewPickupWindow: (start, end) => `Самовывоз с ${start} до ${end}`,
+    reviewSetAsideConfirmed: "Физический резерв подтверждён",
+    confirmButton: "Одобрить и опубликовать",
+    publishing: "Публикация...",
+    publishedTitle: "Предложение опубликовано",
+    publishedQuantity: (n) => `Доступно: ${n}`,
+    publishedDiscount: (percent) => `Скидка ${percent}% от базовой цены`,
+    publishedNoDiscount: "Без скидки, базовая цена не была указана",
+    errorFallback: "Не удалось опубликовать это предложение.",
+    retry: "Повторить",
+    pauseButton: "Приостановить предложение",
+    pausing: "Приостановка...",
+    pausedLabel: "Приостановлено",
   },
 };

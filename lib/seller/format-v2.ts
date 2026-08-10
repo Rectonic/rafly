@@ -13,3 +13,11 @@ export function formatIsoTimestampV2(iso: string): string {
   }
   return `${datePart} ${timePart.slice(0, 5)}`;
 }
+
+/** Splits a multiline draft field into a trimmed, blank line free list. */
+export function parseLinesV2(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
