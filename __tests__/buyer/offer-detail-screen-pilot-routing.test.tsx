@@ -68,6 +68,7 @@ const mockSecureStore = new Map<string, string>();
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage.get(key) ?? null)),
+  removeItem: jest.fn(),
   setItem: jest.fn((key: string, value: string) => {
     mockAsyncStorage.set(key, value);
     return Promise.resolve();

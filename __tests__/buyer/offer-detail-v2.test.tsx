@@ -59,6 +59,7 @@ jest.mock("@/lib/buyer/installation-id", () => ({
 
 const mockAsyncStorage = new Map<string, string>();
 const mockSecureStore = new Map<string, string>();
+let mockSecureStoreWriteError: Error | null = null;
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage.get(key) ?? null)),
@@ -75,6 +76,9 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 jest.mock("expo-secure-store", () => ({
   getItemAsync: jest.fn((key: string) => Promise.resolve(mockSecureStore.get(key) ?? null)),
   setItemAsync: jest.fn((key: string, value: string) => {
+    if (mockSecureStoreWriteError) {
+      return Promise.reject(mockSecureStoreWriteError);
+    }
     mockSecureStore.set(key, value);
     return Promise.resolve();
   }),
@@ -160,6 +164,8 @@ describe("OfferDetailV2", () => {
     mockLocale = "en";
     mockAsyncStorage.clear();
     mockSecureStore.clear();
+    mockSecureStoreWriteError = null;
+    delete process.env.EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE;
   });
 
   it("shows a not found state for an unknown offer id", async () => {
@@ -311,6 +317,37 @@ describe("OfferDetailV2", () => {
     );
     expect(screen.getByTestId("offer-detail-v2-cancel-button")).toBeTruthy();
     expect(screen.queryByTestId("offer-detail-v2-reserve-button")).toBeNull();
+    expect(
+      screen.queryByTestId("offer-detail-v2-storage-degraded-notice")
+    ).toBeNull();
+  });
+
+  it("warns that the pickup code will not survive an app restart when secure storage fails", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const published = await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+    if (!published.ok) throw new Error("expected publish to succeed");
+    mockSecureStoreWriteError = new Error("SecureStore unavailable");
+
+    const screen = await renderDetail(published.value.id, core.buyerApi(), core, scenario);
+    await waitFor(() => expect(screen.getByText("Bakery rescue box")).toBeTruthy());
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("offer-detail-v2-reserve-button"));
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("offer-detail-v2-storage-degraded-notice")
+      ).toHaveTextContent(
+        "Something went wrong. Please try again. Pickup code will not survive an app restart."
+      )
+    );
+    expect(screen.getByTestId("offer-detail-v2-pickup-code")).toHaveTextContent(
+      /^[A-Z0-9]{6}$/
+    );
   });
 
   it("recovers a held reservation on remount and only reveals the code on request", async () => {
