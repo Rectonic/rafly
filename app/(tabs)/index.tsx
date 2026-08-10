@@ -29,7 +29,12 @@ import { useLocale } from "@/lib/locale-store";
 import { localizeOffers } from "@/lib/localized-offers";
 import { useMarketplaceState } from "@/lib/marketplace-store";
 import { useSearchQuery, useSetSearchQuery } from "@/lib/search-store";
-import type { OfferFilterCategory } from "@/types/offer";
+import type { Offer, OfferFilterCategory } from "@/types/offer";
+import { useBuyerMarketplaceFeedV2 } from "@/lib/buyer/marketplace-v2-store";
+import {
+  mapMarketplaceOfferV2ToOffer,
+  UnknownOfferStatusError,
+} from "@/lib/buyer/offer-mappers";
 
 const SORT_OPTIONS: SortMode[] = ["expiry", "price", "discount", "distance"];
 const RADIUS_OPTIONS: RadiusFilterKm[] = [1, 3, 5, null];
@@ -49,6 +54,8 @@ export default function FeedScreen() {
     publishedOffers,
     refreshPublishedOffers,
   } = useMarketplaceState();
+  const marketplaceV2 = useBuyerMarketplaceFeedV2();
+  const isPilot = marketplaceV2.isPilot;
   const query = useSearchQuery();
   const setQuery = useSetSearchQuery();
   const [activeCategory, setActiveCategory] =
@@ -62,15 +69,47 @@ export default function FeedScreen() {
   const feedScrollRef = useRef<ScrollView>(null);
   const offerCardOffsetsRef = useRef<Record<string, number>>({});
 
+  // Pilot mode maps the live v2 feed onto the existing Offer view model so
+  // search, filters, sorting, and the map keep working unchanged. A mapping
+  // failure (an offer status the mapper does not recognize) is treated as a
+  // feed level error rather than silently dropping or mis-rendering one
+  // card, the buyer must see an honest error rather than a broken offer.
+  const { offers: pilotOffers, mappingError } = useMemo(() => {
+    if (!isPilot) {
+      return { mappingError: null as string | null, offers: [] as Offer[] };
+    }
+
+    try {
+      return {
+        mappingError: null,
+        offers: marketplaceV2.offers.map((offer) =>
+          mapMarketplaceOfferV2ToOffer(offer, { userLocation })
+        ),
+      };
+    } catch (error) {
+      return {
+        mappingError:
+          error instanceof UnknownOfferStatusError
+            ? error.message
+            : "Unable to read live offers.",
+        offers: [],
+      };
+    }
+  }, [isPilot, marketplaceV2.offers, userLocation]);
+
+  const pilotError = marketplaceV2.error ?? mappingError;
+
   const offers = useMemo(
     () =>
       filterAndSortOffers({
         activeCategory,
         favoriteIds: favorites,
-        offers: [
-          ...localizeOffers(publishedOffers, locale),
-          ...localizeOffers(OFFERS, locale),
-        ],
+        offers: isPilot
+          ? pilotOffers
+          : [
+              ...localizeOffers(publishedOffers, locale),
+              ...localizeOffers(OFFERS, locale),
+            ],
         query,
         radiusKm,
         showFavoritesOnly: false,
@@ -80,7 +119,9 @@ export default function FeedScreen() {
     [
       activeCategory,
       favorites,
+      isPilot,
       locale,
+      pilotOffers,
       publishedOffers,
       query,
       radiusKm,
@@ -277,30 +318,61 @@ export default function FeedScreen() {
       ) : null}
       </View>
 
-      {isMarketplaceLoading ? (
-        <View
-          style={styles.inlineStatePanel}
-          testID="feed-marketplace-loading-state"
-        >
-          <Text style={styles.inlineStateText}>{t.home.marketplaceLoading}</Text>
-        </View>
-      ) : null}
+      {isPilot ? (
+        <>
+          {marketplaceV2.isLoading ? (
+            <View
+              style={styles.inlineStatePanel}
+              testID="feed-pilot-loading-state"
+            >
+              <Text style={styles.inlineStateText}>{t.buyerV2.feed.loading}</Text>
+            </View>
+          ) : null}
 
-      {marketplaceError ? (
-        <View style={styles.errorPanel} testID="feed-marketplace-error-state">
-          <Text style={styles.errorTitle}>{t.home.marketplaceErrorTitle}</Text>
-          <Text style={styles.errorText}>{marketplaceError}</Text>
-          <Text style={styles.errorHint}>{t.home.marketplaceErrorHint}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void refreshPublishedOffers()}
-            style={styles.retryButton}
-            testID="feed-marketplace-retry-button"
-          >
-            <Text style={styles.retryText}>{t.home.retryMarketplace}</Text>
-          </Pressable>
-        </View>
-      ) : null}
+          {pilotError ? (
+            <View style={styles.errorPanel} testID="feed-pilot-error-state">
+              <Text style={styles.errorTitle}>{t.buyerV2.feed.errorTitle}</Text>
+              <Text style={styles.errorText}>{pilotError}</Text>
+              <Text style={styles.errorHint}>{t.buyerV2.feed.errorHint}</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void marketplaceV2.refresh()}
+                style={styles.retryButton}
+                testID="feed-pilot-retry-button"
+              >
+                <Text style={styles.retryText}>{t.buyerV2.feed.retry}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </>
+      ) : (
+        <>
+          {isMarketplaceLoading ? (
+            <View
+              style={styles.inlineStatePanel}
+              testID="feed-marketplace-loading-state"
+            >
+              <Text style={styles.inlineStateText}>{t.home.marketplaceLoading}</Text>
+            </View>
+          ) : null}
+
+          {marketplaceError ? (
+            <View style={styles.errorPanel} testID="feed-marketplace-error-state">
+              <Text style={styles.errorTitle}>{t.home.marketplaceErrorTitle}</Text>
+              <Text style={styles.errorText}>{marketplaceError}</Text>
+              <Text style={styles.errorHint}>{t.home.marketplaceErrorHint}</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void refreshPublishedOffers()}
+                style={styles.retryButton}
+                testID="feed-marketplace-retry-button"
+              >
+                <Text style={styles.retryText}>{t.home.retryMarketplace}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </>
+      )}
 
       <Text style={styles.offerCount} testID="feed-offer-count">
         {t.home.offersShowing(offers.length)}
@@ -336,7 +408,7 @@ export default function FeedScreen() {
             />
           </View>
         ))
-      ) : (
+      ) : isPilot && pilotError ? null : (
         <View style={styles.emptyState} testID="feed-empty-state">
           <Text style={styles.emptyTitle}>
             {query.trim()

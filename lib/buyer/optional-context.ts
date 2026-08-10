@@ -29,3 +29,16 @@ export function useOptionalFlags(): OptionalFeatureFlagsState | null {
     return null;
   }
 }
+
+/**
+ * The single boolean every buyer v2 screen branches on. True only once both
+ * providers are mounted and the coordinator flag resolved to pilot. Screens
+ * that only need to know which UI to show, not the live feed itself, use
+ * this instead of useBuyerMarketplaceFeedV2 so they do not trigger an
+ * unrelated list fetch just to answer "which mode am I in".
+ */
+export function useIsPilotMode(): boolean {
+  const api = useOptionalBuyerApi();
+  const flagsState = useOptionalFlags();
+  return Boolean(api) && flagsState?.flags.marketplaceMode === "pilot";
+}

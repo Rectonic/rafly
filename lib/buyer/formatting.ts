@@ -70,3 +70,16 @@ export function formatFullPickupWindow(
   const end = formatShortTime(pickupEnd, timeZone);
   return `${start} - ${end}`;
 }
+
+/**
+ * MarketplaceOfferV2 prices are whole Uzbek som, this formats them with the
+ * real currency rather than routing through the existing dollar formatted
+ * formatPrice helper used by demo mode and OfferCard.
+ */
+export function formatUzs(amountUzs: number, locale: Locale): string {
+  return new Intl.NumberFormat(toIntlLocale(locale), {
+    currency: "UZS",
+    maximumFractionDigits: 0,
+    style: "currency",
+  }).format(amountUzs);
+}

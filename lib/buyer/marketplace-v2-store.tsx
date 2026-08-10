@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { MarketplaceOfferV2 } from "@/lib/contracts";
+import type { CommandError, MarketplaceOfferV2, Result } from "@/lib/contracts";
 
-import { useOptionalBuyerApi, useOptionalFlags } from "./optional-context";
+import { useOptionalBuyerApi, useIsPilotMode } from "./optional-context";
 
 export interface BuyerMarketplaceFeedV2State {
   /**
@@ -29,8 +29,7 @@ export interface BuyerMarketplaceFeedV2State {
  */
 export function useBuyerMarketplaceFeedV2(): BuyerMarketplaceFeedV2State {
   const api = useOptionalBuyerApi();
-  const flagsState = useOptionalFlags();
-  const isPilot = Boolean(api) && flagsState?.flags.marketplaceMode === "pilot";
+  const isPilot = useIsPilotMode();
 
   const [offers, setOffers] = useState<MarketplaceOfferV2[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -73,4 +72,67 @@ export function useBuyerMarketplaceFeedV2(): BuyerMarketplaceFeedV2State {
   }, [refresh]);
 
   return { error, isLoading, isPilot, offers, refresh };
+}
+
+export interface BuyerMarketplaceOfferV2State {
+  isPilot: boolean;
+  isLoading: boolean;
+  error: CommandError | null;
+  offer: MarketplaceOfferV2 | null;
+  refresh: () => Promise<Result<MarketplaceOfferV2> | null>;
+}
+
+/**
+ * Buyer v2 single offer detail. Used for the offer detail screen and for
+ * refreshing authoritative offer data, for example after a stale
+ * expectedOfferVersion is rejected during a reservation attempt. A refresh
+ * error keeps the last known offer on screen instead of clearing it, so a
+ * transient failure while the buyer is already looking at an offer does not
+ * blank the page, the error is still surfaced through the error field.
+ */
+export function useBuyerMarketplaceOfferV2(
+  offerId: string | undefined
+): BuyerMarketplaceOfferV2State {
+  const api = useOptionalBuyerApi();
+  const isPilot = useIsPilotMode();
+
+  const [offer, setOffer] = useState<MarketplaceOfferV2 | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<CommandError | null>(null);
+  const requestSequenceRef = useRef(0);
+
+  const refresh = useCallback(async (): Promise<Result<MarketplaceOfferV2> | null> => {
+    if (!api || !isPilot || !offerId) {
+      setOffer(null);
+      setError(null);
+      setIsLoading(false);
+      return null;
+    }
+
+    const requestId = requestSequenceRef.current + 1;
+    requestSequenceRef.current = requestId;
+    setIsLoading(true);
+    setError(null);
+
+    const result = await api.getMarketplaceOfferV2(offerId);
+
+    if (requestId !== requestSequenceRef.current) {
+      return result;
+    }
+
+    if (result.ok) {
+      setOffer(result.value);
+      setError(null);
+    } else {
+      setError(result.error);
+    }
+    setIsLoading(false);
+    return result;
+  }, [api, isPilot, offerId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { error, isLoading, isPilot, offer, refresh };
 }

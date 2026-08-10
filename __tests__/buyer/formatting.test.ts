@@ -2,6 +2,7 @@ import {
   formatFullPickupWindow,
   formatFullTimestamp,
   formatShortTime,
+  formatUzs,
 } from "@/lib/buyer/formatting";
 
 describe("buyer v2 timestamp formatting", () => {
@@ -31,5 +32,18 @@ describe("buyer v2 timestamp formatting", () => {
     expect(window).toContain("17:00");
     expect(window).toContain("20:00");
     expect(window).toContain(" - ");
+  });
+
+  it("formats a whole number of Uzbek som without a decimal fraction", () => {
+    const en = formatUzs(20000, "en");
+    const ru = formatUzs(20000, "ru");
+
+    expect(en).toContain("20,000");
+    expect(en).toContain("UZS");
+    expect(ru).toContain("20");
+    expect(ru).toContain("000");
+    expect(ru).toContain("UZS");
+    expect(en).not.toContain(".");
+    expect(ru).not.toContain(",00");
   });
 });

@@ -12,31 +12,57 @@ import { useLocale } from "@/lib/locale-store";
 import { localizeOffers } from "@/lib/localized-offers";
 import { usePublishedSellerOffers } from "@/lib/marketplace-store";
 import { useSearchQuery } from "@/lib/search-store";
+import { useBuyerMarketplaceFeedV2 } from "@/lib/buyer/marketplace-v2-store";
+import { mapMarketplaceOfferV2ToOffer } from "@/lib/buyer/offer-mappers";
 
 export default function FavoritesScreen() {
   const router = useRouter();
   const favorites = useFavorites();
   const toggleFavorite = useToggleFavorite();
   const publishedOffers = usePublishedSellerOffers();
+  const marketplaceV2 = useBuyerMarketplaceFeedV2();
+  const isPilot = marketplaceV2.isPilot;
   const query = useSearchQuery();
   const t = useT();
   const locale = useLocale();
 
-  const offers = useMemo(
-    () =>
-      filterAndSortOffers({
+  // Favorites store raw offer ids only, so a v2 offer id filters the same
+  // way a v1 id does. Pilot mode still shows only live v2 offers here, a
+  // favorited offer that later sells out or expires simply drops off this
+  // list along with the main feed, matching the buyer facing contract that
+  // pilot mode never mixes in seed supply.
+  const offers = useMemo(() => {
+    if (isPilot) {
+      let mappedOffers: ReturnType<typeof mapMarketplaceOfferV2ToOffer>[] = [];
+      try {
+        mappedOffers = marketplaceV2.offers.map((offer) =>
+          mapMarketplaceOfferV2ToOffer(offer)
+        );
+      } catch {
+        mappedOffers = [];
+      }
+      return filterAndSortOffers({
         activeCategory: "All",
         favoriteIds: favorites,
-        offers: [
-          ...localizeOffers(publishedOffers, locale),
-          ...localizeOffers(OFFERS, locale),
-        ],
+        offers: mappedOffers,
         query,
         showFavoritesOnly: true,
         sortMode: "expiry",
-      }),
-    [favorites, locale, publishedOffers, query]
-  );
+      });
+    }
+
+    return filterAndSortOffers({
+      activeCategory: "All",
+      favoriteIds: favorites,
+      offers: [
+        ...localizeOffers(publishedOffers, locale),
+        ...localizeOffers(OFFERS, locale),
+      ],
+      query,
+      showFavoritesOnly: true,
+      sortMode: "expiry",
+    });
+  }, [favorites, isPilot, locale, marketplaceV2.offers, publishedOffers, query]);
   const emptyMessage =
     favorites.length && query.trim()
       ? t.favorites.noSearchMatches

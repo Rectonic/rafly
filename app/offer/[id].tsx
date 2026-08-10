@@ -24,6 +24,8 @@ import {
   useRetryReservationSync,
 } from "@/lib/reservations-store";
 import type { BuyerReservation } from "@/types/reservation";
+import { OfferDetailV2 } from "@/components/buyer/OfferDetailV2";
+import { useIsPilotMode } from "@/lib/buyer/optional-context";
 
 function formatReminderTime(value: string | undefined, locale: string) {
   if (!value) {
@@ -56,6 +58,12 @@ export default function OfferDetailScreen() {
   const addReservation = useAddReservation();
   const retryReservationSync = useRetryReservationSync();
   const existingReservation = useReservationForOffer(params.id);
+  // Every hook above runs on every render regardless of mode, only the
+  // returned JSX branches on isPilot. Skipping any of the v1 hooks above
+  // when pilot mode is active would call a different number of hooks
+  // between renders once the coordinator flags resolve asynchronously,
+  // which is exactly the rules-of-hooks failure this ordering avoids.
+  const isPilot = useIsPilotMode();
 
   const offer = useMemo(
     () =>
@@ -65,6 +73,10 @@ export default function OfferDetailScreen() {
       ].find((candidate) => candidate.id === params.id),
     [locale, params.id, publishedOffers]
   );
+
+  if (isPilot) {
+    return <OfferDetailV2 offerId={params.id} />;
+  }
 
   if (!offer) {
     return (
