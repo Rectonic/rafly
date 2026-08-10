@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { AccessGateV2 } from "@/components/seller/AccessGateV2";
+import { ExceptionsPanelV2 } from "@/components/seller/ExceptionsPanelV2";
 import { InventoryRowV2 } from "@/components/seller/InventoryRowV2";
 import { useT } from "@/i18n";
 import { useStoreInventoryV2 } from "@/lib/seller/inventory-v2-store";
@@ -122,6 +123,14 @@ export default function InventoryV2Screen() {
             <Text style={styles.exceptionsSummary} testID="inventory-v2-exceptions-summary">
               {t.sellerV2.inventory.exceptionsSummary(exceptionCount)}
             </Text>
+
+            {storeId ? (
+              <ExceptionsPanelV2
+                canResolve={access.canApproveAndPublish}
+                onResolved={inventory.refresh}
+                storeId={storeId}
+              />
+            ) : null}
 
             {inventory.items.length === 0 ? (
               <View style={styles.panel} testID="inventory-v2-empty-state">

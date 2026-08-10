@@ -60,6 +60,39 @@ export interface SellerTranslations {
     offersButton: string;
     pickupsButton: string;
   };
+  exceptions: {
+    title: string;
+    loading: string;
+    empty: string;
+    loadError: string;
+    retry: string;
+    kindLabel: Record<
+      "stock_mismatch" | "import_conflict" | "expiry_risk" | "closeout_missed",
+      string
+    >;
+    createdLabel: (timestamp: string) => string;
+    openStatus: string;
+    resolvedStatus: string;
+    resolveButton: string;
+    noteLabel: string;
+    noteRequired: string;
+    submitButton: string;
+    resolving: string;
+    resolvedSuccess: string;
+    resolutionNoteLabel: (note: string) => string;
+    resolvedAtLabel: (timestamp: string) => string;
+    errorNotFound: string;
+    errorForbidden: string;
+    errorValidationFailed: string;
+    errorVersionConflict: string;
+    errorInvalidState: string;
+    errorIdempotencyConflict: string;
+    errorSoldOut: string;
+    errorOfferNotLive: string;
+    errorAllocationExceeded: string;
+    errorNetwork: string;
+    errorUnknown: string;
+  };
   count: {
     title: string;
     forbiddenTitle: string;
@@ -273,6 +306,44 @@ export const sellerEn: SellerTranslations = {
     offersButton: "View offers",
     pickupsButton: "Pickup queue",
   },
+  exceptions: {
+    title: "Store exceptions",
+    loading: "Loading exceptions...",
+    empty: "No exceptions have been recorded.",
+    loadError: "Unable to load store exceptions. Check your connection and retry.",
+    retry: "Retry",
+    kindLabel: {
+      stock_mismatch: "Stock mismatch",
+      import_conflict: "Import conflict",
+      expiry_risk: "Expiry risk",
+      closeout_missed: "Closeout missed",
+    },
+    createdLabel: (timestamp) => `Created ${timestamp}`,
+    openStatus: "Open",
+    resolvedStatus: "Resolved",
+    resolveButton: "Resolve exception",
+    noteLabel: "Resolution note",
+    noteRequired: "Enter what was checked and how the exception was resolved.",
+    submitButton: "Resolve and release units",
+    resolving: "Resolving...",
+    resolvedSuccess: "Exception resolved.",
+    resolutionNoteLabel: (note) => `Resolution: ${note}`,
+    resolvedAtLabel: (timestamp) => `Resolved ${timestamp}`,
+    errorNotFound: "This exception no longer exists in this store. Refresh the list.",
+    errorForbidden: "Only a manager or owner can resolve this exception.",
+    errorValidationFailed: "The exception was not resolved. Enter a valid resolution note.",
+    errorVersionConflict: "The exception changed before this action finished. Refresh the list.",
+    errorInvalidState: "This exception is already resolved. Refresh the list for its latest state.",
+    errorIdempotencyConflict:
+      "This resolution is already being processed or its action key was reused. Wait, then refresh.",
+    errorSoldOut: "The service reported sold out instead of resolving the exception. Refresh and retry.",
+    errorOfferNotLive:
+      "The related offer is not live. Refresh the exception before trying again.",
+    errorAllocationExceeded:
+      "The service reported an allocation limit and did not resolve the exception. Refresh and retry.",
+    errorNetwork: "The resolution was not confirmed. Check your connection and retry the same action.",
+    errorUnknown: "The resolution was not confirmed. Refresh the list before trying again.",
+  },
   count: {
     title: "Count session",
     forbiddenTitle: "Counts are staff, manager, and owner only",
@@ -440,7 +511,7 @@ export const sellerEn: SellerTranslations = {
     mismatchNotFoundError: "This offer could not be found. Refresh the pickup queue.",
     mismatchErrorFallback: "The mismatch was not confirmed. No local pause was applied.",
     recountGuidance:
-      "The affected units stay reserved against this product until an operator resolves the exception directly in the database, which is the only way to close it in this beta. A recount corrects the on hand record but does not release those units.",
+      "Investigate the mismatch, then resolve the exception in the inventory screen. The failed reservation units return to the offerable quantity after resolution.",
     recountButton: "Start recount",
   },
 };
@@ -493,6 +564,46 @@ export const sellerRu: SellerTranslations = {
     publishButton: "Новое предложение",
     offersButton: "Смотреть предложения",
     pickupsButton: "Очередь самовывоза",
+  },
+  exceptions: {
+    title: "Исключения магазина",
+    loading: "Загружаем исключения...",
+    empty: "Исключений пока нет.",
+    loadError: "Не удалось загрузить исключения. Проверьте соединение и повторите.",
+    retry: "Повторить",
+    kindLabel: {
+      stock_mismatch: "Расхождение остатков",
+      import_conflict: "Конфликт импорта",
+      expiry_risk: "Риск истечения срока",
+      closeout_missed: "Пропущено закрытие дня",
+    },
+    createdLabel: (timestamp) => `Создано ${timestamp}`,
+    openStatus: "Открыто",
+    resolvedStatus: "Закрыто",
+    resolveButton: "Закрыть исключение",
+    noteLabel: "Комментарий к решению",
+    noteRequired: "Опишите, что вы проверили и как устранили расхождение.",
+    submitButton: "Закрыть и освободить единицы",
+    resolving: "Закрываем...",
+    resolvedSuccess: "Исключение закрыто.",
+    resolutionNoteLabel: (note) => `Решение: ${note}`,
+    resolvedAtLabel: (timestamp) => `Закрыто ${timestamp}`,
+    errorNotFound: "Это исключение больше не найдено в магазине. Обновите список.",
+    errorForbidden: "Закрыть исключение может только менеджер или владелец.",
+    errorValidationFailed: "Исключение не закрыто. Добавьте корректный комментарий к решению.",
+    errorVersionConflict: "Исключение изменилось во время операции. Обновите список.",
+    errorInvalidState: "Это исключение уже закрыто. Обновите список, чтобы увидеть новый статус.",
+    errorIdempotencyConflict:
+      "Решение уже обрабатывается или ключ действия использован повторно. Подождите и обновите список.",
+    errorSoldOut:
+      "Сервис вернул статус распродажи вместо закрытия исключения. Обновите список и повторите.",
+    errorOfferNotLive:
+      "Связанное предложение не активно. Обновите исключение перед повторной попыткой.",
+    errorAllocationExceeded:
+      "Сервис сообщил об ограничении доступного количества и не закрыл исключение. Обновите список.",
+    errorNetwork:
+      "Закрытие не подтверждено. Проверьте соединение и повторите то же действие.",
+    errorUnknown: "Закрытие не подтверждено. Обновите список перед повторной попыткой.",
   },
   count: {
     title: "Сессия пересчёта",
@@ -661,7 +772,7 @@ export const sellerRu: SellerTranslations = {
     mismatchNotFoundError: "Предложение не найдено. Обновите очередь самовывоза.",
     mismatchErrorFallback: "Расхождение не подтверждено. Локальная приостановка не применялась.",
     recountGuidance:
-      "Затронутые единицы остаются закреплёнными за этим товаром, пока оператор не закроет исключение прямо в базе данных, других способов закрыть его в этой бете нет. Пересчёт исправляет учётный остаток, но не освобождает эти единицы.",
+      "Разберитесь с расхождением и закройте исключение на экране остатков. После закрытия единицы из невыданных броней снова войдут в доступное количество.",
     recountButton: "Начать пересчёт",
   },
 };

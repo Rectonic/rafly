@@ -34,6 +34,7 @@ import {
   type PublishOfferV2Input,
   type RecordInventoryCountV2Input,
   type ReportStockMismatchV2Input,
+  type ResolveStoreExceptionV2Input,
   type ReservationStatusV2,
   type ReserveOfferV2Input,
   type ReserveOfferV2Result,
@@ -329,6 +330,8 @@ export class InMemoryStoreCore {
         this.guard(() => this.fulfillReservation(userId, input)),
       reportStockMismatchV2: async (input) =>
         this.guard(() => this.reportStockMismatch(userId, input)),
+      resolveStoreExceptionV2: async (input) =>
+        this.guard(() => this.resolveStoreException(userId, input)),
       listStoreExceptionsV2: async (storeId) =>
         this.guard(() => this.listStoreExceptions(userId, storeId)),
     };
@@ -1225,6 +1228,8 @@ export class InMemoryStoreCore {
         kind: "stock_mismatch",
         message: `${input.reason} (observed ${input.observedQuantity})`,
         status: "open",
+        resolutionNote: null,
+        resolvedAt: null,
         relatedOfferId: offer.id,
         relatedStoreProductId: offer.allocation.storeProductId,
         createdAt: this.now,
@@ -1249,6 +1254,72 @@ export class InMemoryStoreCore {
     });
     this.writeIdempotent(
       "reportStockMismatchV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint,
+      result
+    );
+    return result;
+  }
+
+  private resolveStoreException(
+    userId: string,
+    input: ResolveStoreExceptionV2Input
+  ): Result<StoreExceptionV2> {
+    const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
+    if (!access.ok) return access;
+
+    if (input.resolutionNote.trim().length === 0) {
+      return err("validation_failed", "resolution note is required");
+    }
+    if (input.idempotencyKey.length === 0) {
+      return err("validation_failed", "idempotency key is required");
+    }
+
+    const fingerprint = input.exceptionId;
+    const replay = this.readIdempotent<StoreExceptionV2>(
+      "resolveStoreExceptionV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint
+    );
+    if (replay) {
+      return replay;
+    }
+
+    const exception = this.exceptions.get(input.exceptionId);
+    if (!exception || exception.storeId !== input.storeId) {
+      return err(
+        "not_found",
+        `exception ${input.exceptionId} is not in store ${input.storeId}`
+      );
+    }
+    if (exception.status !== "open") {
+      return err(
+        "invalid_state",
+        `exception ${input.exceptionId} is already ${exception.status}`
+      );
+    }
+
+    exception.status = "resolved";
+    exception.resolutionNote = input.resolutionNote;
+    exception.resolvedAt = this.now;
+
+    this.appendAudit({
+      storeId: input.storeId,
+      command: "resolveStoreExceptionV2",
+      actorUserId: userId,
+      installationRef: null,
+    });
+    this.appendOutbox("exception_resolved", input.storeId, {
+      exceptionId: exception.id,
+      relatedOfferId: exception.relatedOfferId,
+      relatedStoreProductId: exception.relatedStoreProductId,
+    });
+
+    const result = ok({ ...exception });
+    this.writeIdempotent(
+      "resolveStoreExceptionV2",
       input.storeId,
       input.idempotencyKey,
       fingerprint,

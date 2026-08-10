@@ -427,6 +427,8 @@ export interface ExceptionRow {
   kind: StoreExceptionV2["kind"];
   message: string;
   status: StoreExceptionV2["status"];
+  resolution_note?: string | null;
+  resolved_at?: string | null;
   related_offer_id: string | null;
   related_store_product_id: string | null;
   created_at: string;
@@ -439,6 +441,8 @@ export function mapExceptionRow(row: ExceptionRow): StoreExceptionV2 {
     kind: row.kind,
     message: row.message,
     status: row.status,
+    resolutionNote: row.resolution_note ?? null,
+    resolvedAt: toIsoDateTimeOrNull(row.resolved_at ?? null),
     relatedOfferId: row.related_offer_id,
     relatedStoreProductId: row.related_store_product_id,
     createdAt: toIsoDateTime(row.created_at),

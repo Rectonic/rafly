@@ -1555,5 +1555,186 @@ export function runSellerApiConformance(
         expect(outbox[outbox.length - 1].name).toBe("offer_stock_mismatch");
       });
     });
+
+    describe("resolveStoreExceptionV2", () => {
+      async function openMismatch(): Promise<{
+        exceptionId: string;
+        failedReservationCount: number;
+      }> {
+        const offer = await publishOffer(harness, {
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: 3,
+            physicallySetAside: false,
+          },
+        });
+        const buyer = harness.buyerApi();
+        expectOk(await buyer.reserveOfferV2(buildReserveInput(harness, offer)));
+        expectOk(
+          await buyer.reserveOfferV2(
+            buildReserveInput(harness, offer, {
+              clientReservationId: "resolve-client-reservation-2",
+              installationId: harness.scenario.installationB,
+              expectedOfferVersion: offer.version + 1,
+            })
+          )
+        );
+        const mismatch = expectOk(
+          await manager.reportStockMismatchV2({
+            storeId: harness.scenario.storeId,
+            offerId: offer.id,
+            observedQuantity: 0,
+            reason: "two reserved bags could not be found",
+            idempotencyKey: "resolve-mismatch-key",
+          })
+        );
+        return {
+          exceptionId: mismatch.exception.id,
+          failedReservationCount: 2,
+        };
+      }
+
+      it("refuses exception resolution by staff with forbidden", async () => {
+        const opened = await openMismatch();
+
+        expectErrorCode(
+          await staff.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Verified the shelf and corrected the discrepancy",
+            idempotencyKey: "resolve-key-staff",
+          }),
+          "forbidden"
+        );
+      });
+
+      it("refuses exception resolution by a non member with forbidden", async () => {
+        const opened = await openMismatch();
+
+        expectErrorCode(
+          await stranger.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Attempted by a non member",
+            idempotencyKey: "resolve-key-stranger",
+          }),
+          "forbidden"
+        );
+      });
+
+      it("releases mismatch capacity and permits publishing at the recovered ceiling", async () => {
+        const opened = await openMismatch();
+        const whileOpen = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const auditBefore = harness.listAuditEntries().length;
+        const outboxBefore = harness.listOutboxEvents().length;
+
+        const resolved = expectOk(
+          await manager.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Counted the shelf and confirmed the failed units are available",
+            idempotencyKey: "resolve-key-capacity",
+          })
+        );
+
+        expect(resolved.status).toBe("resolved");
+        expect(resolved.resolutionNote).toBe(
+          "Counted the shelf and confirmed the failed units are available"
+        );
+        expect(resolved.resolvedAt).not.toBeNull();
+
+        const afterResolve = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(afterResolve.allocatedQuantity).toBe(
+          whileOpen.allocatedQuantity - opened.failedReservationCount
+        );
+        expect(afterResolve.maxOfferableQuantity).toBe(
+          whileOpen.maxOfferableQuantity + opened.failedReservationCount
+        );
+        expect(afterResolve.hasOpenExceptions).toBe(false);
+        const audit = harness.listAuditEntries();
+        const outbox = harness.listOutboxEvents();
+        expect(audit).toHaveLength(auditBefore + 1);
+        expect(audit[audit.length - 1]).toMatchObject({
+          command: "resolveStoreExceptionV2",
+          actorUserId: harness.scenario.managerUserId,
+          storeId: harness.scenario.storeId,
+        });
+        expect(outbox).toHaveLength(outboxBefore + 1);
+        expect(outbox[outbox.length - 1]).toMatchObject({
+          name: "exception_resolved",
+          storeId: harness.scenario.storeId,
+        });
+
+        expectOk(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "publish-at-recovered-ceiling",
+              allocation: {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                quantity: afterResolve.maxOfferableQuantity,
+                physicallySetAside: false,
+              },
+            })
+          )
+        );
+      });
+
+      it("replays the same resolved exception for the same idempotency key", async () => {
+        const opened = await openMismatch();
+        const input = {
+          storeId: harness.scenario.storeId,
+          exceptionId: opened.exceptionId,
+          resolutionNote: "Shelf count completed",
+          idempotencyKey: "resolve-key-replay",
+        };
+
+        const first = expectOk(await owner.resolveStoreExceptionV2(input));
+        const replay = expectOk(await owner.resolveStoreExceptionV2(input));
+
+        expect(replay).toEqual(first);
+      });
+
+      it("returns invalid_state for a resolved exception with a fresh key", async () => {
+        const opened = await openMismatch();
+        expectOk(
+          await manager.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Shelf count completed",
+            idempotencyKey: "resolve-key-first",
+          })
+        );
+
+        expectErrorCode(
+          await manager.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Trying to resolve the same exception again",
+            idempotencyKey: "resolve-key-fresh",
+          }),
+          "invalid_state"
+        );
+      });
+
+      it("requires a non empty resolution note", async () => {
+        const opened = await openMismatch();
+
+        expectErrorCode(
+          await manager.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "   ",
+            idempotencyKey: "resolve-key-empty-note",
+          }),
+          "validation_failed"
+        );
+      });
+    });
   });
 }

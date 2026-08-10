@@ -78,6 +78,9 @@ describe("Seller v2 inventory and confidence", () => {
     await waitFor(() =>
       expect(screen.getByTestId("inventory-v2-item-summary")).toBeTruthy()
     );
+    await waitFor(() =>
+      expect(screen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
   });
 
   it("shows the honest empty state when the store has no tracked products", async () => {
@@ -93,6 +96,9 @@ describe("Seller v2 inventory and confidence", () => {
     const screen = render(providerTree(sellerApi, <InventoryV2Screen />));
 
     await waitFor(() => expect(screen.getByTestId("inventory-v2-empty-state")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
   });
 
   it("shows an error state with a working retry when the inventory fetch fails", async () => {
@@ -124,6 +130,9 @@ describe("Seller v2 inventory and confidence", () => {
       expect(screen.queryByTestId("inventory-v2-error-state")).toBeNull()
     );
     expect(screen.getByTestId("inventory-v2-item-summary")).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
   });
 
   it("shows high, medium, and low confidence with last verified time, optional barcode, and optional expiry", async () => {
@@ -132,6 +141,9 @@ describe("Seller v2 inventory and confidence", () => {
 
     const screen = render(providerTree(sellerApi, <InventoryV2Screen />));
     await waitFor(() => expect(screen.getByTestId("inventory-v2-item-summary")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
 
     // High confidence, has both a barcode and an expiry date.
     expect(
@@ -195,13 +207,14 @@ describe("Seller v2 inventory and confidence", () => {
       cancellationPolicy: null,
     });
     if (!offer.ok) throw new Error("expected publish to succeed");
-    await manager.reportStockMismatchV2({
+    const mismatch = await manager.reportStockMismatchV2({
       storeId: scenario.storeId,
       offerId: offer.value.id,
       observedQuantity: 0,
       reason: "shelf was empty",
       idempotencyKey: "mismatch-key-1",
     });
+    if (!mismatch.ok) throw new Error("expected mismatch to open an exception");
 
     const screen = render(providerTree(manager, <InventoryV2Screen />));
     await waitFor(() => expect(screen.getByTestId("inventory-v2-item-summary")).toBeTruthy());
@@ -215,6 +228,11 @@ describe("Seller v2 inventory and confidence", () => {
     expect(
       screen.queryByTestId(`inventory-v2-exception-action-${scenario.lowConfidenceProductId}`)
     ).toBeNull();
+    await waitFor(() =>
+      expect(
+        screen.getByTestId(`exceptions-panel-v2-card-${mismatch.value.exception.id}`)
+      ).toBeTruthy()
+    );
   });
 
   it("never exposes a direct quantity edit control on the inventory screen", async () => {
@@ -223,6 +241,9 @@ describe("Seller v2 inventory and confidence", () => {
 
     const screen = render(providerTree(sellerApi, <InventoryV2Screen />));
     await waitFor(() => expect(screen.getByTestId("inventory-v2-item-summary")).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
 
     expect(screen.UNSAFE_queryAllByType(TextInput)).toHaveLength(0);
   });
@@ -239,6 +260,9 @@ describe("Seller v2 inventory and confidence", () => {
     await waitFor(() =>
       expect(staffScreen.getByTestId("inventory-v2-record-count-button")).toBeTruthy()
     );
+    await waitFor(() =>
+      expect(staffScreen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
+    );
     expect(staffScreen.queryByTestId("inventory-v2-publish-button")).toBeNull();
 
     const managerScreen = render(
@@ -249,6 +273,9 @@ describe("Seller v2 inventory and confidence", () => {
     );
     await waitFor(() =>
       expect(managerScreen.getByTestId("inventory-v2-record-count-button")).toBeTruthy()
+    );
+    await waitFor(() =>
+      expect(managerScreen.getByTestId("exceptions-panel-v2-empty")).toBeTruthy()
     );
     expect(managerScreen.getByTestId("inventory-v2-publish-button")).toBeTruthy();
   });

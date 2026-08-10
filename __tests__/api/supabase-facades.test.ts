@@ -256,6 +256,16 @@ describe("never throws", () => {
           idempotencyKey: "idem-1",
         }),
     ],
+    [
+      "resolveStoreExceptionV2",
+      () =>
+        sellerApi.resolveStoreExceptionV2({
+          storeId: "store-1",
+          exceptionId: "exception-1",
+          resolutionNote: "shelf recounted",
+          idempotencyKey: "idem-1",
+        }),
+    ],
     ["listStoreExceptionsV2", () => sellerApi.listStoreExceptionsV2("store-1")],
   ];
 

@@ -26,6 +26,7 @@ export type {
   PublishOfferV2Input,
   RecordInventoryCountV2Input,
   ReportStockMismatchV2Input,
+  ResolveStoreExceptionV2Input,
   SellerPickupV2,
   StockAdjustmentProposalV2,
   StockConfidenceV2,

@@ -515,6 +515,8 @@ describe("mapExceptionRow", () => {
       kind: "stock_mismatch",
       message: "shelf was empty (observed 0)",
       status: "open",
+      resolution_note: null,
+      resolved_at: null,
       related_offer_id: publicOfferRow.id,
       related_store_product_id: "33333333-3333-4333-8333-333333333333",
       created_at: "2026-08-10T09:45:00+00:00",
@@ -526,11 +528,13 @@ describe("mapExceptionRow", () => {
       kind: "stock_mismatch",
       message: "shelf was empty (observed 0)",
       status: "open",
+      resolutionNote: null,
+      resolvedAt: null,
       relatedOfferId: publicOfferRow.id,
       relatedStoreProductId: "33333333-3333-4333-8333-333333333333",
       createdAt: "2026-08-10T09:45:00.000Z",
     });
-    expect(Object.keys(mapped)).toHaveLength(8);
+    expect(Object.keys(mapped)).toHaveLength(10);
   });
 });
 

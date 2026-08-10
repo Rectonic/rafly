@@ -184,6 +184,7 @@ const MUTATIONS: ReadonlySet<string> = new Set([
   "pauseOfferV2",
   "fulfillReservationV2",
   "reportStockMismatchV2",
+  "resolveStoreExceptionV2",
 ]);
 
 /** The facade method name behind each audited SQL command. */
@@ -196,6 +197,7 @@ const COMMAND_NAMES: Readonly<Record<string, string>> = {
   pause_offer_v2: "pauseOfferV2",
   fulfill_reservation_v2: "fulfillReservationV2",
   report_stock_mismatch_v2: "reportStockMismatchV2",
+  resolve_store_exception_v2: "resolveStoreExceptionV2",
 };
 
 function isoPlus(base: string, minutes: number): string {

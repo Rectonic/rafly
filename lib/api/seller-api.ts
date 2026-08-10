@@ -8,6 +8,7 @@ import type {
   PublishOfferV2Input,
   RecordInventoryCountV2Input,
   ReportStockMismatchV2Input,
+  ResolveStoreExceptionV2Input,
   SellerPickupV2,
   StockAdjustmentProposalV2,
   StoreExceptionV2,
@@ -25,5 +26,6 @@ export interface SellerStoreApiV2 {
   listSellerPickupsV2(storeId: string): Promise<Result<SellerPickupV2[]>>
   fulfillReservationV2(input: FulfillReservationV2Input): Promise<Result<SellerPickupV2>>
   reportStockMismatchV2(input: ReportStockMismatchV2Input): Promise<Result<{ offer: MarketplaceOfferV2, exception: StoreExceptionV2 }>>
+  resolveStoreExceptionV2(input: ResolveStoreExceptionV2Input): Promise<Result<StoreExceptionV2>>
   listStoreExceptionsV2(storeId: string): Promise<Result<StoreExceptionV2[]>>
 }

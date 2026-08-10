@@ -281,19 +281,13 @@ describe("Seller v2 stock mismatch", () => {
     await waitFor(() =>
       expect(screen.getByTestId("pickups-v2-mismatch-recount-guidance")).toBeTruthy()
     );
-    // The guidance has to stay honest about what a recount can and cannot do.
-    // No command in either facade resolves a store exception, so the affected
-    // units stay encumbered until an operator closes the row in the database.
-    // Promising that a count reconciles them would be a lie the backend
-    // cannot keep.
+    // The guidance points managers to the in-app resolution command and is
+    // explicit that failed reservation units return only after resolution.
     const guidance = screen.getByTestId("pickups-v2-mismatch-recount-guidance");
-    expect(guidance).toHaveTextContent("stay reserved against this product", {
+    expect(guidance).toHaveTextContent("resolve the exception in the inventory screen", {
       exact: false,
     });
-    expect(guidance).toHaveTextContent("operator resolves the exception", {
-      exact: false,
-    });
-    expect(guidance).toHaveTextContent("does not release those units", {
+    expect(guidance).toHaveTextContent("return to the offerable quantity", {
       exact: false,
     });
     fireEvent.press(screen.getByTestId("pickups-v2-mismatch-recount-button"));

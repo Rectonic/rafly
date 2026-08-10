@@ -104,12 +104,21 @@ export interface ReportStockMismatchV2Input {
   idempotencyKey: string
 }
 
+export interface ResolveStoreExceptionV2Input {
+  storeId: string;
+  exceptionId: string;
+  resolutionNote: string;
+  idempotencyKey: string;
+}
+
 export interface StoreExceptionV2 {
   id: string
   storeId: string
   kind: 'stock_mismatch' | 'import_conflict' | 'expiry_risk' | 'closeout_missed'
   message: string
   status: 'open' | 'resolved'
+  resolutionNote: string | null;
+  resolvedAt: IsoDateTime | null;
   relatedOfferId: string | null
   relatedStoreProductId: string | null
   createdAt: IsoDateTime

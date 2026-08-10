@@ -42,6 +42,7 @@ import type {
   PublishOfferV2Input,
   RecordInventoryCountV2Input,
   ReportStockMismatchV2Input,
+  ResolveStoreExceptionV2Input,
   Result,
   SellerPickupV2,
   StockAdjustmentProposalV2,
@@ -450,6 +451,29 @@ export function makeSupabaseSellerApi(
           return commandErrorFrom(error);
         }
         return ok(((data ?? []) as ExceptionRow[]).map(mapExceptionRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async resolveStoreExceptionV2(
+      input: ResolveStoreExceptionV2Input
+    ): Promise<Result<StoreExceptionV2>> {
+      try {
+        const { data, error } = await client.rpc("resolve_store_exception_v2", {
+          p_store_id: input.storeId,
+          p_exception_id: input.exceptionId,
+          p_resolution_note: input.resolutionNote,
+          p_idempotency_key: input.idempotencyKey,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        if (!data) {
+          return err("unknown", "exception resolution returned no result");
+        }
+        return ok(mapExceptionRow(data as ExceptionRow));
       } catch (thrown) {
         return commandErrorFrom(thrown);
       }
