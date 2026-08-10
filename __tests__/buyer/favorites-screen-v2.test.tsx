@@ -1,8 +1,8 @@
-import { act, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { createElement, type ReactNode } from "react";
 
 import FavoritesScreen from "@/app/(tabs)/favorites";
-import { ApiProvider } from "@/lib/api";
+import { ApiProvider, type BuyerMarketplaceApiV2 } from "@/lib/api";
 import type { FeatureFlagsV2, PublishOfferV2Input } from "@/lib/contracts";
 import { FeatureFlagsProvider } from "@/lib/feature-flags";
 import {
@@ -121,5 +121,89 @@ describe("FavoritesScreen in pilot mode", () => {
     await waitFor(() => expect(screen.getByText("Dairy clearance crate")).toBeTruthy());
     expect(screen.queryByText("Bakery rescue box")).toBeNull();
     expect(screen.queryByTestId("favorites-empty-state")).toBeNull();
+    expect(screen.getByText("UZS 20,000")).toBeTruthy();
+  });
+
+  it("shows a loading state while the live feed is fetching, not the empty state", async () => {
+    const core = new InMemoryStoreCore();
+    const scenario = makeDefaultScenario(core);
+    let resolveList: ((result: Awaited<ReturnType<BuyerMarketplaceApiV2["listMarketplaceOffersV2"]>>) => void) | null =
+      null;
+    const delayedBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      listMarketplaceOffersV2: () =>
+        new Promise((resolve) => {
+          resolveList = resolve;
+        }),
+    };
+
+    const screen = render(
+      createElement(
+        FeatureFlagsProvider,
+        { source: pilotSource },
+        createElement(
+          ApiProvider,
+          {
+            buyerApi: delayedBuyerApi,
+            sellerApi: core.sellerApi({ userId: scenario.managerUserId }),
+          },
+          createElement(FavoritesScreen)
+        )
+      )
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("favorites-pilot-loading-state")).toBeTruthy()
+    );
+    expect(screen.queryByTestId("favorites-empty-state")).toBeNull();
+
+    await act(async () => {
+      resolveList?.(await core.buyerApi().listMarketplaceOffersV2());
+    });
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("favorites-pilot-loading-state")).toBeNull()
+    );
+  });
+
+  it("shows an honest error and retry state instead of a false empty favorites message", async () => {
+    const core = new InMemoryStoreCore();
+    const scenario = makeDefaultScenario(core);
+    const failingBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      listMarketplaceOffersV2: async () => ({
+        ok: false,
+        error: { code: "network_error", message: "Network unavailable", retryable: true },
+      }),
+    };
+    mockFavorites = ["offer-1"];
+
+    const screen = render(
+      createElement(
+        FeatureFlagsProvider,
+        { source: pilotSource },
+        createElement(
+          ApiProvider,
+          {
+            buyerApi: failingBuyerApi,
+            sellerApi: core.sellerApi({ userId: scenario.managerUserId }),
+          },
+          createElement(FavoritesScreen)
+        )
+      )
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("favorites-pilot-error-state")).toBeTruthy()
+    );
+    expect(screen.getByText("Network unavailable")).toBeTruthy();
+    expect(screen.queryByTestId("favorites-empty-state")).toBeNull();
+
+    failingBuyerApi.listMarketplaceOffersV2 = core.buyerApi().listMarketplaceOffersV2;
+    fireEvent.press(screen.getByTestId("favorites-pilot-retry-button"));
+
+    await waitFor(() =>
+      expect(screen.queryByTestId("favorites-pilot-error-state")).toBeNull()
+    );
   });
 });

@@ -25,6 +25,10 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
     mockAsyncStorage.set(key, value);
     return Promise.resolve();
   }),
+  removeItem: jest.fn((key: string) => {
+    mockAsyncStorage.delete(key);
+    return Promise.resolve();
+  }),
 }));
 
 jest.mock("expo-secure-store", () => ({
@@ -309,6 +313,55 @@ describe("useReserveOfferV2", () => {
 
     expect(reserveResult).toBeNull();
     expect(result.current.status).toBe("idle");
+  });
+
+  it("persists the pending clientReservationId across a remount so a retry after a failed attempt reuses it", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+
+    const seenClientReservationIds: string[] = [];
+    let shouldFail = true;
+    const flakyBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      reserveOfferV2: async (input) => {
+        seenClientReservationIds.push(input.clientReservationId);
+        if (shouldFail) {
+          return {
+            ok: false,
+            error: { code: "network_error", message: "Network unavailable", retryable: true },
+          };
+        }
+        return core.buyerApi().reserveOfferV2(input);
+      },
+    };
+
+    const first = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(flakyBuyerApi, core, scenario),
+    });
+    await waitFor(() => expect(first.result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await first.result.current.reserve(offer);
+    });
+    expect(first.result.current.status).toBe("error");
+
+    // A restart drops all in-memory refs and state, only AsyncStorage
+    // survives, this hook instance has never seen the first attempt.
+    first.unmount();
+
+    const second = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(flakyBuyerApi, core, scenario),
+    });
+    await waitFor(() => expect(second.result.current.isPilot).toBe(true));
+
+    shouldFail = false;
+    await act(async () => {
+      await second.result.current.reserve(offer);
+    });
+
+    expect(second.result.current.status).toBe("held");
+    expect(seenClientReservationIds).toHaveLength(2);
+    expect(seenClientReservationIds[0]).toBe(seenClientReservationIds[1]);
   });
 });
 

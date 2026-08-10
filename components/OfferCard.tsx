@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useT } from "@/i18n";
+import { formatUzs } from "@/lib/buyer/formatting";
 import { formatPrice } from "@/lib/format-price";
 import { useLocale } from "@/lib/locale-store";
 import type { Offer } from "@/types/offer";
@@ -11,6 +12,14 @@ type OfferCardProps = {
   offer: Offer;
   onPress: () => void;
   onToggleFavorite: () => void;
+  /**
+   * Seeds and v1 seller published offers are priced in dollars and always
+   * pass this as undefined, which keeps their formatting byte identical to
+   * before. Pilot mode offers are priced in whole Uzbek som, callers pass
+   * "UZS" so the card matches the currency the offer detail screen already
+   * uses instead of routing a UZS amount through the dollar formatter.
+   */
+  currency?: "USD" | "UZS";
 };
 
 export function OfferCard({
@@ -19,6 +28,7 @@ export function OfferCard({
   offer,
   onPress,
   onToggleFavorite,
+  currency = "USD",
 }: OfferCardProps) {
   const t = useT();
   const locale = useLocale();
@@ -26,6 +36,14 @@ export function OfferCard({
   const favoriteLabel = isFavorite
     ? `${t.offer.removeFromFavorites}: ${offer.title}`
     : `${t.offer.addToFavorites}: ${offer.title}`;
+  const formatOfferPrice = (amount: number) =>
+    currency === "UZS" ? formatUzs(amount, locale) : formatPrice(amount, locale);
+  // A discount claim needs both a positive percentage and an old price that
+  // is genuinely higher than the new one, offer-mappers.ts already sets
+  // discount to 0 and oldPrice equal to newPrice when there is no supported
+  // reference price, this guard is what keeps that honest mapping from
+  // being undone by an unconditional struck price in the card itself.
+  const hasRealDiscount = offer.discount > 0 && offer.oldPrice > offer.newPrice;
 
   return (
     <Pressable
@@ -53,8 +71,10 @@ export function OfferCard({
         </Pressable>
       </View>
       <View style={styles.row}>
-        <Text style={styles.price}>{formatPrice(offer.newPrice, locale)}</Text>
-        <Text style={styles.oldPrice}>{formatPrice(offer.oldPrice, locale)}</Text>
+        <Text style={styles.price}>{formatOfferPrice(offer.newPrice)}</Text>
+        {hasRealDiscount ? (
+          <Text style={styles.oldPrice}>{formatOfferPrice(offer.oldPrice)}</Text>
+        ) : null}
         <Text style={styles.meta}>{offer.distance}</Text>
         <Text style={styles.meta}>{offer.endTime}</Text>
       </View>

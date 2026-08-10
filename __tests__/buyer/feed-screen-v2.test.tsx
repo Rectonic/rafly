@@ -172,6 +172,10 @@ describe("FeedScreen in pilot mode", () => {
     const screen = render(pilotTree(delayedBuyerApi, core, scenario));
 
     await waitFor(() => expect(screen.getByTestId("feed-pilot-loading-state")).toBeTruthy());
+    // The list has not resolved yet, offers.length is 0 at this point, the
+    // generic empty state must not render alongside the loading banner and
+    // claim there is nothing to see while a fetch is still in flight.
+    expect(screen.queryByTestId("feed-empty-state")).toBeNull();
 
     await act(async () => {
       resolveList?.(await core.buyerApi().listMarketplaceOffersV2());
@@ -288,5 +292,19 @@ describe("FeedScreen in pilot mode", () => {
 
     fireEvent.press(screen.getByText("Bakery rescue box"));
     expect(mockPush).toHaveBeenCalledWith("/offer/offer-1");
+  });
+
+  it("shows UZS formatted prices on pilot mode cards, not the dollar formatter", async () => {
+    const core = new InMemoryStoreCore();
+    const scenario = makeDefaultScenario(core);
+    await core
+      .sellerApi({ userId: scenario.managerUserId })
+      .approveAndPublishOfferV2(publishInputFor(scenario));
+
+    const screen = renderPilotFeed(core, scenario);
+
+    await waitFor(() => expect(screen.getByText("Bakery rescue box")).toBeTruthy());
+    expect(screen.getByText("UZS 20,000")).toBeTruthy();
+    expect(screen.queryByText("$20000.00")).toBeNull();
   });
 });

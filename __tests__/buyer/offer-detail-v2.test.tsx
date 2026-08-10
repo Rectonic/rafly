@@ -66,6 +66,10 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
     mockAsyncStorage.set(key, value);
     return Promise.resolve();
   }),
+  removeItem: jest.fn((key: string) => {
+    mockAsyncStorage.delete(key);
+    return Promise.resolve();
+  }),
 }));
 
 jest.mock("expo-secure-store", () => ({
@@ -403,8 +407,12 @@ describe("OfferDetailV2", () => {
     const screen = await renderDetail(published.value.id, core.buyerApi(), core, scenario);
 
     await waitFor(() => expect(screen.getByText("Picked up")).toBeTruthy());
+    expect(screen.getByTestId("offer-detail-v2-reservation-history")).toBeTruthy();
     expect(screen.getByText("This reservation was picked up.")).toBeTruthy();
     expect(screen.queryByTestId("offer-detail-v2-cancel-button")).toBeNull();
+    // The offer still has stock (3 published, 1 fulfilled), the fulfilled
+    // history entry must not hide the still-available reserve button.
+    expect(screen.getByTestId("offer-detail-v2-reserve-button")).not.toBeDisabled();
   });
 
   it("shows the stock mismatch terminal state with copy distinct from a seller cancellation", async () => {
@@ -430,12 +438,18 @@ describe("OfferDetailV2", () => {
     const screen = await renderDetail(published.value.id, core.buyerApi(), core, scenario);
 
     await waitFor(() => expect(screen.getByText("Unavailable")).toBeTruthy());
+    expect(screen.getByTestId("offer-detail-v2-reservation-history")).toBeTruthy();
     expect(
       screen.getByText(
         "The seller found a stock mismatch. This reservation could not be honored."
       )
     ).toBeTruthy();
     expect(screen.queryByTestId("offer-detail-v2-cancel-button")).toBeNull();
+    // A stock mismatch pauses the offer itself, the reserve button stays
+    // present (this is still a history entry, not a hidden action) but
+    // disabled, distinct from a fully hidden control.
+    expect(screen.getByTestId("offer-detail-v2-reserve-button")).toBeDisabled();
+    expect(screen.getByText("This offer is temporarily paused")).toBeTruthy();
   });
 
   it("shows distinct seller cancelled and no show copy for terminal states the fake cannot yet produce", async () => {
@@ -471,10 +485,19 @@ describe("OfferDetailV2", () => {
     );
     await waitFor(() => expect(sellerCancelledScreen.getByText("Cancelled by seller")).toBeTruthy());
     expect(
+      sellerCancelledScreen.getByTestId("offer-detail-v2-reservation-history")
+    ).toBeTruthy();
+    expect(
       sellerCancelledScreen.getByText(
         "The seller cancelled this reservation. Your unit was released."
       )
     ).toBeTruthy();
+    // The offer itself was never touched by this override, it is still
+    // live and in stock, a seller cancellation for one past reservation
+    // must not hide the reserve button for a new attempt.
+    expect(
+      sellerCancelledScreen.getByTestId("offer-detail-v2-reserve-button")
+    ).not.toBeDisabled();
 
     const noShowApi: BuyerMarketplaceApiV2 = {
       ...core.buyerApi(),
@@ -580,5 +603,102 @@ describe("OfferDetailV2", () => {
     await waitFor(() =>
       expect(screen.getByTestId("offer-detail-v2-reservation-panel")).toBeTruthy()
     );
+  });
+
+  it("shows a still-available reserve button after cancelling, and a fresh reserve uses a new clientReservationId", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const published = await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+    if (!published.ok) throw new Error("expected publish to succeed");
+
+    const seenClientReservationIds: string[] = [];
+    const trackingBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      reserveOfferV2: (input) => {
+        seenClientReservationIds.push(input.clientReservationId);
+        return core.buyerApi().reserveOfferV2(input);
+      },
+    };
+
+    const screen = await renderDetail(published.value.id, trackingBuyerApi, core, scenario);
+    await waitFor(() => expect(screen.getByText("Bakery rescue box")).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId("offer-detail-v2-reserve-button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("offer-detail-v2-cancel-button")).toBeTruthy()
+    );
+
+    const alertSpy = jest
+      .spyOn(Alert, "alert")
+      .mockImplementation((_title, _message, buttons) => {
+        buttons?.find((button) => button.style === "destructive")?.onPress?.();
+      });
+
+    fireEvent.press(screen.getByTestId("offer-detail-v2-cancel-button"));
+
+    // The offer is still live and in stock (quantity 3, one held and
+    // released again), the reserve button must come back rather than stay
+    // gone forever just because this offer once had a reservation.
+    await waitFor(() =>
+      expect(screen.getByTestId("offer-detail-v2-reserve-button")).toBeTruthy()
+    );
+    alertSpy.mockRestore();
+    expect(screen.getByTestId("offer-detail-v2-reserve-button")).not.toBeDisabled();
+    expect(screen.queryByTestId("offer-detail-v2-cancel-button")).toBeNull();
+
+    // The cancelled reservation still shows as history, distinct from the
+    // now-available action panel.
+    expect(screen.getByTestId("offer-detail-v2-reservation-history")).toBeTruthy();
+    expect(screen.getByText("Cancelled")).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId("offer-detail-v2-reserve-button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("offer-detail-v2-cancel-button")).toBeTruthy()
+    );
+
+    expect(seenClientReservationIds).toHaveLength(2);
+    expect(seenClientReservationIds[0]).not.toBe(seenClientReservationIds[1]);
+  });
+
+  it("shows an honest message distinct from a reserve error when cancelling fails on a network problem", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const published = await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+    if (!published.ok) throw new Error("expected publish to succeed");
+
+    const flakyCancelBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      cancelReservationV2: async () => ({
+        ok: false,
+        error: { code: "network_error", message: "Network unavailable", retryable: true },
+      }),
+    };
+
+    const screen = await renderDetail(published.value.id, flakyCancelBuyerApi, core, scenario);
+    await waitFor(() => expect(screen.getByText("Bakery rescue box")).toBeTruthy());
+
+    fireEvent.press(screen.getByTestId("offer-detail-v2-reserve-button"));
+    await waitFor(() =>
+      expect(screen.getByTestId("offer-detail-v2-cancel-button")).toBeTruthy()
+    );
+
+    const alertSpy = jest
+      .spyOn(Alert, "alert")
+      .mockImplementation((_title, _message, buttons) => {
+        buttons?.find((button) => button.style === "destructive")?.onPress?.();
+      });
+
+    fireEvent.press(screen.getByTestId("offer-detail-v2-cancel-button"));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Could not cancel, check your connection and try again.")
+      ).toBeTruthy()
+    );
+    alertSpy.mockRestore();
+
+    // The reservation stays held, a failed cancel must not be silently
+    // swallowed or read as a reserve failure.
+    expect(screen.getByTestId("offer-detail-v2-cancel-button")).toBeTruthy();
+    expect(screen.queryByTestId("offer-detail-v2-reserve-error")).toBeNull();
+    expect(screen.getByTestId("offer-detail-v2-cancel-error")).toBeTruthy();
   });
 });

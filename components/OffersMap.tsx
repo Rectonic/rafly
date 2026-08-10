@@ -75,9 +75,11 @@ export function OffersMap({
                     isActive ? styles.markerActive : null,
                   ]}
                 >
-                  <Text style={styles.markerText}>
-                    {Math.round(offer.discount)}
-                  </Text>
+                  {offer.discount > 0 ? (
+                    <Text style={styles.markerText}>
+                      {Math.round(offer.discount)}
+                    </Text>
+                  ) : null}
                 </View>
               </View>
               <Callout
@@ -88,7 +90,9 @@ export function OffersMap({
                   <Text style={styles.calloutTitle}>{offer.title}</Text>
                   <Text style={styles.calloutMeta}>{offer.restaurant}</Text>
                   <Text style={styles.calloutMeta}>
-                    {t.offer.mapCallout(offer.discount, offer.endTime)}
+                    {offer.discount > 0
+                      ? t.offer.mapCallout(offer.discount, offer.endTime)
+                      : t.buyerV2.feed.mapCalloutNoDiscount(offer.endTime)}
                   </Text>
                 </View>
               </Callout>

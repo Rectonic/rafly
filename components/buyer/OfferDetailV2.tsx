@@ -51,7 +51,7 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
     onOfferChanged: () => void refresh(),
   });
   const cancelHook = useCancelReservationV2(installationId);
-  const [revealedCode, setRevealedCode] = useState<string | null>(null);
+  const [revealedCodes, setRevealedCodes] = useState<Record<string, string>>({});
   const [isRevealing, setIsRevealing] = useState(false);
 
   if (!offer && isLoading) {
@@ -104,32 +104,56 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
   const availability = describeAvailability(offer, t.buyerV2.offerDetail);
   const canReserve = offer.status === "live" && offer.quantityAvailable > 0;
 
-  const existingReservation =
-    reservations.find((candidate) => candidate.offerId === offer.id) ?? null;
-  const displayReservation = reserveHook.reservation ?? existingReservation;
-  const displayPickupCode = reserveHook.pickupCode ?? revealedCode;
+  // The action panel (reserve button, or the held reservation panel) binds
+  // only to a reservation that is actually held. A cancelled, fulfilled, or
+  // otherwise terminal reservation for this offer must never hide the
+  // reserve button while the offer itself is still live and in stock, that
+  // is exactly the bug where the button disappeared forever after one
+  // cancellation. reserveHook.reservation is always held when set, it is
+  // only ever populated from a successful reserveOfferV2 response.
+  const reservationsForOffer = reservations.filter(
+    (candidate) => candidate.offerId === offer.id
+  );
+  const heldReservation =
+    reserveHook.reservation ??
+    reservationsForOffer.find((candidate) => candidate.status === "held") ??
+    null;
+  const terminalReservations = reservationsForOffer.filter(
+    (candidate) => candidate.status !== "held"
+  );
+  const displayPickupCode = heldReservation
+    ? (reserveHook.pickupCode ?? revealedCodes[heldReservation.id] ?? null)
+    : null;
   const reserveErrorMessage = reserveHook.error
     ? describeReserveError(reserveHook.error.code, t.buyerV2.reservation)
     : null;
   const isCancelling =
-    displayReservation != null &&
-    cancelHook.statusFor(displayReservation.id) === "in-flight";
+    heldReservation != null &&
+    cancelHook.statusFor(heldReservation.id) === "in-flight";
+  const cancelError = heldReservation
+    ? cancelHook.errorFor(heldReservation.id)
+    : null;
+  const cancelErrorMessage = cancelError
+    ? describeCancelError(cancelError.code, t.buyerV2.reservation)
+    : null;
 
   const handleReveal = async () => {
-    if (!displayReservation || isRevealing) {
+    if (!heldReservation || isRevealing) {
       return;
     }
     setIsRevealing(true);
-    const code = await loadPickupCodeV2(displayReservation.id);
-    setRevealedCode(code);
+    const code = await loadPickupCodeV2(heldReservation.id);
+    if (code) {
+      setRevealedCodes((current) => ({ ...current, [heldReservation.id]: code }));
+    }
     setIsRevealing(false);
   };
 
   const handleCancelPress = () => {
-    if (!displayReservation) {
+    if (!heldReservation) {
       return;
     }
-    const reservationId = displayReservation.id;
+    const reservationId = heldReservation.id;
     Alert.alert(
       t.buyerV2.reservation.cancelConfirmTitle,
       t.buyerV2.reservation.cancelConfirmMessage,
@@ -137,18 +161,20 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
         { style: "cancel", text: t.buyerV2.reservation.cancelConfirmDismiss },
         {
           onPress: () => {
-            // displayReservation prefers reserveHook.reservation, the
-            // object captured at reserve time with status held. Cancelling
-            // updates the server and cancelHook's own per-id status map,
-            // but never touches that captured object, so without abandon()
-            // the panel would keep showing held forever after a successful
-            // cancel. Abandoning falls back to existingReservation, which
+            // heldReservation prefers reserveHook.reservation, the object
+            // captured at reserve time. Cancelling updates the server and
+            // cancelHook's own per-id status map, but never touches that
+            // captured object, so without abandon() the panel would keep
+            // treating this reservation as held forever after a successful
+            // cancel. Abandoning falls back to the reservations list, which
             // the refetch below brings up to date with the real terminal
-            // status.
+            // status, and the offer detail refetch below picks up the
+            // released unit.
             void cancelHook.cancel(reservationId).then((result) => {
               if (result?.ok) {
-                reserveHook.abandon();
+                reserveHook.abandon(offer.id);
                 void refreshReservations();
+                void refresh();
               }
             });
           },
@@ -265,16 +291,39 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
         </Text>
       </Pressable>
 
-      {displayReservation ? (
+      {terminalReservations.length ? (
+        <View style={styles.reservationPanel} testID="offer-detail-v2-reservation-history">
+          <Text style={styles.reservationLabel}>{t.buyerV2.reservation.historyTitle}</Text>
+          {terminalReservations.map((reservation) => (
+            <View
+              key={reservation.id}
+              style={styles.historyItem}
+              testID={`offer-detail-v2-history-item-${reservation.id}`}
+            >
+              <Text
+                style={styles.reservationStatusLabel}
+                testID={`offer-detail-v2-history-status-${reservation.id}`}
+              >
+                {t.buyerV2.reservation.statusLabel[reservation.status]}
+              </Text>
+              <Text style={styles.meta}>
+                {t.buyerV2.reservation.statusDescription[reservation.status]}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {heldReservation ? (
         <View style={styles.reservationPanel} testID="offer-detail-v2-reservation-panel">
           <Text
             style={styles.reservationStatusLabel}
             testID="offer-detail-v2-reservation-status"
           >
-            {t.buyerV2.reservation.statusLabel[displayReservation.status]}
+            {t.buyerV2.reservation.statusLabel[heldReservation.status]}
           </Text>
           <Text style={styles.meta}>
-            {t.buyerV2.reservation.statusDescription[displayReservation.status]}
+            {t.buyerV2.reservation.statusDescription[heldReservation.status]}
           </Text>
 
           <Text style={styles.reservationLabel}>{t.buyerV2.reservation.pickupCode}</Text>
@@ -290,7 +339,7 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
               style={styles.pickupCodeHint}
               testID="offer-detail-v2-pickup-code-hint"
             >
-              {t.buyerV2.reservation.pickupCodeHint(displayReservation.pickupCodeHint)}
+              {t.buyerV2.reservation.pickupCodeHint(heldReservation.pickupCodeHint)}
             </Text>
           )}
           {!displayPickupCode ? (
@@ -308,27 +357,28 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
           ) : null}
           <Text style={styles.metaSubtle}>{t.buyerV2.reservation.secureRecoveryNote}</Text>
 
-          {displayReservation.status === "held" ? (
-            <>
-              <Text style={styles.meta} testID="offer-detail-v2-hold-expires">
-                {t.buyerV2.reservation.holdExpiresAt(
-                  formatFullTimestamp(displayReservation.holdExpiresAt, locale, offer.timezone)
-                )}
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                disabled={isCancelling}
-                onPress={handleCancelPress}
-                style={[styles.secondaryButton, isCancelling ? styles.disabledButton : null]}
-                testID="offer-detail-v2-cancel-button"
-              >
-                <Text style={styles.secondaryText}>
-                  {isCancelling
-                    ? t.buyerV2.reservation.cancelling
-                    : t.buyerV2.reservation.cancel}
-                </Text>
-              </Pressable>
-            </>
+          <Text style={styles.meta} testID="offer-detail-v2-hold-expires">
+            {t.buyerV2.reservation.holdExpiresAt(
+              formatFullTimestamp(heldReservation.holdExpiresAt, locale, offer.timezone)
+            )}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={isCancelling}
+            onPress={handleCancelPress}
+            style={[styles.secondaryButton, isCancelling ? styles.disabledButton : null]}
+            testID="offer-detail-v2-cancel-button"
+          >
+            <Text style={styles.secondaryText}>
+              {isCancelling
+                ? t.buyerV2.reservation.cancelling
+                : t.buyerV2.reservation.cancel}
+            </Text>
+          </Pressable>
+          {cancelErrorMessage ? (
+            <Text style={styles.errorText} testID="offer-detail-v2-cancel-error">
+              {cancelErrorMessage}
+            </Text>
           ) : null}
         </View>
       ) : (
@@ -408,6 +458,16 @@ function describeReserveError(
     default:
       return copy.genericErrorMessage;
   }
+}
+
+function describeCancelError(
+  code: CommandErrorCode,
+  copy: {
+    cancelNetworkErrorMessage: string;
+    cancelGenericErrorMessage: string;
+  }
+): string {
+  return code === "network_error" ? copy.cancelNetworkErrorMessage : copy.cancelGenericErrorMessage;
 }
 
 function InfoSection({
@@ -548,6 +608,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     justifyContent: "space-between",
+  },
+  historyItem: {
+    borderTopColor: "#E5E7EB",
+    borderTopWidth: 1,
+    gap: 4,
+    paddingTop: 8,
   },
   infoSection: {
     gap: 8,

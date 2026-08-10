@@ -147,7 +147,7 @@ describe("useCancelReservationV2", () => {
     expect(result.current.statusFor(reservationId)).toBe("cancelled");
   });
 
-  it("is safe to repeat, a second cancel call after success replays the same terminal result", async () => {
+  it("is idempotent, a second cancel call after success replays the exact same result", async () => {
     const { core, scenario, seller } = makeWorld();
     const reservationId = await heldReservationId(core, scenario, seller);
 
@@ -166,17 +166,16 @@ describe("useCancelReservationV2", () => {
       secondResult = await result.current.cancel(reservationId);
     });
 
+    // The hook keeps reusing the same idempotencyKey for this reservation
+    // id after success, so a repeat call replays the stored result at the
+    // server rather than minting a fresh key that would hit invalid_state
+    // against an already terminal reservation. This is what idempotent
+    // cancellation means, not merely safe to repeat once.
     expect(firstResult?.ok).toBe(true);
-    // A cancel after the reservation is already terminal is rejected by the
-    // backend with invalid_state, the hook must surface that rather than
-    // silently pretending a second identical success happened, repeating
-    // the action is safe in the sense that it never corrupts state or
-    // charges the buyer twice.
-    expect(secondResult?.ok).toBe(false);
-    if (!secondResult?.ok) {
-      expect(secondResult?.error.code).toBe("invalid_state");
-    }
-    expect(result.current.statusFor(reservationId)).toBe("error");
+    expect(secondResult?.ok).toBe(true);
+    expect(secondResult).toEqual(firstResult);
+    expect(result.current.statusFor(reservationId)).toBe("cancelled");
+    expect(result.current.errorFor(reservationId)).toBeNull();
   });
 
   it("degrades to a no-op outside pilot mode", async () => {

@@ -10,6 +10,11 @@ import type {
 
 import { generateOpaqueId } from "./id";
 import { useIsPilotMode, useOptionalBuyerApi } from "./optional-context";
+import {
+  clearPendingClientReservationId,
+  loadPendingClientReservationId,
+  savePendingClientReservationId,
+} from "./pending-reservation";
 import { persistPickupCodeV2 } from "./secure-pickup-code";
 
 /**
@@ -37,7 +42,7 @@ export interface UseReserveOfferV2Result {
   pickupCode: string | null;
   error: CommandError | null;
   reserve: (offer: MarketplaceOfferV2) => Promise<Result<ReserveOfferV2Result> | null>;
-  abandon: () => void;
+  abandon: (offerId?: string) => void;
 }
 
 /**
@@ -49,6 +54,13 @@ export interface UseReserveOfferV2Result {
  * goes straight to SecureStore and only the safe hint stays in the returned
  * reservation, on failure nothing is ever marked held, matching the rule
  * that a backend failure must never produce a fabricated local success.
+ *
+ * The pending clientReservationId also survives a remount. It is persisted
+ * to AsyncStorage keyed by offer id the moment an attempt starts, so a
+ * buyer whose reserve attempt fails and who then leaves the screen, or
+ * whose app restarts, retries with the exact same id rather than minting a
+ * fresh one, which is what keeps the retry idempotent at the server instead
+ * of risking a second reservation for the same intended action.
  */
 export function useReserveOfferV2(
   installationId: string | null,
@@ -74,7 +86,13 @@ export function useReserveOfferV2(
 
       inFlightRef.current = true;
       if (!clientReservationIdRef.current) {
-        clientReservationIdRef.current = generateOpaqueId("reserve");
+        const pending = await loadPendingClientReservationId(offer.id);
+        if (pending) {
+          clientReservationIdRef.current = pending;
+        } else {
+          clientReservationIdRef.current = generateOpaqueId("reserve");
+          await savePendingClientReservationId(offer.id, clientReservationIdRef.current);
+        }
       }
       setStatus("in-flight");
       setError(null);
@@ -98,9 +116,13 @@ export function useReserveOfferV2(
         // The action succeeded, a future reserve call is a new action and
         // earns its own clientReservationId.
         clientReservationIdRef.current = null;
+        await clearPendingClientReservationId(offer.id);
       } else {
         setError(result.error);
         setStatus("error");
+        // clientReservationIdRef and its AsyncStorage backed copy both stay
+        // set here on purpose, a retry of this same action, even after a
+        // remount, must reuse this id rather than mint a new one.
         if (OFFER_CHANGED_ERROR_CODES.has(result.error.code)) {
           onOfferChanged?.();
         }
@@ -111,13 +133,16 @@ export function useReserveOfferV2(
     [api, installationId, isPilot, onOfferChanged]
   );
 
-  const abandon = useCallback(() => {
+  const abandon = useCallback((offerId?: string) => {
     clientReservationIdRef.current = null;
     inFlightRef.current = false;
     setStatus("idle");
     setReservation(null);
     setPickupCode(null);
     setError(null);
+    if (offerId) {
+      void clearPendingClientReservationId(offerId);
+    }
   }, []);
 
   return { abandon, error, isPilot, pickupCode, reservation, reserve, status };
@@ -239,7 +264,13 @@ export function useCancelReservationV2(
 
       if (result.ok) {
         setStatusMap((current) => ({ ...current, [reservationId]: "cancelled" }));
-        idempotencyKeysRef.current.delete(reservationId);
+        // The idempotencyKey is kept rather than deleted. A reservation id
+        // is never reused for a different reservation, so a repeat cancel
+        // call against this same id, however it happens, replays the
+        // stored successful result at the server instead of minting a
+        // fresh key that would hit invalid_state against an already
+        // terminal reservation, that replay is what makes cancellation
+        // idempotent rather than merely once-safe.
       } else {
         setStatusMap((current) => ({ ...current, [reservationId]: "error" }));
         setErrorMap((current) => ({ ...current, [reservationId]: result.error }));

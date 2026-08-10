@@ -13,6 +13,7 @@ export interface BuyerTranslations {
     errorTitle: string;
     errorHint: string;
     retry: string;
+    mapCalloutNoDiscount: (endTime: string) => string;
   };
   offerDetail: {
     loading: string;
@@ -43,6 +44,7 @@ export interface BuyerTranslations {
   };
   reservation: {
     title: string;
+    historyTitle: string;
     pickupCode: string;
     pickupCodeHint: (hint: string) => string;
     showPickupCode: string;
@@ -60,6 +62,8 @@ export interface BuyerTranslations {
     offerNotLiveMessage: string;
     networkErrorMessage: string;
     genericErrorMessage: string;
+    cancelNetworkErrorMessage: string;
+    cancelGenericErrorMessage: string;
     statusLabel: Record<ReservationStatusV2, string>;
     statusDescription: Record<ReservationStatusV2, string>;
   };
@@ -78,6 +82,7 @@ export const buyerEn: BuyerTranslations = {
     errorTitle: "Live marketplace unavailable",
     errorHint: "Check your connection and try again.",
     retry: "Retry",
+    mapCalloutNoDiscount: (endTime) => `Collect by ${endTime}`,
   },
   offerDetail: {
     loading: "Loading offer...",
@@ -108,6 +113,7 @@ export const buyerEn: BuyerTranslations = {
   },
   reservation: {
     title: "Reservation",
+    historyTitle: "Previous reservations for this offer",
     pickupCode: "Pickup code",
     pickupCodeHint: (hint) => `Code ending in ${hint}`,
     showPickupCode: "Show pickup code",
@@ -126,6 +132,8 @@ export const buyerEn: BuyerTranslations = {
     offerNotLiveMessage: "This offer is no longer accepting reservations.",
     networkErrorMessage: "Network problem. Please try again.",
     genericErrorMessage: "Something went wrong. Please try again.",
+    cancelNetworkErrorMessage: "Could not cancel, check your connection and try again.",
+    cancelGenericErrorMessage: "Could not cancel this reservation. Please try again.",
     statusLabel: {
       cancelled_by_buyer: "Cancelled",
       cancelled_by_seller: "Cancelled by seller",
@@ -159,6 +167,7 @@ export const buyerRu: BuyerTranslations = {
     errorTitle: "Витрина недоступна",
     errorHint: "Проверьте соединение и повторите попытку.",
     retry: "Повторить",
+    mapCalloutNoDiscount: (endTime) => `Забрать до ${endTime}`,
   },
   offerDetail: {
     loading: "Загрузка предложения...",
@@ -189,6 +198,7 @@ export const buyerRu: BuyerTranslations = {
   },
   reservation: {
     title: "Бронирование",
+    historyTitle: "Предыдущие брони по этому предложению",
     pickupCode: "Код самовывоза",
     pickupCodeHint: (hint) => `Код оканчивается на ${hint}`,
     showPickupCode: "Показать код самовывоза",
@@ -207,6 +217,8 @@ export const buyerRu: BuyerTranslations = {
     offerNotLiveMessage: "Это предложение больше не принимает брони.",
     networkErrorMessage: "Проблема с сетью. Попробуйте ещё раз.",
     genericErrorMessage: "Что-то пошло не так. Попробуйте ещё раз.",
+    cancelNetworkErrorMessage: "Не удалось отменить, проверьте соединение и попробуйте ещё раз.",
+    cancelGenericErrorMessage: "Не удалось отменить эту бронь. Попробуйте ещё раз.",
     statusLabel: {
       cancelled_by_buyer: "Отменено",
       cancelled_by_seller: "Отменено продавцом",

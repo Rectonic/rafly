@@ -397,6 +397,7 @@ export default function FeedScreen() {
             testID={`offer-card-layout-${offer.id}`}
           >
             <OfferCard
+              currency={isPilot ? "UZS" : undefined}
               isActive={offer.id === activeOfferId}
               isFavorite={favorites.includes(offer.id)}
               offer={offer}
@@ -408,7 +409,7 @@ export default function FeedScreen() {
             />
           </View>
         ))
-      ) : isPilot && pilotError ? null : (
+      ) : isPilot && (pilotError || marketplaceV2.isLoading) ? null : (
         <View style={styles.emptyState} testID="feed-empty-state">
           <Text style={styles.emptyTitle}>
             {query.trim()
