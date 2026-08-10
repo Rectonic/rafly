@@ -58,9 +58,21 @@ export interface ReserveOfferV2Input {
   expectedOfferVersion: number
 }
 
+/**
+ * A reserve response. The raw pickup code is issued exactly once, on the call
+ * that actually created the reservation, and is never re-issued afterwards.
+ *
+ * A replay of an already used clientReservationId therefore carries
+ * pickupCode null and a reservation projected from the CURRENT row, not a
+ * frozen snapshot of how it looked when it was first created. A replay after
+ * a cancellation reports cancelled_by_buyer, a replay after the hold expired
+ * reports expired_no_show, and so on. Callers read pickupCode null as "this
+ * was a replay, whatever you already stored for this reservation is still the
+ * only copy of the raw code".
+ */
 export interface ReserveOfferV2Result {
   reservation: BuyerReservationV2
-  pickupCode: string
+  pickupCode: string | null
 }
 
 export interface CancelReservationV2Input {

@@ -119,6 +119,18 @@ function makeWorld() {
   return { core, scenario, seller };
 }
 
+/**
+ * The plaintext code a first reserve issues. A replay of an already used
+ * clientReservationId carries null instead, so a fixture that needs the raw
+ * code says so rather than silently threading a null through.
+ */
+function requireCode(pickupCode: string | null): string {
+  if (pickupCode === null) {
+    throw new Error("expected a freshly issued pickup code, received a replay");
+  }
+  return pickupCode;
+}
+
 function pilotSource(): Promise<FeatureFlagsV2> {
   return Promise.resolve({ marketplaceMode: "pilot" });
 }
@@ -320,6 +332,11 @@ describe("OfferDetailV2", () => {
     expect(
       screen.queryByTestId("offer-detail-v2-storage-degraded-notice")
     ).toBeNull();
+    // The write really did reach secure storage, so the promise about
+    // surviving a restart is the true one to show.
+    expect(
+      screen.getByTestId("offer-detail-v2-secure-recovery-note")
+    ).toHaveTextContent("Your pickup code is stored securely on this device.");
   });
 
   it("warns that the pickup code will not survive an app restart when secure storage fails", async () => {
@@ -342,12 +359,20 @@ describe("OfferDetailV2", () => {
       expect(
         screen.getByTestId("offer-detail-v2-storage-degraded-notice")
       ).toHaveTextContent(
-        "Something went wrong. Please try again. Pickup code will not survive an app restart."
+        "This device could not store your pickup code securely. Keep this screen open, the code will not survive closing the app. Your reservation itself is safe."
       )
     );
     expect(screen.getByTestId("offer-detail-v2-pickup-code")).toHaveTextContent(
       /^[A-Z0-9]{6}$/
     );
+    // The promise that the code survives a restart must be gone, not merely
+    // accompanied by a warning that contradicts it.
+    expect(
+      screen.queryByTestId("offer-detail-v2-secure-recovery-note")
+    ).toBeNull();
+    expect(
+      screen.queryByText("Your pickup code is stored securely on this device.")
+    ).toBeNull();
   });
 
   it("recovers a held reservation on remount and only reveals the code on request", async () => {
@@ -362,10 +387,11 @@ describe("OfferDetailV2", () => {
       expectedOfferVersion: published.value.version,
     });
     if (!held.ok) throw new Error("expected reserve to succeed");
+    const heldCode = requireCode(held.value.pickupCode);
     // Calling the facade directly (as this setup does to simulate a prior
     // session) skips useReserveOfferV2 entirely, so the prior session's own
     // SecureStore write has to be simulated explicitly here.
-    await persistPickupCodeV2(held.value.reservation.id, held.value.pickupCode);
+    await persistPickupCodeV2(held.value.reservation.id, heldCode);
 
     // A fresh render stands in for the app restarting, no reserve() call
     // happens in this session, recovery relies entirely on the server list
@@ -377,14 +403,14 @@ describe("OfferDetailV2", () => {
     );
     expect(
       screen.getByTestId("offer-detail-v2-pickup-code-hint")
-    ).toHaveTextContent(new RegExp(held.value.pickupCode.slice(-2)));
+    ).toHaveTextContent(new RegExp(heldCode.slice(-2)));
     expect(screen.queryByTestId("offer-detail-v2-pickup-code")).toBeNull();
 
     fireEvent.press(screen.getByTestId("offer-detail-v2-reveal-code-button"));
 
     await waitFor(() =>
       expect(screen.getByTestId("offer-detail-v2-pickup-code")).toHaveTextContent(
-        held.value.pickupCode
+        heldCode
       )
     );
   });
@@ -437,7 +463,7 @@ describe("OfferDetailV2", () => {
     if (!held.ok) throw new Error("expected reserve to succeed");
     await seller.fulfillReservationV2({
       storeId: scenario.storeId,
-      pickupCode: held.value.pickupCode,
+      pickupCode: requireCode(held.value.pickupCode),
       idempotencyKey: "fulfill-key-1",
     });
 

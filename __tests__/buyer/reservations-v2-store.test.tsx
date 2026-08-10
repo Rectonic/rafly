@@ -4,7 +4,6 @@ import { createElement, type ReactNode } from "react";
 
 import { ApiProvider, type BuyerMarketplaceApiV2 } from "@/lib/api";
 import type {
-  BuyerReservationV2,
   FeatureFlagsV2,
   MarketplaceOfferV2,
   PublishOfferV2Input,
@@ -457,42 +456,50 @@ describe("useReserveOfferV2", () => {
     const { core, scenario, seller } = makeWorld();
     const offer = await publishOffer(core, scenario, seller);
     const staleClientReservationId = "reserve-stale";
+
+    // A real earlier attempt that really finished. Nothing is faked here: the
+    // reservation exists in the store, it was cancelled through the facade,
+    // and the cleanup that should have dropped its pending id never landed.
+    // Replaying that id now returns the live cancelled row with a null code,
+    // which is exactly what the backend does, and it must never be shown as
+    // a fresh hold.
+    const stale = await core.buyerApi().reserveOfferV2({
+      offerId: offer.id,
+      quantity: 1,
+      clientReservationId: staleClientReservationId,
+      installationId: "installation-a",
+      expectedOfferVersion: offer.version,
+    });
+    if (!stale.ok) throw new Error("expected reserve to succeed");
+    const cancelled = await core.buyerApi().cancelReservationV2({
+      reservationId: stale.value.reservation.id,
+      installationId: "installation-a",
+      idempotencyKey: "cancel-key-1",
+    });
+    if (!cancelled.ok) throw new Error("expected cancel to succeed");
     await savePendingClientReservationId(offer.id, staleClientReservationId);
 
-    // The reservation this id created was cancelled, and the cleanup that
-    // should have dropped the id never landed. Replaying it hands back a
-    // finished reservation, which must never be shown as a fresh hold.
-    const staleReservation: BuyerReservationV2 = {
-      id: "reservation-stale",
-      version: 2,
-      offerId: offer.id,
-      status: "cancelled_by_buyer",
-      quantity: 1,
-      offerSnapshot: offer,
-      pickupCodeHint: "99",
-      holdExpiresAt: offer.pickupEnd,
-      createdAt: scenario.now,
-      updatedAt: scenario.now,
-    };
+    const backing = core.buyerApi();
     const seenClientReservationIds: string[] = [];
-    const replayingBuyerApi: BuyerMarketplaceApiV2 = {
-      ...core.buyerApi(),
+    const observedBuyerApi: BuyerMarketplaceApiV2 = {
+      ...backing,
       reserveOfferV2: async (input) => {
         seenClientReservationIds.push(input.clientReservationId);
-        if (input.clientReservationId === staleClientReservationId) {
-          return { ok: true, value: { pickupCode: "LB9999", reservation: staleReservation } };
-        }
-        return core.buyerApi().reserveOfferV2(input);
+        return backing.reserveOfferV2(input);
       },
     };
+    // The screen is looking at the offer as it stands now, two versions on
+    // from publish after that hold and its cancellation.
+    const current = await backing.getMarketplaceOfferV2(offer.id);
+    if (!current.ok) throw new Error("expected the offer to still be readable");
 
     const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
-      wrapper: makeWrapper(replayingBuyerApi, core, scenario),
+      wrapper: makeWrapper(observedBuyerApi, core, scenario),
     });
     await waitFor(() => expect(result.current.isPilot).toBe(true));
 
     await act(async () => {
-      await result.current.reserve(offer);
+      await result.current.reserve(current.value);
     });
 
     expect(seenClientReservationIds).toHaveLength(2);
@@ -500,11 +507,63 @@ describe("useReserveOfferV2", () => {
     expect(seenClientReservationIds[1]).not.toBe(staleClientReservationId);
     expect(result.current.status).toBe("held");
     expect(result.current.reservation?.status).toBe("held");
-    expect(result.current.reservation?.id).not.toBe(staleReservation.id);
+    expect(result.current.reservation?.id).not.toBe(stale.value.reservation.id);
+    // The retry really did create a new reservation, so it really does carry
+    // a freshly issued raw code rather than the replay's null.
+    expect(result.current.pickupCode).toMatch(/^[A-Z0-9]{6}$/);
     expect(await loadPendingClientReservationId(offer.id)).toBeNull();
     expect(JSON.stringify([...mockAsyncStorage.entries()])).not.toContain(
       staleClientReservationId
     );
+  });
+
+  it("keeps SecureStore authoritative when a replay of a live hold returns a null code", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    const pendingClientReservationId = "reserve-in-flight";
+
+    // The first attempt reached the server and held a unit, the answer never
+    // reached the app, so the pending id survived. Retrying replays it.
+    const held = await core.buyerApi().reserveOfferV2({
+      offerId: offer.id,
+      quantity: 1,
+      clientReservationId: pendingClientReservationId,
+      installationId: "installation-a",
+      expectedOfferVersion: offer.version,
+    });
+    if (!held.ok) throw new Error("expected reserve to succeed");
+    const issuedCode = held.value.pickupCode;
+    if (issuedCode === null) throw new Error("expected a freshly issued code");
+    mockSecureStore.set(pickupCodeKeyV2(held.value.reservation.id), issuedCode);
+    await savePendingClientReservationId(offer.id, pendingClientReservationId);
+
+    const backing = core.buyerApi();
+    const current = await backing.getMarketplaceOfferV2(offer.id);
+    if (!current.ok) throw new Error("expected the offer to still be readable");
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(backing, core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await result.current.reserve(current.value);
+    });
+
+    // The hold is real and still live, so the surface shows it as held. The
+    // replay carries no raw code, and the code SecureStore already holds is
+    // left exactly as it was rather than overwritten or called degraded.
+    expect(result.current.status).toBe("held");
+    expect(result.current.reservation?.id).toBe(held.value.reservation.id);
+    expect(result.current.pickupCode).toBeNull();
+    expect(result.current.storageDegraded).toBe(false);
+    expect(mockSecureStore.get(pickupCodeKeyV2(held.value.reservation.id))).toBe(
+      issuedCode
+    );
+    // One tap, one reservation, no second unit taken by the replay.
+    const reservations = await backing.getBuyerReservationsV2("installation-a");
+    if (!reservations.ok) throw new Error("expected the list to succeed");
+    expect(reservations.value).toHaveLength(1);
   });
 });
 
@@ -558,13 +617,13 @@ describe("useBuyerReservationsV2", () => {
     expect(result.current.reservations).toEqual([]);
   });
 
-  it("clears a persisted pending id once the reservation it produced is terminal", async () => {
+  it("never retires a pending id on refresh, even when an older reservation for that offer is terminal", async () => {
     const { core, scenario, seller } = makeWorld();
     const offer = await publishOffer(core, scenario, seller);
     const held = await core.buyerApi().reserveOfferV2({
       offerId: offer.id,
       quantity: 1,
-      clientReservationId: "client-reservation-1",
+      clientReservationId: "client-reservation-old",
       installationId: "installation-a",
       expectedOfferVersion: offer.version,
     });
@@ -574,9 +633,14 @@ describe("useBuyerReservationsV2", () => {
       installationId: "installation-a",
       idempotencyKey: "cancel-key-1",
     });
-    // The cleanup after that cancellation failed, so the finished attempt
-    // still has a pending id on disk waiting to replay itself.
-    await savePendingClientReservationId(offer.id, "client-reservation-1");
+
+    // The buyer then tapped reserve again on the same offer. That newer
+    // attempt never got an answer, so its own pending id is on disk waiting
+    // to be retried idempotently. The cancelled reservation above says
+    // nothing about it, the list is keyed by offer and carries no client id
+    // at all, so a refresh that cleared on sight would destroy this retry
+    // and turn the buyer's next tap into a second reservation.
+    await savePendingClientReservationId(offer.id, "client-reservation-new");
 
     const { result } = renderHook(() => useBuyerReservationsV2("installation-a"), {
       wrapper: makeWrapper(core.buyerApi(), core, scenario),
@@ -584,8 +648,12 @@ describe("useBuyerReservationsV2", () => {
 
     await waitFor(() => expect(result.current.reservations).toHaveLength(1));
     expect(result.current.reservations[0].status).toBe("cancelled_by_buyer");
-    await waitFor(async () =>
-      expect(await loadPendingClientReservationId(offer.id)).toBeNull()
+    await act(async () => {
+      await result.current.refresh();
+    });
+
+    expect(await loadPendingClientReservationId(offer.id)).toBe(
+      "client-reservation-new"
     );
   });
 

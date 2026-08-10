@@ -355,16 +355,26 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
               </Text>
             </Pressable>
           ) : null}
+          {/*
+            Exactly one of these two ever renders. The secure recovery line is
+            a promise about what happens after a restart, so it is only
+            honest when the write actually reached secure storage. When it did
+            not, the degraded notice takes its place and says so plainly.
+          */}
           {reserveHook.storageDegraded ? (
             <Text
               style={styles.errorText}
               testID="offer-detail-v2-storage-degraded-notice"
             >
-              {t.buyerV2.reservation.genericErrorMessage}{" "}
-              Pickup code will not survive an app restart.
+              {t.buyerV2.reservation.storageDegradedNote}
             </Text>
           ) : (
-            <Text style={styles.metaSubtle}>{t.buyerV2.reservation.secureRecoveryNote}</Text>
+            <Text
+              style={styles.metaSubtle}
+              testID="offer-detail-v2-secure-recovery-note"
+            >
+              {t.buyerV2.reservation.secureRecoveryNote}
+            </Text>
           )}
 
           <Text style={styles.meta} testID="offer-detail-v2-hold-expires">

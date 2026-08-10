@@ -48,7 +48,14 @@ export interface BuyerTranslations {
     pickupCode: string;
     pickupCodeHint: (hint: string) => string;
     showPickupCode: string;
+    /**
+     * Only ever rendered when the raw code really did reach secure storage.
+     * The degraded branch renders storageDegradedNote instead, promising
+     * recovery that cannot happen is the exact dishonesty this pair exists
+     * to prevent.
+     */
     secureRecoveryNote: string;
+    storageDegradedNote: string;
     holdExpiresAt: (timestamp: string) => string;
     cancel: string;
     cancelling: string;
@@ -118,6 +125,8 @@ export const buyerEn: BuyerTranslations = {
     pickupCodeHint: (hint) => `Code ending in ${hint}`,
     showPickupCode: "Show pickup code",
     secureRecoveryNote: "Your pickup code is stored securely on this device.",
+    storageDegradedNote:
+      "This device could not store your pickup code securely. Keep this screen open, the code will not survive closing the app. Your reservation itself is safe.",
     holdExpiresAt: (timestamp) => `Hold expires ${timestamp}`,
     cancel: "Cancel reservation",
     cancelling: "Cancelling...",
@@ -203,6 +212,8 @@ export const buyerRu: BuyerTranslations = {
     pickupCodeHint: (hint) => `Код оканчивается на ${hint}`,
     showPickupCode: "Показать код самовывоза",
     secureRecoveryNote: "Код самовывоза надёжно хранится на этом устройстве.",
+    storageDegradedNote:
+      "Это устройство не смогло надёжно сохранить код самовывоза. Не закрывайте этот экран, после выхода из приложения код будет потерян. Сама бронь в порядке.",
     holdExpiresAt: (timestamp) => `Бронь действует до ${timestamp}`,
     cancel: "Отменить бронь",
     cancelling: "Отмена...",

@@ -362,7 +362,21 @@ export class InMemoryStoreCore {
       fingerprint
     );
     if (replay) {
-      return replay;
+      if (!replay.ok) {
+        return replay;
+      }
+      // A replay never re-issues the raw pickup code, and it never hands back
+      // the snapshot of how the reservation looked when it was created. The
+      // caller gets the live row as it stands right now, so an id whose
+      // reservation was since cancelled, fulfilled or expired replays as
+      // terminal rather than looking like a fresh hold.
+      const live = this.reservations.get(replay.value.reservation.id);
+      return ok<ReserveOfferV2Result>({
+        reservation: live
+          ? this.projectReservation(live)
+          : replay.value.reservation,
+        pickupCode: null,
+      });
     }
 
     if (input.quantity !== 1) {
@@ -1295,8 +1309,11 @@ export class InMemoryStoreCore {
    *
    * Stored results are cloned on the way in and on the way out, so a replay is
    * equal in content to the first response without handing every caller the same
-   * mutable object. A replayed reservation therefore carries the same raw pickup
-   * code value even though it is a different object.
+   * mutable object.
+   *
+   * reserveOfferV2 is the one command that does not simply hand the stored
+   * payload back. Its replay path re-projects the live reservation row and
+   * blanks the raw pickup code, see reserveOffer for why.
    */
   private readIdempotent<T>(
     command: string,

@@ -22,6 +22,7 @@ import {
   expectOk,
   isoPlusMinutes,
   publishOffer,
+  requirePickupCode,
   type ConformanceHarness,
   type MakeConformanceHarness,
 } from "./buyer-api-conformance";
@@ -815,11 +816,11 @@ export function runSellerApiConformance(
           offerId: offer.id,
           offerTitle: offer.title,
           status: "held",
-          pickupCodeHint: second.pickupCode.slice(-2),
+          pickupCodeHint: requirePickupCode(second).slice(-2),
         });
         const serialized = JSON.stringify(pickups);
-        expect(serialized).not.toContain(first.pickupCode);
-        expect(serialized).not.toContain(second.pickupCode);
+        expect(serialized).not.toContain(requirePickupCode(first));
+        expect(serialized).not.toContain(requirePickupCode(second));
       });
     });
 
@@ -836,7 +837,7 @@ export function runSellerApiConformance(
         return {
           offerId: offer.id,
           reservationId: held.reservation.id,
-          pickupCode: held.pickupCode,
+          pickupCode: requirePickupCode(held),
         };
       }
 

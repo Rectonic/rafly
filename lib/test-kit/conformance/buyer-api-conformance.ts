@@ -112,6 +112,21 @@ export function expectOk<T>(result: Result<T>): T {
   return result.value;
 }
 
+/**
+ * The plaintext pickup code from a reserve that actually created a
+ * reservation. A replay carries null instead of re-issuing the code, so any
+ * assertion that needs the plaintext has to state that it is working with a
+ * freshly issued hold rather than quietly accepting a null.
+ */
+export function requirePickupCode(result: ReserveOfferV2Result): string {
+  if (result.pickupCode === null) {
+    throw new Error(
+      "expected a freshly issued pickup code, received a replay carrying null"
+    );
+  }
+  return result.pickupCode;
+}
+
 export function expectErrorCode(
   result: Result<unknown>,
   code: CommandErrorCode
@@ -373,9 +388,10 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
           await buyer.reserveOfferV2(buildReserveInput(harness, offer))
         );
 
-        expect(result.pickupCode).toMatch(/^[A-Z0-9]{6}$/);
+        const code = requirePickupCode(result);
+        expect(code).toMatch(/^[A-Z0-9]{6}$/);
         expect(result.reservation.pickupCodeHint).toHaveLength(2);
-        expect(result.reservation.pickupCodeHint).toBe(result.pickupCode.slice(-2));
+        expect(result.reservation.pickupCodeHint).toBe(code.slice(-2));
       });
 
       it("freezes the public offer snapshot and holds until the offer pickup end", async () => {
@@ -410,7 +426,7 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         expect(reservations[0].offerSnapshot.title).toBe(offer.title);
       });
 
-      it("replays the same reservation and the same raw pickup code for a repeated clientReservationId", async () => {
+      it("replays the same reservation with a null pickup code for a repeated clientReservationId", async () => {
         const offer = await publishOffer(harness);
         const first = expectOk(
           await buyer.reserveOfferV2(buildReserveInput(harness, offer))
@@ -420,15 +436,55 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
           await buyer.reserveOfferV2(buildReserveInput(harness, offer))
         );
 
+        // The raw code is issued exactly once. A replay proves which
+        // reservation the id belongs to and what state it is in now, it never
+        // hands the plaintext code out a second time.
         expect(replay.reservation.id).toBe(first.reservation.id);
-        expect(replay.pickupCode).toBe(first.pickupCode);
-        expect(replay).toEqual(first);
+        expect(replay.pickupCode).toBeNull();
+        expect(replay.reservation.status).toBe("held");
+        expect(replay.reservation.pickupCodeHint).toBe(
+          first.reservation.pickupCodeHint
+        );
         const after = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
         expect(after.quantityAvailable).toBe(1);
         const reservations = expectOk(
           await buyer.getBuyerReservationsV2(harness.scenario.installationA)
         );
         expect(reservations).toHaveLength(1);
+      });
+
+      it("replays a cancelled reservation as cancelled with a null pickup code", async () => {
+        const offer = await publishOffer(harness);
+        const first = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        expectOk(
+          await buyer.cancelReservationV2({
+            reservationId: first.reservation.id,
+            installationId: harness.scenario.installationA,
+            idempotencyKey: "cancel-key-1",
+          })
+        );
+
+        const replay = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+
+        // A replay reports the row as it stands now, not a frozen snapshot of
+        // how it looked when it was created. Returning the stale held view
+        // here would let a client that never cleaned up its pending id show a
+        // cancelled reservation as an active hold.
+        expect(replay.reservation.id).toBe(first.reservation.id);
+        expect(replay.reservation.status).toBe("cancelled_by_buyer");
+        expect(replay.pickupCode).toBeNull();
+        // Replaying is a read, it must not take a second unit.
+        const after = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
+        expect(after.quantityAvailable).toBe(offer.quantityAvailable);
+        const reservations = expectOk(
+          await buyer.getBuyerReservationsV2(harness.scenario.installationA)
+        );
+        expect(reservations).toHaveLength(1);
+        expect(reservations[0].status).toBe("cancelled_by_buyer");
       });
 
       it("returns idempotency_conflict when a clientReservationId is reused for another offer", async () => {
@@ -730,7 +786,7 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         const failure = expectErrorCode(
           await seller.fulfillReservationV2({
             storeId: harness.scenario.storeId,
-            pickupCode: held.pickupCode,
+            pickupCode: requirePickupCode(held),
             idempotencyKey: "fulfill-after-expiry",
           }),
           "invalid_state"
@@ -790,6 +846,71 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         expect(afterRepublish.allocatedQuantity).toBe(freed.onHandQuantity);
         expect(afterRepublish.maxOfferableQuantity).toBe(0);
       });
+
+      // The two blocks below deliberately make the assertion under test the
+      // FIRST call after the clock moves. Every other expiry assertion in
+      // this file happens to read something else first, so an implementation
+      // that only applies expiry from one entry point would still pass them.
+      // These two remove that cover: whichever call the caller happens to
+      // make first has to see an already expired world.
+      it("reports expiry on a seller pickup list read taken before any other call", async () => {
+        const offer = await publishOffer(harness);
+        const held = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        const seller = harness.sellerApi({
+          userId: harness.scenario.managerUserId,
+        });
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        const pickups = expectOk(
+          await seller.listSellerPickupsV2(harness.scenario.storeId)
+        );
+
+        const pickup = pickups.find(
+          (candidate) => candidate.reservationId === held.reservation.id
+        );
+        expect(pickup?.status).toBe("expired_no_show");
+      });
+
+      it("frees the expired allocation for a republish taken before any other call", async () => {
+        const seller = harness.sellerApi({
+          userId: harness.scenario.managerUserId,
+        });
+        const inventory = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const wholeShelf = inventory.maxOfferableQuantity;
+        expect(wholeShelf).toBeGreaterThan(0);
+        await publishOffer(harness, {
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: wholeShelf,
+            physicallySetAside: false,
+          },
+        });
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        // Nothing is read between the clock move and this publish. The whole
+        // shelf is only offerable again if the expiry the clock caused is
+        // applied by the publish path itself.
+        const republished = await publishOffer(harness, {
+          idempotencyKey: "publish-after-expiry",
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: wholeShelf,
+            physicallySetAside: false,
+          },
+          pickupStart: isoPlusMinutes(harness.scenario.pickupEnd, 120),
+          pickupEnd: isoPlusMinutes(harness.scenario.pickupEnd, 240),
+        });
+
+        expect(republished.status).toBe("live");
+        expect(republished.quantityAvailable).toBe(wholeShelf);
+      });
     });
 
     describe("getBuyerReservationsV2", () => {
@@ -812,13 +933,15 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
           await buyer.getBuyerReservationsV2(harness.scenario.installationA)
         );
 
+        const mineCode = requirePickupCode(mine);
+        const theirsCode = requirePickupCode(theirs);
         expect(reservations.map((reservation) => reservation.id)).toEqual([
           mine.reservation.id,
         ]);
-        expect(reservations[0].pickupCodeHint).toBe(mine.pickupCode.slice(-2));
+        expect(reservations[0].pickupCodeHint).toBe(mineCode.slice(-2));
         const serialized = JSON.stringify(reservations);
-        expect(serialized).not.toContain(mine.pickupCode);
-        expect(serialized).not.toContain(theirs.pickupCode);
+        expect(serialized).not.toContain(mineCode);
+        expect(serialized).not.toContain(theirsCode);
       });
     });
   });

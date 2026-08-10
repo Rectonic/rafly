@@ -101,7 +101,7 @@ async function reserve(
   offer: MarketplaceOfferV2,
   sequence: number
 ) {
-  return expectOk(
+  const result = expectOk(
     await core.buyerApi().reserveOfferV2({
       clientReservationId: `client-reservation-${sequence}`,
       expectedOfferVersion: offer.version + sequence - 1,
@@ -110,6 +110,12 @@ async function reserve(
       quantity: 1,
     })
   );
+  // Every reserve here is a first attempt, so the raw code is really issued.
+  // A replay would carry null and these fixtures would be meaningless.
+  if (result.pickupCode === null) {
+    throw new Error("expected a freshly issued pickup code, received a replay");
+  }
+  return { pickupCode: result.pickupCode, reservation: result.reservation };
 }
 
 describe("Seller v2 pickup queue and fulfillment", () => {

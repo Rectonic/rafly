@@ -148,13 +148,22 @@ export function useReserveOfferV2(
         }
 
         if (result.ok && !isTerminalReservation(result.value.reservation)) {
-          const outcome = await persistPickupCodeV2(
-            result.value.reservation.id,
-            result.value.pickupCode
-          );
+          const rawCode = result.value.pickupCode;
+          if (rawCode === null) {
+            // A replay of an id that already produced this hold. The server
+            // issues the raw code exactly once, so SecureStore stays the only
+            // authority on it and nothing here overwrites or re-degrades it.
+            // The surface falls back to the safe hint plus its reveal path.
+            setStorageDegraded(false);
+          } else {
+            const outcome = await persistPickupCodeV2(
+              result.value.reservation.id,
+              rawCode
+            );
+            setStorageDegraded(outcome === "degraded");
+          }
           setReservation(result.value.reservation);
-          setPickupCode(result.value.pickupCode);
-          setStorageDegraded(outcome === "degraded");
+          setPickupCode(rawCode);
           setStatus("held");
           setError(null);
           // The action succeeded, a future reserve call is a new action and
@@ -261,13 +270,14 @@ export function useBuyerReservationsV2(
     if (result.ok) {
       setReservations(result.value);
       setError(null);
-      // The server is the authority on what finished. Any offer whose
-      // reservation here is already terminal has no attempt left to retry,
-      // so its pending clientReservationId is dropped rather than left on
-      // disk to replay a finished reservation on the buyer's next tap.
-      for (const finished of result.value.filter(isTerminalReservation)) {
-        void clearPendingClientReservationId(finished.offerId);
-      }
+      // Reading the list deliberately does not touch pending
+      // clientReservationIds. The list is keyed by offer, not by client id,
+      // so an old terminal reservation for an offer says nothing about a
+      // pending id minted afterwards for a brand new attempt on that same
+      // offer. Clearing on sight destroyed exactly that id and turned the
+      // buyer's retry into a second reservation. Only two things retire a
+      // pending id now: a replay that comes back terminal, and the attempt
+      // it belongs to either succeeding or being explicitly abandoned.
     } else {
       setReservations([]);
       setError(result.error.message);

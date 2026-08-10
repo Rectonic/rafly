@@ -100,6 +100,18 @@ function makeWorld() {
   return { core, scenario, seller };
 }
 
+/**
+ * The plaintext code a first reserve issues. A replay of an already used
+ * clientReservationId carries null instead, so a fixture that needs the raw
+ * code says so rather than silently threading a null through.
+ */
+function requireCode(pickupCode: string | null): string {
+  if (pickupCode === null) {
+    throw new Error("expected a freshly issued pickup code, received a replay");
+  }
+  return pickupCode;
+}
+
 function pilotSource(): Promise<FeatureFlagsV2> {
   return Promise.resolve({ marketplaceMode: "pilot" });
 }
@@ -153,10 +165,11 @@ describe("ReservationsScreen in pilot mode", () => {
       expectedOfferVersion: published.value.version,
     });
     if (!held.ok) throw new Error("expected reserve to succeed");
+    const heldCode = requireCode(held.value.pickupCode);
     // Calling the facade directly to seed this fixture skips
     // useReserveOfferV2, so the SecureStore write a real reserve() call
     // would have made has to be simulated here for reveal to find anything.
-    mockSecureStore.set(pickupCodeKeyV2(held.value.reservation.id), held.value.pickupCode);
+    mockSecureStore.set(pickupCodeKeyV2(held.value.reservation.id), heldCode);
 
     const screen = await renderScreen(core.buyerApi(), core, scenario);
 
@@ -168,7 +181,7 @@ describe("ReservationsScreen in pilot mode", () => {
     expect(screen.getByText("Bakery rescue box")).toBeTruthy();
     expect(screen.getByText("Reserved")).toBeTruthy();
     expect(
-      screen.getByText(new RegExp(held.value.pickupCode.slice(-2)))
+      screen.getByText(new RegExp(heldCode.slice(-2)))
     ).toBeTruthy();
 
     fireEvent.press(
@@ -178,7 +191,7 @@ describe("ReservationsScreen in pilot mode", () => {
     await waitFor(() =>
       expect(
         screen.getByTestId(`reservation-v2-code-${held.value.reservation.id}`)
-      ).toHaveTextContent(held.value.pickupCode)
+      ).toHaveTextContent(heldCode)
     );
 
     fireEvent.press(
