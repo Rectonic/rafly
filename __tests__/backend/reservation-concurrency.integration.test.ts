@@ -161,6 +161,58 @@ d("reservation concurrency", () => {
     expect(rows.data).toHaveLength(1);
   });
 
+  it("never deadlocks when cancels race a stock mismatch on the same offer", async () => {
+    // cancel_reservation_v2 used to lock the reservation and reach its offer
+    // only through the release update, while report_stock_mismatch_v2 and the
+    // expiry sweep both lock the offer first. Two writers walking the same
+    // pair in opposite orders is a lock order cycle, and Postgres resolves a
+    // cycle by killing one of them with a raw 40P01 the buyer contract has no
+    // shape for, so it reached the buyer as unknown. Both paths now take the
+    // offer first.
+    const holds = 6;
+    const { offer } = await publish(holds);
+    const reservations: { id: string; installation: string }[] = [];
+    for (let index = 0; index < holds; index += 1) {
+      const installation = randomUUID();
+      const response = await reserveCall(
+        offer.id,
+        offer.version + index,
+        randomUUID(),
+        installation
+      );
+      expect(response.error).toBeNull();
+      reservations.push({ id: response.data.reservation.id, installation });
+    }
+
+    const responses = await Promise.all([
+      ...reservations.map((reservation) =>
+        anon.rpc("cancel_reservation_v2", {
+          p_reservation_id: reservation.id,
+          p_installation_id: reservation.installation,
+          p_idempotency_key: randomUUID(),
+        })
+      ),
+      owner.rpc("report_stock_mismatch_v2", {
+        p_store_id: storeId,
+        p_offer_id: offer.id,
+        p_observed_quantity: 0,
+        p_reason: "shelf was empty",
+        p_idempotency_key: randomUUID(),
+      }),
+    ]);
+
+    for (const response of responses) {
+      if (!response.error) continue;
+      // Losing a race to the mismatch is a contracted invalid_state. A
+      // deadlock is not contracted at all.
+      expect(response.error.message).toMatch(
+        /^(invalid_state|not_found|forbidden|idempotency_conflict):/
+      );
+      expect(response.error.message).not.toMatch(/deadlock/i);
+      expect(response.error.message).not.toMatch(RAW_DATABASE_ERROR);
+    }
+  });
+
   it("serializes duplicate fulfills into one stock movement without raw errors", async () => {
     const { offer, productId } = await publish(1);
     const clientId = randomUUID();
