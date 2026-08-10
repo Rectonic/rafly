@@ -1,6 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
 import {
-  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -10,6 +9,7 @@ import {
 } from "react";
 
 import { buildFallbackSellerProfile } from "@/lib/seller/defaults";
+import { SellerAuthContext } from "@/lib/seller/auth-context";
 import {
   createMissingSupabaseConfigurationError,
   createSellerBackendError,
@@ -37,7 +37,7 @@ type SellerProfileRow = {
   translations?: LocalizedSellerProfileContent | null;
 };
 
-type AuthContextValue = {
+export type SellerAuthContextValue = {
   error: string | null;
   isLoading: boolean;
   sellerProfile: SellerProfile | null;
@@ -50,8 +50,6 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
 };
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 function isLocalSellerE2EEnabled() {
   return process.env.EXPO_PUBLIC_LASTBITE_E2E_LOCAL_SELLER === "1";
@@ -330,6 +328,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const completeBusinessTypeSelection = useCallback(
     async (businessType: SellerBusinessType) => {
       if (!isSupabaseConfigured() || !supabase) {
+        if (isLocalSellerE2EEnabled()) {
+          setError(null);
+          setSellerProfile((current) =>
+            buildFallbackSellerProfile({
+              ...current,
+              businessType,
+              category: businessType === "shop" ? "Groceries" : "Bakery",
+            })
+          );
+          return;
+        }
+
         const missingConfigurationError = createMissingSupabaseConfigurationError();
         setError(missingConfigurationError.message);
         throw missingConfigurationError;
@@ -426,11 +436,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <SellerAuthContext.Provider value={value}>
+      {children}
+    </SellerAuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const value = useContext(AuthContext);
+  const value = useContext(SellerAuthContext);
 
   if (!value) {
     throw new Error("AuthProvider is missing.");

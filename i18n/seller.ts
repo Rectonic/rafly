@@ -58,6 +58,7 @@ export interface SellerTranslations {
     recordCountButton: string;
     publishButton: string;
     offersButton: string;
+    pickupsButton: string;
   };
   count: {
     title: string;
@@ -168,6 +169,59 @@ export interface SellerTranslations {
     pausedLabel: string;
     pauseErrorFallback: string;
   };
+  pickups: {
+    title: string;
+    loading: string;
+    loadError: string;
+    loadForbidden: string;
+    loadNotFound: string;
+    loadErrorFallback: string;
+    retry: string;
+    pendingSegment: (n: number) => string;
+    terminalSegment: (n: number) => string;
+    emptyPending: string;
+    emptyTerminal: string;
+    fulfillTitle: string;
+    codePrivacyHint: string;
+    codePlaceholder: string;
+    fulfillButton: string;
+    fulfilling: string;
+    fulfilledSuccess: string;
+    managerOnly: string;
+    codeHint: (hint: string) => string;
+    pickupWindow: (start: string, end: string) => string;
+    statusLabel: Record<
+      | "held"
+      | "fulfilled"
+      | "cancelled_by_buyer"
+      | "cancelled_by_seller"
+      | "expired_no_show"
+      | "failed_stock_mismatch",
+      string
+    >;
+    errorNotFound: string;
+    errorInvalidState: string;
+    errorForbidden: string;
+    errorNetwork: string;
+    errorFallback: string;
+    reportMismatchButton: string;
+    mismatchTitle: string;
+    mismatchSafetyHint: string;
+    observedQuantityLabel: string;
+    mismatchReasonLabel: string;
+    mismatchReasonRequired: string;
+    mismatchSubmitButton: string;
+    mismatchSubmitting: string;
+    mismatchAwaitingConfirmation: string;
+    mismatchConfirmed: string;
+    mismatchNetworkError: string;
+    mismatchInvalidStateError: string;
+    mismatchForbiddenError: string;
+    mismatchNotFoundError: string;
+    mismatchErrorFallback: string;
+    recountGuidance: string;
+    recountButton: string;
+  };
 }
 
 export const sellerEn: SellerTranslations = {
@@ -217,6 +271,7 @@ export const sellerEn: SellerTranslations = {
     recordCountButton: "Record a count",
     publishButton: "New offer",
     offersButton: "View offers",
+    pickupsButton: "Pickup queue",
   },
   count: {
     title: "Count session",
@@ -331,6 +386,63 @@ export const sellerEn: SellerTranslations = {
     pausedLabel: "Paused",
     pauseErrorFallback: "Unable to pause this offer.",
   },
+  pickups: {
+    title: "Pickup queue",
+    loading: "Loading pickups...",
+    loadError: "Unable to load pickups. Check your connection and retry.",
+    loadForbidden: "You no longer have access to this store's pickup queue.",
+    loadNotFound: "This store's pickup queue could not be found.",
+    loadErrorFallback: "Unable to load pickups. Refresh and try again.",
+    retry: "Retry",
+    pendingSegment: (n) => `Pending (${n})`,
+    terminalSegment: (n) => `Completed (${n})`,
+    emptyPending: "No active pickups are waiting.",
+    emptyTerminal: "No completed pickups yet.",
+    fulfillTitle: "Fulfill by pickup code",
+    codePrivacyHint: "Enter the buyer's full code. It is sent only for this fulfillment check.",
+    codePlaceholder: "Full pickup code",
+    fulfillButton: "Confirm pickup",
+    fulfilling: "Confirming pickup...",
+    fulfilledSuccess: "Pickup confirmed by the store service.",
+    managerOnly: "Managers and owners confirm pickups. You can still view the queue.",
+    codeHint: (hint) => `Code ends in ${hint}`,
+    pickupWindow: (start, end) => `Pickup ${start} to ${end}`,
+    statusLabel: {
+      held: "Waiting for pickup",
+      fulfilled: "Fulfilled",
+      cancelled_by_buyer: "Cancelled by buyer",
+      cancelled_by_seller: "Cancelled by seller",
+      expired_no_show: "Expired, no show",
+      failed_stock_mismatch: "Failed, stock mismatch",
+    },
+    errorNotFound: "No active pickup matches that code. Check the full code and try again.",
+    errorInvalidState:
+      "This reservation is no longer active. The queue has been refreshed with its latest state.",
+    errorForbidden: "Only a manager or owner can confirm this pickup.",
+    errorNetwork: "The pickup was not confirmed. Check your connection and retry the same action.",
+    errorFallback: "The pickup was not confirmed. Refresh the queue before trying again.",
+    reportMismatchButton: "Report stock mismatch",
+    mismatchTitle: "Pause availability for a stock mismatch",
+    mismatchSafetyHint:
+      "Submitting asks the store service to pause the offer and fail its active reservations.",
+    observedQuantityLabel: "Observed quantity",
+    mismatchReasonLabel: "Reason for the mismatch",
+    mismatchReasonRequired: "Enter a reason before reporting this mismatch.",
+    mismatchSubmitButton: "Report mismatch and pause offer",
+    mismatchSubmitting: "Reporting mismatch...",
+    mismatchAwaitingConfirmation: "Waiting for the store service to confirm the pause.",
+    mismatchConfirmed: "Offer paused after the stock mismatch was confirmed.",
+    mismatchNetworkError:
+      "The mismatch was not confirmed. Check your connection and retry the same action.",
+    mismatchInvalidStateError:
+      "The offer changed before this report was accepted. No local pause was applied.",
+    mismatchForbiddenError: "Only a manager or owner can report this stock mismatch.",
+    mismatchNotFoundError: "This offer could not be found. Refresh the pickup queue.",
+    mismatchErrorFallback: "The mismatch was not confirmed. No local pause was applied.",
+    recountGuidance:
+      "The affected stock remains allocated while the exception is open. Start a physical count to reconcile it.",
+    recountButton: "Start recount",
+  },
 };
 
 export const sellerRu: SellerTranslations = {
@@ -380,6 +492,7 @@ export const sellerRu: SellerTranslations = {
     recordCountButton: "Записать пересчёт",
     publishButton: "Новое предложение",
     offersButton: "Смотреть предложения",
+    pickupsButton: "Очередь самовывоза",
   },
   count: {
     title: "Сессия пересчёта",
@@ -493,5 +606,62 @@ export const sellerRu: SellerTranslations = {
     pausing: "Приостановка...",
     pausedLabel: "Приостановлено",
     pauseErrorFallback: "Не удалось приостановить это предложение.",
+  },
+  pickups: {
+    title: "Очередь самовывоза",
+    loading: "Загрузка самовывозов...",
+    loadError: "Не удалось загрузить самовывозы. Проверьте соединение и повторите.",
+    loadForbidden: "У вас больше нет доступа к очереди самовывоза этого магазина.",
+    loadNotFound: "Очередь самовывоза этого магазина не найдена.",
+    loadErrorFallback: "Не удалось загрузить самовывозы. Обновите и повторите.",
+    retry: "Повторить",
+    pendingSegment: (n) => `Ожидают (${n})`,
+    terminalSegment: (n) => `Завершены (${n})`,
+    emptyPending: "Нет активных заказов, ожидающих выдачи.",
+    emptyTerminal: "Завершённых самовывозов пока нет.",
+    fulfillTitle: "Выдача по коду",
+    codePrivacyHint: "Введите полный код покупателя. Он отправляется только для этой проверки выдачи.",
+    codePlaceholder: "Полный код самовывоза",
+    fulfillButton: "Подтвердить выдачу",
+    fulfilling: "Подтверждение выдачи...",
+    fulfilledSuccess: "Выдача подтверждена сервисом магазина.",
+    managerOnly: "Выдачу подтверждают менеджеры и владельцы. Очередь доступна для просмотра.",
+    codeHint: (hint) => `Код заканчивается на ${hint}`,
+    pickupWindow: (start, end) => `Самовывоз с ${start} до ${end}`,
+    statusLabel: {
+      held: "Ожидает выдачи",
+      fulfilled: "Выдано",
+      cancelled_by_buyer: "Отменено покупателем",
+      cancelled_by_seller: "Отменено продавцом",
+      expired_no_show: "Срок истёк, покупатель не пришёл",
+      failed_stock_mismatch: "Не выдано из-за расхождения остатков",
+    },
+    errorNotFound: "Активный самовывоз с таким кодом не найден. Проверьте полный код и повторите.",
+    errorInvalidState:
+      "Бронирование больше не активно. Очередь обновлена до актуального состояния.",
+    errorForbidden: "Подтвердить эту выдачу может только менеджер или владелец.",
+    errorNetwork: "Выдача не подтверждена. Проверьте соединение и повторите то же действие.",
+    errorFallback: "Выдача не подтверждена. Обновите очередь перед повторной попыткой.",
+    reportMismatchButton: "Сообщить о расхождении",
+    mismatchTitle: "Приостановить доступность из-за расхождения",
+    mismatchSafetyHint:
+      "После отправки сервис магазина приостановит предложение и отметит активные бронирования как невыполненные.",
+    observedQuantityLabel: "Фактическое количество",
+    mismatchReasonLabel: "Причина расхождения",
+    mismatchReasonRequired: "Укажите причину перед отправкой расхождения.",
+    mismatchSubmitButton: "Сообщить и приостановить предложение",
+    mismatchSubmitting: "Отправка расхождения...",
+    mismatchAwaitingConfirmation: "Ожидаем подтверждение приостановки от сервиса магазина.",
+    mismatchConfirmed: "Предложение приостановлено после подтверждения расхождения.",
+    mismatchNetworkError:
+      "Расхождение не подтверждено. Проверьте соединение и повторите то же действие.",
+    mismatchInvalidStateError:
+      "Предложение изменилось до принятия отчёта. Локальная приостановка не применялась.",
+    mismatchForbiddenError: "Сообщить о расхождении может только менеджер или владелец.",
+    mismatchNotFoundError: "Предложение не найдено. Обновите очередь самовывоза.",
+    mismatchErrorFallback: "Расхождение не подтверждено. Локальная приостановка не применялась.",
+    recountGuidance:
+      "Затронутый остаток остаётся выделенным, пока исключение открыто. Запустите физический пересчёт для сверки.",
+    recountButton: "Начать пересчёт",
   },
 };

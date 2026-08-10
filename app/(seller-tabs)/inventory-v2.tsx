@@ -32,6 +32,10 @@ export default function InventoryV2Screen() {
     router.push("/(seller-tabs)/offers-v2");
   };
 
+  const goToPickups = () => {
+    router.push("/(seller-tabs)/orders");
+  };
+
   return (
     <AccessGateV2 access={access} screenTestId="inventory-v2">
       <ScreenScrollView contentContainerStyle={styles.container} testID="inventory-v2-screen">
@@ -72,6 +76,17 @@ export default function InventoryV2Screen() {
             testID="inventory-v2-offers-button"
           >
             <Text style={styles.secondaryButtonText}>{t.sellerV2.inventory.offersButton}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel={t.sellerV2.inventory.pickupsButton}
+            accessibilityRole="button"
+            onPress={goToPickups}
+            style={styles.secondaryButton}
+            testID="inventory-v2-pickups-button"
+          >
+            <Text style={styles.secondaryButtonText}>
+              {t.sellerV2.inventory.pickupsButton}
+            </Text>
           </Pressable>
         </View>
 
@@ -133,6 +148,7 @@ export default function InventoryV2Screen() {
 const styles = StyleSheet.create({
   actionsRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
     marginBottom: 16,
   },
@@ -196,7 +212,8 @@ const styles = StyleSheet.create({
     borderColor: "#16C79A",
     borderRadius: 12,
     borderWidth: 1,
-    flex: 1,
+    flexBasis: "46%",
+    flexGrow: 1,
     paddingVertical: 12,
   },
   secondaryButtonText: {

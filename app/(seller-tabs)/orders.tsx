@@ -10,10 +10,13 @@ import { useMemo, useState } from "react";
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { OrderCard } from "@/components/seller/OrderCard";
+import { PickupQueueV2 } from "@/components/seller/PickupQueueV2";
 import { Scanner } from "@/components/seller/Scanner";
 import { useT } from "@/i18n";
 import { useLocale } from "@/lib/locale-store";
 import { useOrders } from "@/lib/seller/orders-store";
+import { useOptionalSellerAuth } from "@/lib/seller/auth-context";
+import { useStoreMembershipV2 } from "@/lib/seller/store-context-v2";
 
 function formatRefreshTime(isoTime: string, locale: "en" | "ru") {
   return new Intl.DateTimeFormat(locale === "ru" ? "ru-RU" : "en-US", {
@@ -23,6 +26,29 @@ function formatRefreshTime(isoTime: string, locale: "en" | "ru") {
 }
 
 export default function OrdersScreen() {
+  const access = useStoreMembershipV2();
+  const sellerAuth = useOptionalSellerAuthSnapshot();
+
+  if (
+    access.access !== "unavailable" &&
+    (!sellerAuth.available || sellerAuth.businessType === "shop")
+  ) {
+    return <PickupQueueV2 access={access} />;
+  }
+
+  return <LegacyOrdersScreen />;
+}
+
+function useOptionalSellerAuthSnapshot() {
+  const auth = useOptionalSellerAuth();
+
+  return {
+    available: auth !== null,
+    businessType: auth?.sellerProfile?.businessType ?? null,
+  };
+}
+
+function LegacyOrdersScreen() {
   const t = useT();
   const locale = useLocale();
   const {
