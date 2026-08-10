@@ -544,7 +544,7 @@ d("Supabase facades against the local stack", () => {
 
   describe("harness coverage", () => {
     it("documents every skipped conformance block with a reason", () => {
-      expect(SKIPPED_BLOCKS.size).toBe(12);
+      expect(SKIPPED_BLOCKS.size).toBe(13);
       for (const [name, reason] of SKIPPED_BLOCKS) {
         expect(name.length).toBeGreaterThan(0);
         expect(reason.length).toBeGreaterThan(20);
