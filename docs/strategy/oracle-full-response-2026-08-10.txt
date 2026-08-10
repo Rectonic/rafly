@@ -1,0 +1,1548 @@
+Used the exact requested model: **GPT-5.6 Sol with Pro effort**. The consultation ran for 16m 41s.
+
+The Oracle CLI could not create its session directory under the enforced read-only sandbox, so I used the Oracle skill’s documented manual-paste fallback in the signed-in ChatGPT browser. No repository files were edited or committed.
+
+## My one-page synthesis
+
+The evidence does not yet support “video inventory” as LastBite’s primary commercial wedge. It supports a **paid Store Control Sprint**, with video tested as one possible way to make onboarding faster.
+
+The core shop problem is not simply missing software or missing stock counts. It is that nobody owns the whole operational setup: catalog cleanup, receiving, counts, expiry, supplier coordination, staff routines, exceptions, and reliable follow-through. Video can collect more evidence, but it cannot fix weak operating discipline by itself.
+
+### Ranked by expected impact for two founders
+
+| Rank | Bet | Expected impact | What to do |
+|---:|---|---|---|
+| 1 | Paid Store Control Sprint | Highest | Sell a defined 7–10 day result for the top 100–300 SKUs and ask five owners for a material deposit. |
+| 2 | Barcode/CSV catalog cleanup and alias review | Very high | Establish reliable product identity before analytics, reordering, or video inference. |
+| 3 | Telegram-first exception summary | High | Manually send only actionable issues: receiving, expiry, recounts, supplier actions, reorder drafts, offer mismatches. |
+| 4 | Reviewed receiving and expiry workflows | High | Test invoice OCR against manual entry and maintain expiry only for selected high-risk categories. |
+| 5 | Existing verified-offer loop | High but narrower | Preserve physical allocation, manager approval, atomic reservation, closeout, and mismatch recovery. |
+| 6 | Supplier/return/display audit | Potentially high | Offer it as a service add-on because the transcript suggests visible cash opportunities, but repeatability is unknown. |
+| 7 | Video-assisted onboarding | Conditional | Compare two 100-SKU captures against barcode/manual census before building integration or custom models. |
+| 8 | Checkout video | Research only | Test the review burden and privacy proposition with Wizard-of-Oz events; do not treat detected handling as a sale. |
+
+The fastest sequence is:
+
+1. Pitch five owners using a 60–90 second film plus a before/after Store Control Sprint demo.
+2. Require one signed scope and material deposit before expanding product scope.
+3. Run two 100-SKU comparisons. Video must reduce total time to a reviewed draft by at least 25% in one store, be no slower in the other, and produce zero silently accepted wrong merges.
+4. Test 30 adversarial checkout events before any real integration. Require zero unauthorized movements, zero applied movements for pick-and-replace, median review below 20 seconds, and no “sale detected” claim without trusted POS evidence.
+5. Run one or two paid operational pilots while camera research remains separately authorized and isolated.
+
+The safe video chain is:
+
+```text
+Authorized capture
+→ InventoryObservation
+→ identity/count/removal proposal
+→ staff or operator review
+→ manager approval, correction, or rejection
+→ append-only StockMovement, if approved
+→ balance and confidence recalculation
+→ allocation revalidation
+→ offer unchanged or paused for mismatch
+```
+
+The best owner-facing demo is a **before/after Store Control Sprint**. Lead with catalog cleanup, expiry action, supplier opportunities, and owner control; show video as one evidence channel among barcode, CSV, OCR, and physical count.
+
+The best investor/partner demo is a **three-shop interactive showroom**:
+
+- no-POS verified-offer shop;
+- incomplete-POS systematization shop;
+- separately labeled camera research lab.
+
+For the priority checkout scene, the honest copy is:
+
+> Possible physical removal — payment unknown. Manager review required.
+
+Only after the manager approves should the demo animate `balance 7 → 6`. If an allocated unit becomes unsupported, pause the offer; do not complete a reservation from camera evidence.
+
+Do not build during the next twelve weeks:
+
+- a custom vision model;
+- permanent CCTV infrastructure;
+- automatic checkout decrement;
+- payment or fiscal inference;
+- facial or worker identification;
+- a generic POS integration framework;
+- autonomous ordering or pricing;
+- broad analytics;
+- a camera-dependent marketplace.
+
+The stop rule is important: if video does not beat barcode/manual onboarding on total verified time—or checkout review costs more than a three-minute closeout—remove it from the product roadmap rather than training a larger model.
+
+## Oracle’s full response
+
+The text below is Oracle’s complete substantive response. Browser-only “Pasted text” UI markers were removed; wording is otherwise preserved.
+
+---
+
+# LastBite Video Evidence and Retail Operations Strategy
+
+## Executive decision
+
+**GO:** Position LastBite as a service-led retail-control and verified-offer system for small grocery and convenience shops. The initial commercial wedge should be a paid, done-for-you store systematization sprint: clean the most important 100–300 SKUs, establish reliable receiving and counting, surface expiry and supplier exceptions, produce simple owner summaries, and activate only auditable, seller-approved offers.
+
+**CONDITIONAL GO:** Use video as an optional evidence-capture accelerator for onboarding and as a compelling demonstration of the observation-to-approval chain. Begin with prerecorded, staged, or Wizard-of-Oz detection; then run separately authorized after-hours research only if video materially reduces operator time.
+
+**NO-GO:** Do not market, design, or implement video as autonomous stock truth. Do not let a camera silently decrement inventory, infer payment, complete a reservation, publish an offer, change a price, accuse staff or customers of shrink, or write to fiscal, marked-goods, supplier-order, or compliance systems.
+
+The strongest source-supported thesis is that the underlying problem is not a lack of software alone. It is incomplete setup, bad product data, weak operating discipline, manual supplier work, expiry losses, and the absence of someone who implements the system “pod klyuch.” The source therefore supports a field-service-backed operating layer, not a camera-first inventory company.
+
+The evidence remains narrow. The strongest direct store evidence is one ASR-derived, Uzbek/Russian code-switched conversation, and the beta context explicitly says current evidence is not market validation. Willingness to pay, staff maintenance, camera acceptance, buyer demand, and field economics are still hypotheses.
+
+### Evidence status
+
+| Label | What it means for this recommendation |
+|---|---|
+| Evidence | The current beta has a defined observation, proposal, approval, append-only movement, balance, allocation, offer, reservation, and audit model. One store conversation strongly supports turnkey operational cleanup. |
+| Assumption | The founders can use existing phones, a sample shelf, staged inventory, and low-code or current beta UI to run the first demonstrations. |
+| Hypothesis | Video can produce a verified draft faster than barcode/manual census; owners value it enough to pay; staff and customers accept the camera workflow. |
+| Deferred | Any camera experiment inside a real shop’s live workflow, particularly customer-facing checkout capture. |
+| Expensive | Permanent cameras, custom model training, multi-camera tracking, broad video retention, real-time checkout inference, and autonomous stock changes. |
+
+The current contract is explicit: camera output is an observation or count-task input, never stock truth or a direct movement; all stock-affecting actions require authorized human review. Camera work is excluded from the present 30-day pilot and requires separate future authorization.
+
+# A. Concrete demo formats that sell the video-detection story
+
+The central line in every demo should be:
+
+> “The camera notices. LastBite prepares evidence. Your manager decides.”
+
+Do not use “automatic inventory,” “AI cashier,” “the camera knows what was sold,” or “real-time stock truth.”
+
+## 1. Sixty-to-ninety-second founder phone-shot film
+
+### Audience and promise
+
+Small-store owners reached through Telegram, WhatsApp, direct introductions, or an in-person pitch.
+
+Promise:
+
+> “LastBite helps make your shop controllable without closing it and without replacing your current POS. Video can prepare a draft, but nothing changes until you approve it.”
+
+### Setup
+
+Use one real or staged shelf with 8–12 recognizable packaged products, one phone filming, and a second phone showing the LastBite review screen. Use natural shop lighting rather than a studio so the result feels credible.
+
+### Script
+
+**0–8 seconds — the problem**
+
+Show the crowded shelf.
+
+Narration:
+
+> “You have hundreds or thousands of products, but the real stock is often in staff memory, notebooks, or an incomplete system.”
+
+**8–18 seconds — capture**
+
+A founder films one shelf section. A person removes one item.
+
+On-screen label:
+
+> Video capture — evidence only
+
+**18–32 seconds — model output**
+
+Cut to a review card:
+
+```text
+Possible removal
+Candidate: Coca-Cola 1 L
+Estimated quantity: 1
+Confidence: 84%
+Payment: unknown
+Status: needs manager review
+```
+
+**32–47 seconds — explicit trust boundary**
+
+The manager taps the evidence thumbnail, sees the short clip, selects the product, corrects quantity if needed, and taps:
+
+> Approve inventory adjustment
+
+Narration:
+
+> “The camera did not change stock. The manager reviewed and authorized the adjustment.”
+
+**47–60 seconds — controlled state transition**
+
+Show:
+
+```text
+Approved movement: -1
+Balance recalculated: 7 → 6
+Audit entry created
+```
+
+Then show the offer allocation separately:
+
+> LastBite allocation: 2 units — still valid
+
+**60–72 seconds — mismatch scenario**
+
+Briefly show a second card:
+
+> Possible removal from reserved allocation
+
+Manager confirms a mismatch. The affected offer changes to:
+
+> Paused — recount required
+
+**72–85 seconds — outcome and CTA**
+
+Show an owner summary:
+
+```text
+3 products need review
+2 near-expiry items
+1 offer ready for approval
+```
+
+Exact CTA:
+
+> “Give us one after-hours session and 100 products. We will return a reviewed draft and measure whether it saves time. Continue only if the result is useful.”
+
+### Live versus prerecorded
+
+The shelf action and most footage may be prerecorded. The review, approval, audit, balance recalculation, and pause flow should run live against a staged environment. Detection may initially be Wizard-of-Oz, but label it:
+
+> Staged detection for demo
+
+### Visible UI states
+
+`capture_started`, `analysis_pending`, `needs_review`, `identity_ambiguous`, `approved`, `movement_applied`, `balance_recalculated`, `allocation_checked`, `offer_paused`.
+
+### Production effort
+
+Assumption: 6–10 founder-hours over one day, using current phones and a staged beta environment. No custom vision implementation is required.
+
+### Failure fallback
+
+Prepare a QR code or button that opens the predetermined review card. If model output fails during filming, the story remains honest because the card is explicitly described as staged.
+
+### Signal tested
+
+Whether owners:
+
+- understand and accept the human-review boundary;
+- agree to an after-hours 100-SKU test;
+- provide shop access;
+- ask about business results rather than model accuracy;
+- accept a deposit-based pilot conversation.
+
+## 2. Portable sales-booth demo with a shelf and two phones
+
+### Audience and promise
+
+Store owners, POS vendors, supplier representatives, accelerators, and local business events.
+
+Promise:
+
+> “Try the system yourself. The camera will propose what happened; you decide whether anything changes.”
+
+### Physical setup
+
+Use a portable shelf or crate with 12–20 products. Mount one phone looking at the front of the shelf and one at a diagonal angle. A tablet or laptop displays the LastBite review queue.
+
+Place three cards beside the shelf:
+
+- Take one item
+- Take it, then put it back
+- Restock two items
+
+### Beat-by-beat experience
+
+1. Visitor chooses one card and performs the action.
+2. The screen shows `Analyzing`.
+3. A review card appears with an event classification.
+4. The visitor opens the evidence clip.
+5. The visitor chooses:
+   - approve;
+   - correct product or quantity;
+   - reject as no change;
+   - send to physical count.
+6. The event timeline shows whether a stock movement was created.
+7. A second panel shows that public offer availability changes only after authorized approval and allocation checks.
+8. The facilitator demonstrates a duplicate replay and shows:
+   - `Duplicate suppressed`;
+   - no second proposal;
+   - no second movement.
+
+### Live versus prerecorded
+
+The physical action and UI should be live. In the first version, detection can be Wizard-of-Oz: a facilitator chooses the matching event from a hidden control screen. The visible UI must display:
+
+> Demo mode — event classification staged
+
+The approval, idempotency, ledger, and allocation logic should be genuine.
+
+### Visible UI states
+
+- `possible_removal`
+- `possible_replacement`
+- `possible_restock`
+- `ambiguous_identity`
+- `duplicate_suppressed`
+- `pending_manager_review`
+- `approved_no_change`
+- `adjustment_applied`
+- `offer_unchanged`
+- `offer_paused`
+
+### Production effort
+
+Assumption: 2–3 founder-days for a credible booth, including props, a stable demo dataset, rehearsals, and fallback controls.
+
+### Failure fallback
+
+A facilitator can trigger one of three scripted events. The system should also have a static “replay last successful event” function.
+
+### Exact CTA
+
+> “Try all three actions. If the review queue feels useful rather than intrusive, schedule a paid store-control audit for your top 100 products.”
+
+### Signal tested
+
+- Does the owner trust the approval boundary?
+- Does the owner find the review card understandable?
+- Is the owner comfortable with two cameras or phones?
+- How many events before the owner finds the review queue annoying?
+- Will the owner schedule and pay for the broader operational sprint?
+
+## 3. Self-guided web showroom with three sample shops
+
+### Audience and promise
+
+Investors, strategic partners, POS vendors, retailers who are not ready for an in-person visit, and owners reached through a shared link.
+
+Promise:
+
+> “See how LastBite works for three different levels of shop digitization.”
+
+### The three staged shops
+
+**Shop 1: Mahalla Mini Market — no reliable POS**
+
+Core flow:
+
+- physical set-aside allocation;
+- daily closeout;
+- seller-approved verified offer;
+- reservation and pickup;
+- mismatch pauses the offer.
+
+The camera is not presented as full-store inventory. An optional photo or short shelf clip is evidence for a count task only.
+
+**Shop 2: Kasaba Grocery — incomplete POS and messy catalog**
+
+Core flow:
+
+- barcode-assisted census;
+- CSV import;
+- multilingual alias review;
+- invoice OCR draft;
+- expiry watchlist;
+- supplier follow-up;
+- Telegram owner summary.
+
+A short onboarding video proposes products and visible counts, but the operator reviews every row.
+
+**Shop 3: After-Hours Research Lab — camera evaluation**
+
+Core flow:
+
+- explicit research authorization;
+- capture session;
+- possible removal event;
+- evidence card;
+- manager approval or rejection;
+- append-only adjustment;
+- balance and offer-allocation check.
+
+This shop should display a persistent banner:
+
+> CAMERA RESEARCH — NOT LIVE STOCK TRUTH
+
+### Self-guided script
+
+Each shop uses the same five-step navigation:
+
+1. Store reality
+2. Evidence collected
+3. Human review
+4. Authorized action
+5. Owner or buyer outcome
+
+Include a “show me a failure” button. Examples:
+
+- product identity ambiguous;
+- footage occluded;
+- staff forgets closeout;
+- POS import incomplete;
+- reserved unit missing.
+
+### Live versus prerecorded
+
+The web UI and state transitions should be interactive. Video clips and data are staged. The site must explicitly distinguish:
+
+- live interaction;
+- prerecorded evidence;
+- synthetic shop data;
+- Wizard-of-Oz event classification.
+
+### Visible UI states
+
+In addition to review states, show:
+
+- `source_data_incomplete`
+- `confidence_low`
+- `physical_count_required`
+- `offer_requires_allocation`
+- `reservation_held`
+- `pickup_fulfilled`
+- `failed_stock_mismatch`
+
+### Production effort
+
+Assumption: 4–6 founder-days for a polished but narrow showroom using existing screens and mocked shop data.
+
+### Failure fallback
+
+Every interactive flow should have a static storyboard fallback. The “camera” section can replay a deterministic recorded event.
+
+### Exact CTA
+
+> “Choose the shop closest to yours and request the matching pilot. Camera research is optional and requires a separate consent process.”
+
+### Signal tested
+
+- Which shop archetype receives the most interest?
+- Which feature triggers the pilot request?
+- Do users choose catalog cleanup, verified offers, expiry control, or video?
+- Do partners understand that LastBite complements existing POS/fiscal tools rather than replacing them?
+- Does the visitor finish the trust-chain flow or leave at the camera step?
+
+## 4. In-store after-hours staged trial
+
+### Audience and promise
+
+A genuinely interested owner and the staff who would use the system.
+
+Promise:
+
+> “We will test the workflow after closing, with no customers, no hidden stock writes, and no effect on your live business.”
+
+### Setup
+
+Use one actual store zone after closing. Obtain explicit written authorization for the staged session. Disable audio. Mark the camera field of view and exclude areas not required for the trial.
+
+Use two phones or cameras:
+
+- one shelf-facing;
+- one diagonal or counter-zone view.
+
+Create a ground-truth sheet with 30 scripted events:
+
+- 8 simple one-item removals;
+- 5 two-item removals;
+- 5 pick-and-replace events;
+- 4 similar-package substitutions;
+- 3 restocks;
+- 2 body-occluded events;
+- 2 duplicate replay tests;
+- 1 reserved-unit scenario.
+
+### Trial script
+
+1. Explain purpose, retention, and deletion.
+2. Staff perform the scripted events in randomized order.
+3. The model or Wizard-of-Oz operator creates review cards.
+4. A staff member records initial interpretation.
+5. A manager approves, corrects, or rejects.
+6. Physical ground truth is compared with the final ledger.
+7. Staff answer whether the review process reduced or increased work.
+8. All footage is deleted or retained according to the agreed research policy.
+
+### Live versus prerecorded
+
+The store actions are live. Initial detection may be Wizard-of-Oz, but the review workflow must be real. The research environment must be isolated from live inventory and public offers.
+
+### Visible UI states
+
+Show the full session lifecycle:
+
+```text
+authorized
+→ capturing
+→ uploaded
+→ analyzed
+→ proposal_pending
+→ corrected | rejected | approved
+→ research_reconciled
+→ retained | deleted
+```
+
+### Production effort
+
+Assumption: one preparation day, one evening session, and half a day for reconciliation and interviews.
+
+### Failure fallback
+
+Use manual timestamp markers during filming. If automatic detection fails, an operator manually creates the proposed event from the corresponding clip. This still tests the review workflow and staff acceptance.
+
+### Exact CTA
+
+> “Approve a separate two-week research test only if tonight’s workflow saves review time, avoids false accusations, and creates no unauthorized stock changes.”
+
+### Signal tested
+
+- Real-shop image quality and occlusion;
+- staff comfort;
+- review time;
+- manager willingness to authorize adjustments;
+- whether camera review is better than a three-minute closeout;
+- whether the workflow can remain separate from employee surveillance.
+
+## 5. “Before and after” Store Control Sprint walkthrough
+
+### Audience and promise
+
+This is the strongest sales format for store owners because it leads with economic and operational outcomes rather than technology.
+
+Promise:
+
+> “We make the important part of your shop controllable in 7–10 days without replacing your POS or closing the store.”
+
+### Setup
+
+Create a sample shop with:
+
+- 150 SKU rows;
+- duplicate and missing identities;
+- ten sample invoices;
+- 30 expiry-sensitive items;
+- ten suppliers;
+- one verified-offer allocation;
+- several staged video observations.
+
+### Script
+
+**Before**
+
+Show the owner’s starting reality:
+
+- duplicate products;
+- missing barcodes;
+- unknown supplier;
+- unrecorded receiving;
+- near-expiry stock;
+- one offer with uncertain availability.
+
+**During the sprint**
+
+Show four evidence channels:
+
+- barcode census;
+- CSV/POS export;
+- reviewed invoice OCR;
+- optional shelf video.
+
+The key point is that all four feed the same review and exception layer.
+
+**After**
+
+Show a concise owner summary:
+
+```text
+5 products need identity review
+3 products expire within 7 days
+2 reorder drafts ready
+1 supplier return opportunity
+1 verified offer ready for approval
+```
+
+Demonstrate the video event, but only as one input among several.
+
+### Live versus prerecorded
+
+The dashboard and approval flows should be live. The underlying sample data and video can be prepared. The founder should intentionally demonstrate one model failure and correct it.
+
+### Visible UI states
+
+- `catalog_before`
+- `staged_source_rows`
+- `aliases_pending`
+- `receiving_needs_review`
+- `expiry_action_due`
+- `owner_summary`
+- `offer_ready_for_approval`
+- `camera_observation_pending`
+
+### Production effort
+
+Assumption: 3–4 founder-days, mostly reusable across direct sales, the website, and investor meetings.
+
+### Failure fallback
+
+A static before/after report can replace the live dashboard. The camera step may be a deterministic replay.
+
+### Exact CTA
+
+> “Reserve a 7–10 day Store Control Sprint and place a material deposit against the agreed deliverables. We will begin with your top 100–300 products, not the whole shop.”
+
+### Signal tested
+
+This tests the most important commercial question:
+
+- Will the owner pay for the operational result?
+- Which deliverable creates willingness to pay?
+- Is video a purchase driver or merely a curiosity?
+- Does supplier, expiry, or ordering value outperform the camera story?
+
+## 6. Investor or partner “trust-chain replay”
+
+### Audience and promise
+
+Investors, POS vendors, fiscal-system partners, retailers, and potential implementation partners.
+
+Promise:
+
+> “LastBite converts uncertain physical evidence into controlled, auditable actions without pretending that AI is the source of truth.”
+
+### Setup
+
+Use a four-panel screen:
+
+- live or recorded shelf video;
+- model event timeline;
+- private inventory ledger and review card;
+- redacted public marketplace projection.
+
+### Script
+
+1. A customer or staff actor removes an item.
+2. The video pipeline creates:
+   - `possible_removal`;
+   - candidate SKU;
+   - quantity range;
+   - confidence;
+   - payment unknown.
+3. The manager opens the clip and rejects it because the product was replaced.
+4. No movement is created.
+5. A second event is approved.
+6. An append-only movement appears.
+7. Balance and confidence are recalculated.
+8. Allocation remains valid, or the offer pauses if the approved result conflicts with allocated stock.
+9. The public DTO still exposes only approved public availability and allowed offer data.
+10. A duplicate replay is suppressed.
+
+### Live versus prerecorded
+
+Use prerecorded physical events for reliability. The review, ledger, allocation, offer pause, audit log, and public projection should execute live.
+
+### Visible UI states
+
+The most important visual is the difference between:
+
+> Observation exists
+
+and:
+
+> Authorized movement applied
+
+Use different panels, not merely different colors.
+
+### Production effort
+
+Assumption: 4–5 founder-days if the current trust-chain APIs already exist; more if a separate demo façade must be built.
+
+### Failure fallback
+
+Use a deterministic event replay with signed timestamps and a “replay next event” button.
+
+### Exact CTA
+
+> “Sponsor or host one separately authorized research pilot with a defined consent, retention, accuracy, and no-automatic-write contract.”
+
+### Signal tested
+
+- whether partners value LastBite’s trust and audit model;
+- whether they will provide integrations, pilot access, or funding;
+- whether the architecture appears credible rather than theatrical;
+- whether the company can explain failure states without losing the audience.
+
+### Best demo choices
+
+**Best store-owner sales demo:** the Before and After Store Control Sprint walkthrough. It sells control, time savings, expiry action, supplier value, and verified offers. Video is presented as an accelerator rather than the reason to buy.
+
+**Best investor or partner demo:** the three-shop self-guided web showroom, with the trust-chain replay as its central interactive sequence. It shows market breadth while preserving the distinction between no-POS verified offers, messy-POS cleanup, and future camera research.
+
+# B. Product portfolio ranked by shop pain versus build cost
+
+The ranking below treats the broad “Uzbek small-shop market” conclusion as a hypothesis. Evidence strength is relative to these three sources, not proof of market size or willingness to pay.
+
+| Rank | Product or job | Primary buyer/user | Evidence strength | Pain severity | Frequency | Time to value | Build cost for two people | Ongoing field labor | Trustworthy-data dependency | Privacy/compliance risk | Monetization | Cheapest proof | Verdict |
+|---:|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | Store Systematization Sprint: top-SKU cleanup, workflows, staff SOP, owner control | Owner; field operator | Strongest in source, but one-store evidence | Very high | Setup plus recurring maintenance | Same week | Low software; high service design | High initially | Medium | Low–medium | Fixed setup fee; monthly support | Ask five stores for a defined paid 7–10 day pilot and deposit | Now |
+| 2 | Barcode-assisted census and SKU normalization | Operator; staff | Strong | High | Onboarding and periodic recount | Immediate | Low with off-the-shelf scanning | Medium | Low–medium | Low | Included in setup; per-audit fee | Scan and clean 100 SKUs in two stores | Now |
+| 3 | CSV/POS staging, alias approval, and conflict queue | Operator; manager | Strong from beta contract | High where exports exist | Initial and repeated imports | 1–3 days | Medium | Medium until mappings repeat | Medium | Medium for marked/fiscal fields | Setup plus supported-adapter fee | Export, map, reimport, and reconcile the same file twice | Now |
+| 4 | Exception-first dashboard and Telegram owner summary | Owner; manager | Medium–strong | High if it drives action | Daily or weekly | One day after usable data exists | Low | Low | Medium | Low | Monthly support/subscription | Manually send summaries for 14 days | Now |
+| 5 | Verified-offer workflow with physical allocation | Owner, staff, buyer | Strong contract evidence; weak market validation | Medium–high for expiry recovery | Daily where offers exist | Days | Already core beta work | Medium | Low in set-aside mode; higher in POS mode | Low–medium | Subscription, pilot fee, later transaction model only if validated | One seven-day set-aside loop with terminal reservations | Now, pilot only |
+| 6 | Reviewed invoice OCR and receiving | Receiver; manager | Medium | High where receiving is manual | Every delivery | Same delivery | Medium | Low after setup | Medium | Medium for marked or fiscal interpretation | Add-on or monthly support | Ten invoices entered manually versus OCR plus review | Next |
+| 7 | Expiry watchlist and deterministic action tasks | Manager; staff | Medium–strong | High in selected categories | Daily or weekly | 1–7 days | Low–medium | Medium | High at batch level | Medium | Monthly module; recovered-value service | Track 30–50 high-risk SKUs and measure action | Next |
+| 8 | Supplier, return, fridge, shelf, and display CRM | Owner; operator | Strong in one transcript, lower backlog score | Medium–high where opportunities exist | Weekly or monthly | Potentially immediate | Low | High and relationship-driven | Low | Medium; some categories sensitive | Audit/support fee; transparent success fee where appropriate | Map ten suppliers and attempt one real action | Now as service add-on, not core SaaS |
+| 9 | Rules-based reorder drafts | Owner; manager | Medium | High but data-dependent | Daily or weekly | 1–2 weeks | Medium | Low–medium | Very high | Low–medium | Monthly support/subscription | Shadow owner orders for 30–50 SKUs for 7–14 days | Next |
+| 10 | Set-aside photo evidence | Staff; manager | Weak–medium | Low–medium | Publication and closeout | Immediate | Low | Repeated staff task | Low | Medium background privacy risk | Included in verified-offer tier | Optional photo in one set-aside pilot | Later |
+| 11 | Shelf-to-spreadsheet video digitization | Operator; onboarding team | Weak | Potentially high | Onboarding and recount | Unknown | Medium off-the-shelf; high if customized | Potentially high review labor | Medium | Medium–high | Setup premium if it saves time | Film 100 SKUs and compare reviewed time with barcode/manual census | Research only |
+| 12 | Discrepancy and shelf-gap alerts | Staff; manager | Weak | Medium | Daily | Unknown | High | Medium review and camera maintenance | High | Medium–high | Premium operational module | Shadow suggestions against physical ground truth | Research only |
+| 13 | Checkout video capture and possible-removal review | Manager; staff | Very weak | Unproven; could be high or negative | Every checkout event | Unknown | High technically and operationally | Potentially very high | Very high | Very high | Unknown | Thirty staged events, then 100 after-hours Wizard-of-Oz events | Research only |
+| 14 | Full POS replacement, autonomous ordering/pricing, or compliance writes | Owner | Sources argue against it | Not relevant to current wedge | Continuous | Long | Very high | High support burden | Extreme | Extreme | Unclear | Do not prototype | Reject |
+
+The Now portfolio aligns with the current beta’s manual entry, physical counts, reviewed adjustments, minimal receiving, confidence, exceptions, expiry evidence, seller-approved offers, and operator support. The 90-day conditional scope already places OCR, expiry suggestions, and reorder drafts behind data and timing gates.
+
+The camera evidence is much weaker. The experiment backlog explicitly classifies shelf-gap, traffic-zone, and related camera work as future vision work requiring separate approval, privacy clarity, and reliable catalog identity.
+
+## Seductive distractions
+
+The following products are attractive because they create dramatic demos, not because the sources establish commercial value:
+
+- “AI knows every item on every shelf.”
+- Automatic checkout inventory decrement.
+- Custom barcode scanning technology.
+- Permanent multi-camera installations before an operator-led phone test.
+- Facial recognition, customer identity linkage, or staff productivity scoring.
+- A generic integration framework for every POS.
+- Autonomous supplier ordering.
+- AI demand forecasting before sales and receiving are complete.
+- Dynamic pricing without trusted reference prices.
+- A broad analytics dashboard before the exception workflow changes owner behavior.
+- Autonomous Asl Belgisi, fiscal, tax, or marking decisions.
+
+The current documents explicitly exclude full POS replacement, generic POS frameworks, autonomous ordering, AI forecasting, autonomous pricing, camera stock truth, facial recognition, and broad analytics before the data is trustworthy.
+
+# C. Safe integration of video with the existing trust chain
+
+## 1. Non-negotiable architectural rule
+
+Video may produce:
+
+- an `InventoryObservation`;
+- a candidate catalog identity;
+- a possible visible-count estimate;
+- a possible removal, replacement, or restock event;
+- an exception;
+- a physical count task;
+- a `StockAdjustmentProposal`.
+
+Video may not directly produce:
+
+- a `StockMovement`;
+- an offer allocation;
+- a public offer;
+- a price change;
+- a supplier order;
+- a reservation outcome;
+- a fiscal or marked-goods record;
+- an accusation of theft or staff misconduct.
+
+The current source-of-truth rules already say catalog identity is human-approved, OCR is draft data, physical counts are strongest at their timestamp, stock is derived from approved movements, actual payment remains in the existing POS, and camera output is only an observation or count-task input.
+
+## 2. Shared capture-session envelope
+
+Both shelf onboarding and checkout capture should begin with an explicit `CaptureSession`.
+
+| Group | Fields |
+|---|---|
+| Authorization | `authorization_id`, authorizing owner/manager, allowed purpose, allowed zone, validity, research or operational mode |
+| Notice and consent | `notice_version`, staff acknowledgement, customer-notice method, opt-out process, audio enabled/disabled, restricted zones |
+| Store context | `store_id`, `zone_id`, shelf/counter location, local timezone, session timestamps |
+| Source | `source_kind`, device ID, camera/phone model, lens/angle description, operator ID, fixed or handheld |
+| Data handling | Upload mode, store-and-forward flag, encryption status, raw-video retention, evidence-clip retention, deletion status |
+| Integrity | Content hash, session nonce, device clock offset, upload receipt, duplicate-session key |
+| Model provenance | Detection/OCR/barcode model versions, pipeline version, confidence-calibration version |
+| Review requirements | Minimum reviewer role, deadline, expiry behavior, whether partial approval is allowed |
+
+Exact legal consent requirements and retention periods are not established by the sources. They must remain founder decisions subject to local legal review rather than being silently encoded as facts.
+
+## 3. Candidate observation schema
+
+A candidate generated from video should contain:
+
+- `observation_id`
+- `capture_session_id`
+- purpose: `onboarding_shelf` or `checkout_event`
+- evidence timestamps
+- shelf or counter zone
+- candidate `StoreProduct` IDs
+- raw OCR text and barcode, if any
+- proposed Uzbek/Russian aliases
+- visible count estimate
+- count interval, for example 4–6, not just a false point estimate
+- event kind:
+  - `visible_count`
+  - `possible_removal`
+  - `possible_replacement`
+  - `possible_restock`
+  - `unknown_activity`
+- proposed quantity or quantity range
+- identity confidence
+- count or event confidence
+- model and pipeline versions
+- evidence frame references
+- short evidence-clip reference
+- occlusion flags
+- glare, refrigerator, reflection, or low-light flags
+- similar-package ambiguity
+- multiple-person ambiguity
+- payment status: always unknown unless a trusted external source provides it
+- LastBite reservation or allocation proximity flag
+- duplicate fingerprint
+- recommended next action:
+  - review identity;
+  - confirm count;
+  - physical recount;
+  - compare with POS;
+  - reject as no change.
+
+## 4. Review and proposal states
+
+Use one common proposal state machine:
+
+```text
+capture_authorized
+    -> capturing
+    -> uploaded
+    -> analyzed
+        -> rejected_quality
+        -> suppressed_duplicate
+        -> observation_created
+            -> proposal_pending_review
+                -> partially_approved
+                -> approved
+                -> rejected
+                -> expired
+                -> retracted
+```
+
+An approved proposal then follows:
+
+```text
+approved_proposal
+    -> authorization_rechecked
+    -> expected_inventory_version_checked
+    -> append_only_movement_created
+    -> balance_recalculated
+    -> confidence_recalculated
+    -> allocations_revalidated
+        -> no_offer_effect
+        -> offer_pause_required
+    -> audit_and_outbox_written
+```
+
+Existing beta state machines already separate submitted counts, proposed adjustments, approval or rejection, and application. Terminal states may not silently become active again.
+
+### Partial approval
+
+Partial approval is important for shelf video. A reviewer may:
+
+- approve identity but reject the count;
+- approve 8 of 12 products;
+- correct a quantity;
+- approve a barcode alias but retain an ambiguous package-size question;
+- convert an event proposal into a physical count task.
+
+### Retraction
+
+Before movement application, a proposal may be retracted.
+
+After an append-only movement has been applied, do not delete or mutate history. A correction creates:
+
+- a new correction proposal referencing the original movement;
+- a new authorized compensating movement;
+- an audit link between the two.
+
+## 5. Onboarding shelf-video flow
+
+```text
+Owner/manager
+    -> authorizes bounded after-hours capture
+
+Operator
+    -> starts CaptureSession
+    -> films one shelf section at a time
+
+Video pipeline
+    -> samples frames
+    -> detects packages/barcodes/text
+    -> groups repeated views of the same item
+    -> proposes SKU candidates and visible-count ranges
+    -> flags occlusion and ambiguity
+    -> creates InventoryObservations
+
+Operator or staff
+    -> reviews identity candidates
+    -> scans barcode or photographs package where ambiguous
+    -> confirms shelf location
+    -> submits reviewed count session
+
+Manager/owner
+    -> approves, partially approves, or rejects adjustment proposal
+
+Store Core
+    -> creates append-only movement only after approval
+    -> derives balance and confidence
+    -> rechecks allocations
+    -> pauses affected offer if an approved mismatch invalidates allocation
+```
+
+### Identity handling
+
+- An exact barcode may preselect an already approved `StoreProduct`.
+- A new barcode or packaging variant creates a staged catalog or alias proposal.
+- Two visually similar packages must remain separate candidates.
+- The model must never merge products merely because their packaging looks similar.
+- Raw video text and model-proposed aliases remain traceable.
+
+### Count handling
+
+Visible count is a statement about visible shelf state at a timestamp, not total store on-hand. The UI should say:
+
+> Estimated visible shelf count
+
+not:
+
+> Current stock
+
+Backroom stock, items behind other products, and product in customers’ hands remain outside the observation.
+
+### Offer effect
+
+A shelf observation alone has no public effect.
+
+Only after authorized adjustment and balance recalculation can the system evaluate whether an existing allocation remains supported. A no-POS store continues to rely on physically set-aside units rather than a full-store camera claim.
+
+## 6. Checkout-video flow
+
+```text
+Camera
+    -> records a bounded shelf or counter zone
+
+Event pipeline
+    -> tracks item movement
+    -> creates possible-removal / possible-replacement / possible-restock observation
+    -> suppresses duplicate tracks
+    -> attaches evidence clip
+    -> sets payment status to unknown
+
+Staff reviewer
+    -> confirms item identity where possible
+    -> may mark "needs physical check"
+
+Manager/owner
+    -> chooses outcome:
+        no inventory change
+        physical removal confirmed
+        restock confirmed
+        damaged/write-off candidate
+        match to trusted POS event
+        unresolved; count required
+
+Store Core
+    -> creates no movement for no-change or unresolved outcomes
+    -> creates movement only for an authorized confirmed reason
+    -> recalculates balance and allocation
+```
+
+### Payment and fiscal separation
+
+A person picking up an item does not prove:
+
+- payment;
+- successful fiscal transaction;
+- sale finality;
+- which price was paid;
+- which customer paid;
+- whether the item was later returned.
+
+The review card must therefore display:
+
+> Possible physical removal — payment unknown
+
+It must not display:
+
+> Sale detected
+
+A trusted POS record may later be matched to the event, but the camera itself is not the sale source of truth.
+
+### Reservation separation
+
+A camera event involving a LastBite unit must not automatically:
+
+- fulfill the reservation;
+- mark the buyer as collected;
+- consume the reservation;
+- accuse the buyer of taking an unreserved item.
+
+Reservation state remains server-owned and follows the existing pickup workflow. If a manager confirms that an allocated unit is unavailable, the affected offer is paused and the explicit stock-mismatch process is used.
+
+## 7. Reviewer roles
+
+| Action | Minimum role |
+|---|---|
+| Start authorized capture | Delegated operator, staff, manager, or owner |
+| Review candidate identity | Operator or staff |
+| Submit proposed count/event | Staff or operator |
+| Approve stock-affecting adjustment | Manager or owner |
+| Publish or pause offer | Manager or owner |
+| Change retention or release footage | Owner or designated privacy administrator |
+| Correct applied movement | Manager or owner through compensating proposal |
+
+## 8. What may be auto-accepted
+
+### Maturity level 0 — demo
+
+Nothing model-derived is auto-accepted. Detection can be Wizard-of-Oz.
+
+### Maturity level 1 — isolated research
+
+The system may automatically:
+
+- validate file integrity;
+- reject corrupt or unusable footage;
+- sample frames;
+- decode a barcode;
+- prefill an already approved SKU candidate;
+- suppress exact duplicate uploads;
+- group repeated observations into one draft.
+
+Everything remains a proposal.
+
+### Maturity level 2 — validated operator tool
+
+The system may automatically link a candidate to an already approved store product when:
+
+- the barcode is exact;
+- the store mapping is already approved;
+- the package size and unit match;
+- no conflicting alias exists.
+
+The visible count and any stock-affecting proposal still require review.
+
+### Maturity level 3 — mature evidence layer
+
+The system may automatically close technical no-op cases, such as an exact duplicate or an unusable session, provided this produces no stock change.
+
+No stock-affecting camera proposal should be auto-approved under the current trust contract at any maturity.
+
+## 9. Adversarial and ambiguous cases
+
+| Case | Required behavior |
+|---|---|
+| Customer picks up and replaces item | Track full window; classify as replacement/no change; no movement; create count task if uncertain |
+| Two visually similar packages | Show multiple candidates; require barcode, close-up, or reviewer selection; never silently merge |
+| Several items occluded | Use quantity range or `unknown_quantity`; route to physical recount |
+| Staff restocks during checkout | Classify as ambiguous restock/removal; do not net unless reviewer confirms both directions |
+| Item taken but unpaid | Payment remains unknown; do not call it a sale or fiscal event |
+| Camera offline | Queue encrypted capture locally; balances/offers unchanged; upload later with integrity and duplicate checks |
+| Model replay or duplicate upload | Use nonce, clip hash, track fingerprint, time/location, and idempotency key; suppress duplicates |
+| Reserved LastBite unit removed | Raise allocation exception; do not complete reservation; verify set-aside; confirmed mismatch pauses offer |
+| Reviewer approved wrong item | Create correction proposal and compensating movement; retain original audit |
+| Bag, reflection, refrigerator-door image | Apply quality/reflection flag; reject or request closer capture |
+| Multiple units handled, some returned | Use tracks only as evidence; require final count or manager correction |
+| Shelf-to-backroom move | Treat as location-transfer candidate or count task, not negative stock |
+
+## 10. Audit, retention, and public redaction
+
+Maintain:
+
+- capture and authorization audit;
+- model version and evidence lineage;
+- reviewer identity and decision;
+- proposal corrections;
+- movement ID and idempotency key;
+- balance and confidence recalculation result;
+- allocation and offer effect;
+- deletion or retention actions.
+
+Use three retention classes:
+
+- raw video;
+- minimal evidence clip or frames supporting an unresolved or approved decision;
+- non-video audit metadata.
+
+The exact number of retention days is an unresolved legal and product decision. The default should be to retain raw footage for the shortest practical period, preserve only the bounded evidence necessary for audit, and delete rejected or irrelevant footage promptly.
+
+The public marketplace receives none of:
+
+- raw or clipped footage;
+- private on-hand balance;
+- model confidence;
+- device or camera identity;
+- staff or customer identity;
+- private exception data;
+- supplier or cost data.
+
+## 11. Reconciling the attractive demo with honest behavior
+
+The appealing story is:
+
+> “A customer takes an item and stock decrements.”
+
+The honest product story is:
+
+> “A bounded camera sees a possible removal and creates a review card. An authorized manager confirms or corrects the event. Only then does LastBite append an inventory movement, recalculate balance and confidence, check any allocated units, and pause an offer if the approved result creates a mismatch.”
+
+The second story is slightly longer, but it is far more defensible. It demonstrates that LastBite’s differentiator is not raw detection. It is turning uncertain evidence into authorized, auditable retail action.
+
+# D. Cheapest validation before building
+
+## Validation principles
+
+Use three distinct gate families:
+
+- **Business-value gates:** Does an owner pay, provide access, renew, or act differently?
+- **Technical gates:** Can the system produce usable candidate evidence under local shelf conditions?
+- **Workflow and compliance gates:** Can staff understand, consent to, review, and safely resolve proposals without unauthorized changes?
+
+A technical pass does not authorize a product if owners will not pay. A business-interest pass does not authorize cameras if consent, review, or error handling fails.
+
+## Next two days
+
+### Experiment 1: Direct owner pitch and commitment
+
+- Type: Business value
+- Sample: Five store owners
+- Task: Present the 60–90 second film and before/after sprint offer. Ask for:
+  - bounded after-hours audit;
+  - access to 100 products;
+  - recent invoices;
+  - signed pilot scope;
+  - material deposit.
+- Pass: at least one signed scope and meaningful deposit.
+- Fail: five owners offer praise or curiosity but no commitment.
+- Founder-hour cap: eight hours.
+- Cash: near-zero beyond travel and printing; log actual UZS.
+- Authorizes: paid service-led pilot, not camera integration.
+
+### Experiment 2: Fastest falsifier for video onboarding
+
+- Type: Technical and operational
+- Sample: Two 100-SKU shelf sections in two stores, or one real store plus one dense staged shelf.
+- Method:
+  - Store A: film first, then barcode/manual census.
+  - Store B: reverse order to reduce learning bias.
+- Measure:
+  - total human time to reviewer-approved draft;
+  - visible SKU coverage;
+  - correct catalog matches;
+  - unresolved products;
+  - silent wrong merges;
+  - count corrections;
+  - review minutes;
+  - minutes per verified row.
+- Outer gate: useful 100-SKU result within five staff-hours in at least one store.
+- Additional gate: video reduces total time at least 25% in one store, with zero silently approved wrong merges.
+- Kill:
+  - video slower in both stores;
+  - high-confidence wrong merge survives review;
+  - footage cannot create usable draft;
+  - owner trusts barcode/manual result more.
+- Founder-hour cap: 10–12 hours.
+- Authorizes: another bounded onboarding experiment only.
+
+### Experiment 3: Dense local-packaging frame benchmark
+
+- Type: Technical
+- Sample: At least 200 labeled product appearances covering roughly 100 products.
+- Include:
+  - Uzbek, Russian, and mixed labels;
+  - similar packages;
+  - refrigerator shelves;
+  - hanging items;
+  - reflective packages;
+  - partial occlusion;
+  - weak or missing barcodes.
+- Measure:
+  - candidate recall;
+  - precision of high-confidence identity;
+  - unresolved rate;
+  - barcode readability;
+  - OCR usefulness;
+  - unobstructed and occluded count error;
+  - review time per candidate.
+- Pass:
+  - no silent high-confidence false merge;
+  - at least 80% of clearly visible products produce usable candidate cards;
+  - ambiguity is flagged;
+  - reviewed draft materially faster than transcription.
+- Kill: confidence does not separate correct and incorrect candidates, or most rows require manual re-entry.
+- Founder-hour cap: six hours using Experiment 2 clips.
+
+### Experiment 4: Fastest falsifier for checkout video
+
+- Type: Technical and workflow
+- Sample: Thirty staged events, no customers.
+- Measures:
+  - simple-removal detection;
+  - pick-and-replace false-event rate;
+  - duplicate proposals;
+  - ambiguous-event rate;
+  - median review time;
+  - physical recounts;
+  - unauthorized stock writes.
+- Pass:
+  - at least 90% of simple visible removals create a reviewable event;
+  - zero pick-and-replace events create an applied movement;
+  - zero duplicate replays create a second proposal or movement;
+  - median review below 20 seconds;
+  - every stock outcome requires manager approval.
+- Immediate kill:
+  - hidden decrement;
+  - unpaid or ambiguous handling called a sale;
+  - accusations encouraged;
+  - review slower than simple count/closeout.
+- Founder-hour cap: 6–8 hours.
+- Authorizes: larger staged research trial only.
+
+### Experiment 5: Consent and surveillance reaction
+
+- Type: Workflow and compliance
+- Sample: Two owners and at least four actual staff or family workers.
+- Explain capture, purpose, access, retention, no facial recognition, no employee scoring, opt-out, and error handling.
+- Pass: everyone accurately explains purpose and opt-out; participation is not coerced.
+- Stop: owner expects worker identification or discipline, or staff cannot refuse.
+- Founder-hour cap: three hours.
+
+### Experiment 6: Offline store-and-forward
+
+- Type: Technical safety
+- Sample: Twenty sessions in airplane mode or simulated weak connectivity.
+- Pass:
+  - 20/20 sessions queue locally;
+  - upload resumes without loss;
+  - no duplicate proposals;
+  - hashes reconcile;
+  - no stock or offer changes while offline.
+- Founder-hour cap: three hours.
+
+### Two-day decision
+
+Proceed with video-onboarding research only when:
+
+- at least one owner accepts a paid broader pilot;
+- video beats or approaches manual census time;
+- no silent identity merge occurs;
+- staff consent remains credible;
+- checkout creates review cards without stock changes.
+
+Otherwise, keep video as a presentation asset and focus on barcode, CSV, OCR, exception management, and verified offers.
+
+## Next two weeks
+
+### 1. Five-store commercial and workflow audit
+
+Observe:
+
+- receiving;
+- counting;
+- ordering;
+- expiry;
+- checkout;
+- POS/notebook use;
+- supplier interaction;
+- staff roles;
+- current camera use.
+
+Pass: three stores independently exhibit the same core problems.
+
+Fail: problems are isolated or materially different.
+
+Attempt a real POS or CSV export in every equipped store.
+
+### 2. Two-store onboarding comparison
+
+Sample: two stores × 100 SKUs.
+
+Compare:
+
+- barcode/manual census;
+- handheld shelf video plus review;
+- individual product photos only for ambiguity.
+
+Primary outcome: total operator and reviewer minutes per verified catalog row.
+
+Advance: video at least 25% faster in one store and no slower in the other, with no silent false merge.
+
+Kill: slower in both stores or effectively becomes a worse barcode workflow.
+
+### 3. Barcode coverage test
+
+Sample: 200 products.
+
+Measure readable codes, no-code rate, duplicates, existing POS recognition, and package conflicts. Do not build scanner technology.
+
+### 4. Invoice OCR comparison
+
+Sample: at least ten invoices; preferably 10–30.
+
+Pass: at least 40% lower total time without additional critical errors.
+
+Kill: review removes the time gain or creates quantity, unit, total, or identity errors.
+
+### 5. Wizard-of-Oz checkout review
+
+Sample: 100 staged events across two stores or two shelf zones.
+
+Measure reviewer time, manager time, no-change outcomes, recounts, acceptance, owner action, and comparison with simple closeout.
+
+Advance:
+
+- median manager review below 20 seconds;
+- at least 80% resolved without physical recount;
+- zero unauthorized movements;
+- no perception of employee monitoring.
+
+Kill: review volume or ambiguity overwhelms the shop.
+
+### 6. Fourteen-day Telegram summary test
+
+Sample: one or two pilot owners.
+
+Send only:
+
+- low-confidence stock requiring count;
+- unreviewed receiving;
+- near-expiry items;
+- reorder drafts;
+- supplier follow-up;
+- offer mismatch or closeout task.
+
+Pass: owner opens or acts on it on at least 10 of 14 days.
+
+Fail: ignored or creates support questions without action.
+
+### 7. Staff and consent workflow
+
+Test start/stop, restricted zones, notice, deletion, manager approval, no facial identity, no employee scoring, and audit access.
+
+Pass: participants can explain what the camera does and does not do; owner accepts it cannot be standalone shrink evidence.
+
+### Two-week founder-hour budget
+
+Cap camera-specific work at approximately 80–96 combined founder-hours. Continue the paid systematization and verified-offer beta rather than becoming a vision-model project.
+
+Use existing phones and temporary mounts. Limit cash to travel, props, staff compensation, and printing. Do not buy permanent cameras.
+
+## Next six weeks
+
+### Lane 1: Commercial product lane
+
+Run one or two real Store Systematization Sprints with:
+
+- top 100–300 SKU cleanup;
+- barcode and alias mapping;
+- CSV/POS export where possible;
+- reviewed receiving;
+- selected-category expiry watchlist;
+- owner summary;
+- supplier CRM;
+- physical set-aside verified offer;
+- staff closeout and mismatch recovery.
+
+By week six, seek:
+
+- one paying or materially committed store;
+- one store operating seven consecutive days;
+- six of seven closeouts;
+- ten terminal reservation attempts;
+- seller-reliable fulfillment at least 90%;
+- mismatch at most 10%;
+- one exception resolved;
+- one offer approved;
+- owner action attributable to summary, expiry, reorder, or supplier task;
+- all founder/operator hours recorded.
+
+### Lane 2: Separately authorized camera research
+
+Open only if the two-week onboarding and consent gates pass.
+
+Sample:
+
+- one or two consenting stores;
+- one bounded shelf or set-aside zone each;
+- 200 staged or shadow events;
+- two reviewers;
+- one non-founder operator;
+- repeated 100-SKU capture;
+- simulated offline operation.
+
+Technical gates:
+
+- zero unauthorized changes;
+- zero silent high-confidence merges;
+- zero duplicate movements;
+- no sale classification without trusted payment evidence;
+- correction preserves append-only history;
+- at least 25% onboarding-time reduction;
+- review cheaper than count/closeout;
+- high-confidence results outperform medium/low.
+
+Workflow gates:
+
+- explicit notice;
+- no audio by default;
+- no facial recognition;
+- no employee scoring;
+- staff can request stop or deletion;
+- approval cannot be bypassed;
+- reserved-unit events become allocation exceptions;
+- footage access is audited.
+
+Business-value gate:
+
+At least one owner demonstrates that camera output causes a useful action:
+
+- perform count;
+- correct product;
+- resolve allocation;
+- investigate receiving;
+- identify real shelf gap;
+- save measurable time.
+
+“Interesting technology” is not a pass.
+
+### Six-week kill conditions
+
+End the camera direction if:
+
+- no onboarding-time advantage;
+- review exceeds manual workload;
+- staff distrust persists;
+- owner mainly wants surveillance;
+- shelf conditions remain too ambiguous;
+- footage cannot be secured/deleted;
+- camera evidence cannot remain isolated from writes;
+- no owner action or payment is attributable to it.
+
+### Fastest falsifiers
+
+**Video onboarding:** two-store 100-SKU end-to-end comparison. Total time to a trustworthy reviewed draft matters more than raw inference accuracy.
+
+**Checkout video:** thirty staged adversarial events, followed by 100 Wizard-of-Oz events. This exposes review volume, ambiguity, privacy, and lack of payment evidence.
+
+# E. Market-specific risks and mitigations
+
+| Risk | Evidence status | Practical mitigation | Stop condition |
+|---|---|---|---|
+| Camera consent and notice | Legal requirements not established | Written research authorization, notice, bounded zone, no audio, local legal review, opt-out/deletion | No live capture if lawful notice, access, retention, and deletion cannot be established |
+| Customer trust | Hypothesis | Begin after hours; aim at shelf zones; avoid identity; explain “evidence only” | Stop if reasonably perceived as covert monitoring |
+| Staff surveillance fears | High strategic risk | No face recognition, productivity scores, shrink rankings, or theft language; co-design with staff | Stop if primary use is discipline or staff cannot object |
+| Household/family labor | Hypothesis | Treat every worker as affected; owner consent does not replace individual notice | Stop if hierarchy makes consent meaningless |
+| Dense shelves/local variants | Strong technical concern | Small sections, barcode-first, close-ups for ambiguity, approved aliases, quantity ranges | Kill count claims if most items require individual reshooting |
+| Mixed-language labels | Supported | Preserve raw text, multilingual aliases, brand/unit/pack normalization, human approval | Never auto-merge when package/unit differs |
+| Weak/missing barcodes | Research variable | Invoice identity, product photo, supplier alias, manual review; measure coverage | Reject software-led claims if identity remains unrepeatably manual |
+| Lighting/glare/reflections | Strong CV risk | Capture checklist, selective second angle, quality flags, count fallback | Stop expansion if false tasks remain excessive |
+| Occlusion | Strong technical risk | Quantity ranges, `physical_count_required`, no forced point estimate | No movement if final state unobservable |
+| Connectivity/data cost | Hypothesis | Store-and-forward, resumable upload, compressed clips, hashes | Stop real-time claims if integrity/duplicates cannot be controlled |
+| Staff turnover/compliance | Strong operational risk | Three-minute closeout, roles, plain explanations, non-founder operator test | Treat as operator-managed service if tasks are skipped |
+| Incomplete POS/fiscal data | Strong evidence | Classify API/CSV/unreliable/no-POS; trust only after completeness; set-aside mode | Disable dependent analytics/reordering |
+| Asl Belgisi/fiscal/payment confusion | Strong concern; legal details unresolved | Integrate around approved tools; payment unknown; no fiscal writes; specialist review | Stop autonomous compliance/fiscal features |
+| False shrink accusations | Critical | “Possible discrepancy,” no person identification, physical/manager confirmation | Immediate stop if used as sole basis for discipline |
+| Footage security/retention | Critical | Encryption, least privilege, access audit, short retention, deletion workflow | No capture if security/audit/deletion unavailable |
+| Expectation of perfect AI | High demo risk | Deliberately show failure; sell verified action | Reject pilot requiring autonomous truth |
+| Field-service economics | Strong business risk | Track minutes, reshoots, review, travel, support; test non-founder repeatability | Stop or reprice if labor cannot produce margin |
+| Demo credibility | High | Label staged/prerecorded/Wizard-of-Oz; show approval and failure | Never present staged detection as production accuracy |
+| Reserved units | Current invariant | Separate set-aside; verify interaction; pause on confirmed mismatch | Block if camera can silently consume/complete reservation |
+| Review-card overload | Checkout risk | Aggregate duplicates; low-confidence cases become count tasks | Kill checkout video if normal activity creates excessive review |
+
+## Risks that should make the team stop rather than mitigate
+
+Stop the camera direction when:
+
+- video does not reduce total time to a trustworthy result;
+- review creates more work than barcode census, receiving review, or closeout;
+- staff cannot participate without feeling monitored;
+- owner wants worker identification or automatic shrink accusation;
+- footage cannot be secured and kept short-lived;
+- camera event can bypass manager authorization;
+- false events affect offers or reservations before review;
+- custom training or permanent infrastructure is needed before paid demand;
+- owners will not pay for the broader operating result;
+- underlying catalog, receiving, and staff processes are too unreliable for camera output to have stable meaning.
+
+# Closing conclusions
+
+## 1. Decisive thesis
+
+Uzbek small shops most likely do not need another standalone POS or a magical camera that claims to know inventory. They most likely need done-for-you implementation and ongoing operating discipline: a clean priority catalog, usable barcode and import paths, reviewed receiving, selected expiry control, supplier organization, clear exception tasks, simple owner summaries, and a reliable process for seller-approved offers.
+
+Digital underutilization is therefore more symptom than root cause. The likely root causes are:
+
+- nobody owns setup and data cleanup;
+- staff processes do not reliably maintain the system;
+- source data is incomplete;
+- supplier and expiry work remains manual;
+- shop closure and founder-intensive onboarding are too expensive;
+- existing POS, fiscal, and marking systems are not used consistently.
+
+Video should play a narrow supporting role:
+
+> A fast way to collect bounded evidence and create review tasks—not a source of stock truth.
+
+That position preserves the built beta’s strongest asset: its explicit chain from uncertain observation to authorized, audited action.
+
+## 2. Ranked twelve-week roadmap for a two-person team
+
+| Weeks | Priority | Deliverables | Gate |
+|---|---|---|---|
+| 1–2 | Commercial and field proof | Five pitches; paid sprint; two 100-SKU censuses; exports; ten invoices; phone film; shelf demo | One signed scope/deposit; common pain in 3/5; one result within five staff-hours |
+| 3–4 | First paid sprint | Clean 100–300 SKUs; aliases; barcode coverage; import staging; summary; SOP; set-aside offer | Owner sees value; staff completes tasks; no unreviewed changes |
+| 5–6 | Repeatable operator workflow | Exception console; reviewed receiving; OCR test; expiry watchlist; supplier CRM; closeout | OCR saves 40% or is dropped; owner acts; real expiry/supplier action |
+| 7–8 | Reliability and retention | Seven-day offer loop; mismatch recovery; reorder shadows; second store | Reliability gates pass; reorder used/edited; economics plausible |
+| 9–10 | Authorized video-onboarding research | Two-store comparison; frame benchmark; offline queue; consent | 25% advantage in one store; zero silent false merges; acceptable staff response |
+| 11–12 | Checkout falsification and decision | Thirty adversarial events; 100 Wizard-of-Oz events; investor showroom | Zero unauthorized writes; low burden; no surveillance use; attributable value |
+
+Explicitly do not build:
+
+- custom vision model;
+- permanent CCTV;
+- facial recognition;
+- customer/staff identity tracking;
+- automatic checkout decrement;
+- fiscal-sale inference;
+- generic POS integration;
+- POS replacement;
+- autonomous orders;
+- AI forecasting;
+- dynamic pricing;
+- autonomous compliance/marking;
+- microservices;
+- broad analytics;
+- complete-inventory claims;
+- camera-dependent buyer marketplace.
+
+## 3. Top ten founder decisions and unknowns
+
+1. What will the first customer actually pay for: sprint, support, verified offers, expiry, supplier monetization, or camera onboarding?
+2. Which segment buys first: no-POS, incomplete-POS, new store, expiry-heavy, or supplier-opportunity store?
+3. Who owns receiving, counts, expiry, closeout, supplier data, and approvals after founders leave?
+4. What is the true end-to-end cost of verified 100-SKU onboarding?
+5. How accessible and trustworthy are current POS exports?
+6. What is local barcode, packaging-variant, and multilingual identity coverage?
+7. Does invoice OCR save time after correction and reconciliation?
+8. Will staff and customers accept the evidence-only camera boundary?
+9. Does video change an owner decision rather than merely impress?
+10. Is checkout video economically better than a three-minute closeout, trusted POS feed, or physical set-aside?
+
+## 4. Investor narrative
+
+LastBite is building a human-in-the-loop retail control layer for under-systemized neighborhood shops. It begins with a paid store systematization sprint that cleans priority products, connects available POS or CSV data, improves receiving and expiry workflows, organizes supplier actions, and turns only verified, seller-approved inventory into nearby offers. AI accelerates catalog cleanup, document extraction, exception detection, and owner decisions. Video is a future evidence channel: it can propose shelf counts or possible removal events, but every stock-affecting action remains authorized, append-only, auditable, and separate from payment or fiscal truth. The ambition is not to pretend that a camera perfectly knows the store; it is to make uncertain store reality progressively more controllable at a cost small retailers can support.
+
+## 5. Red-team assessment
+
+The strongest reason the entire video direction may be wrong is that perception may not be the bottleneck. The sources repeatedly point to setup, staff discipline, receiving, incomplete POS use, supplier processes, and ongoing maintenance. A camera can produce more observations without resolving any of those problems. In dense shops, it may also add occlusion, false candidates, sensitive footage, staff distrust, review queues, installation support, and a dangerous illusion of accuracy. Barcode scanning, CSV cleanup, invoice OCR, a three-minute closeout, and an accountable operator may reach a trustworthy result faster and more cheaply. If the two-store 100-SKU test does not reduce total verified-onboarding time, or the staged checkout test creates more review work than it removes, the correct decision is not to train a better model. It is to remove camera capture from the product roadmap and retain it only as a carefully labeled demo.
+
+Codex session ID: 019feceb-cc66-74e3-9a35-236c5386a216
+Resume in Codex: codex resume 019feceb-cc66-74e3-9a35-236c5386a216

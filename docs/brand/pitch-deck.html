@@ -1,0 +1,1273 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>lastbite, презентация</title>
+<meta name="description" content="lastbite. Проверенные предложения излишков еды для магазинов у дома в Ташкенте.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   lastbite, презентация
+   один файл, никаких внешних ресурсов кроме google fonts
+   ============================================================ */
+
+/* палитра */
+:root{
+  --teal:#16C79A;
+  --seal:#0E8A6C;
+  --ink:#101418;
+  --paper:#FFFFFF;
+  --fog:#F4F6F5;
+  --tangerine:#FF8C42;
+  --coral:#FF6B6B;
+
+  --ink-72:rgba(16,20,24,.72);
+  --ink-52:rgba(16,20,24,.52);
+  --ink-34:rgba(16,20,24,.34);
+  --line:rgba(16,20,24,.13);
+  --line-soft:rgba(16,20,24,.08);
+  --teal-wash:rgba(22,199,154,.08);
+
+  --paper-72:rgba(255,255,255,.72);
+  --paper-48:rgba(255,255,255,.48);
+
+  /* форма */
+  --r-control:16px;
+  --r-card:24px;
+
+  /* шкала кегля, каждый шаг зависит от вьюпорта */
+  --fs-display:clamp(2.4rem, min(8.4vw, 12.6vh), 8.2rem);
+  --fs-h1:clamp(1.5rem, min(4.3vw, 6.4vh), 4.3rem);
+  --fs-h2:clamp(1rem, min(2.3vw, 3.5vh), 2.1rem);
+  --fs-lead:clamp(.84rem, min(1.46vw, 2.3vh), 1.52rem);
+  --fs-body:clamp(.73rem, min(1.12vw, 1.74vh), 1.16rem);
+  --fs-small:clamp(.63rem, min(.9vw, 1.4vh), .95rem);
+  --fs-chip:clamp(.55rem, min(.78vw, 1.2vh), .84rem);
+  --fs-num:clamp(1.45rem, min(4vw, 6vh), 4rem);
+  --fs-num-sm:clamp(1rem, min(2.2vw, 3.4vh), 2.3rem);
+  --fs-rank:clamp(.68rem, min(1.02vw, 1.58vh), 1.02rem);
+
+  /* отступы, та же дисциплина */
+  --sp-1:clamp(4px, min(.46vw, .72vh), 9px);
+  --sp-2:clamp(8px, min(.92vw, 1.44vh), 18px);
+  --sp-3:clamp(12px, min(1.5vw, 2.3vh), 30px);
+  --sp-4:clamp(16px, min(2.2vw, 3.4vh), 46px);
+  --pad-x:clamp(20px, min(5vw, 8vh), 96px);
+  --pad-y:clamp(18px, min(3.4vw, 5.4vh), 66px);
+
+  --ease:cubic-bezier(.2,.72,.2,1);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Onest",system-ui,-apple-system,sans-serif;
+  font-size:var(--fs-body);
+  line-height:1.45;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ---------- каркас колоды ---------- */
+.deck{
+  height:100vh;
+  height:100dvh;
+  overflow-y:scroll;
+  overflow-x:hidden;
+  scroll-snap-type:y mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.deck::-webkit-scrollbar{width:0;height:0;display:none}
+
+.slide{
+  height:100vh;
+  height:100dvh;
+  scroll-snap-align:start;
+  scroll-snap-stop:always;
+  overflow:hidden;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:var(--pad-y) var(--pad-x);
+}
+.wrap{
+  width:min(1240px,100%);
+  max-height:100%;
+  display:flex;
+  flex-direction:column;
+  gap:var(--sp-3);
+}
+.wrap.center{align-items:center;text-align:center}
+
+/* ---------- тёмный слайд, единственный громкий момент ---------- */
+.slide.ink{
+  background:var(--ink);
+  color:var(--paper);
+}
+.slide.ink::before{
+  content:"";
+  position:absolute;
+  inset:auto auto -30% -12%;
+  width:70vw;
+  height:70vw;
+  background:radial-gradient(circle at center, rgba(22,199,154,.20), rgba(22,199,154,0) 62%);
+  pointer-events:none;
+}
+.slide.ink .eyebrow{color:var(--teal)}
+.slide.ink .lead{color:var(--paper-72)}
+
+/* ---------- типографика ---------- */
+.eyebrow{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:var(--fs-chip);
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--ink-52);
+  margin:0;
+}
+h1,h2,h3,p,ul,ol,li,figure{margin:0}
+ul{list-style:none;padding:0}
+
+.display{
+  font-family:"Unbounded",sans-serif;
+  font-weight:900;
+  font-size:var(--fs-display);
+  line-height:.9;
+  letter-spacing:-.04em;
+  overflow-wrap:break-word;
+}
+.h1{
+  font-family:"Unbounded",sans-serif;
+  font-weight:700;
+  font-size:var(--fs-h1);
+  line-height:1.04;
+  letter-spacing:-.028em;
+  overflow-wrap:break-word;
+}
+.h2{
+  font-family:"Unbounded",sans-serif;
+  font-weight:500;
+  font-size:var(--fs-h2);
+  line-height:1.14;
+  letter-spacing:-.018em;
+  overflow-wrap:break-word;
+}
+.lead{
+  font-size:var(--fs-lead);
+  color:var(--ink-72);
+  max-width:56ch;
+}
+.small{font-size:var(--fs-small);color:var(--ink-52)}
+.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.accent{color:var(--teal)}
+
+/* ---------- фирменный приём, чип проверки ---------- */
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.55em;
+  border-radius:999px;
+  padding:.44em .85em;
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:var(--fs-chip);
+  line-height:1;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+.chip-verified{
+  border:1.5px solid var(--seal);
+  color:var(--seal);
+  background:var(--teal-wash);
+}
+.ink .chip-verified{
+  border-color:var(--teal);
+  color:var(--teal);
+  background:rgba(22,199,154,.10);
+}
+.dot{
+  width:.55em;
+  height:.55em;
+  border-radius:50%;
+  background:var(--teal);
+  flex:0 0 auto;
+  animation:pulse 2.4s var(--ease) infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(22,199,154,.55)}
+  70%{box-shadow:0 0 0 .55em rgba(22,199,154,0)}
+  100%{box-shadow:0 0 0 0 rgba(22,199,154,0)}
+}
+
+/* нейтральный чип для тегов и статусов.
+   Чип талона с пунктиром живёт внутри макета телефона, класс ph-ticket. */
+.chip-quiet{
+  border:1px solid var(--line);
+  color:var(--ink-52);
+  background:var(--paper);
+}
+
+/* ---------- карточки ---------- */
+.card{
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  background:var(--paper);
+  padding:var(--sp-3);
+  display:flex;
+  flex-direction:column;
+  gap:var(--sp-1);
+  min-width:0;
+}
+.card.fog{background:var(--fog);border-color:transparent}
+.card-title{
+  font-family:"Onest",sans-serif;
+  font-weight:600;
+  font-size:var(--fs-lead);
+  letter-spacing:-.01em;
+  line-height:1.2;
+}
+.card-note{font-size:var(--fs-small);color:var(--ink-52);line-height:1.42}
+
+/* плитка с числом */
+.stat{
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  padding:var(--sp-3);
+  display:flex;
+  flex-direction:column;
+  gap:.15em;
+  min-width:0;
+}
+.stat-num{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-weight:700;
+  font-size:var(--fs-num);
+  line-height:1;
+  letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+}
+.stat-label{font-size:var(--fs-small);color:var(--ink-52);line-height:1.35}
+.stat.teal .stat-num{color:var(--seal)}
+
+/* ---------- раскладка ---------- */
+.two-col{display:grid;grid-template-columns:1.1fr .9fr;gap:var(--sp-4);align-items:center}
+.two-col.even{grid-template-columns:1fr 1fr}
+.two-col.media{grid-template-columns:auto 1fr}
+.two-col.top{align-items:start}
+.stack{display:flex;flex-direction:column;gap:var(--sp-2);min-width:0}
+.row{display:flex;gap:var(--sp-2);align-items:center;flex-wrap:wrap}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2)}
+.head{display:flex;flex-direction:column;gap:var(--sp-1)}
+
+/* список, простые глаголы */
+.bullets{display:flex;flex-direction:column;gap:var(--sp-2)}
+.bullets li{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:.7em;
+  align-items:baseline;
+  font-size:var(--fs-lead);
+  color:var(--ink);
+  line-height:1.34;
+}
+.bullets li::before{
+  content:"";
+  width:.42em;
+  height:.42em;
+  border-radius:50%;
+  background:var(--teal);
+  transform:translateY(-.16em);
+}
+
+/* ---------- слайд 5, цепочка ---------- */
+.flow{display:flex;align-items:stretch;gap:var(--sp-1)}
+.step{
+  flex:1 1 0;
+  min-width:0;
+  border:1px solid var(--line);
+  border-radius:var(--r-control);
+  padding:var(--sp-2);
+  display:flex;
+  flex-direction:column;
+  gap:.3em;
+  background:var(--paper);
+}
+.step-n{
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:var(--fs-chip);
+  color:var(--teal);
+  font-weight:700;
+}
+.step-t{font-weight:600;font-size:var(--fs-body);line-height:1.2;letter-spacing:-.01em}
+.step-d{font-size:var(--fs-small);color:var(--ink-52);line-height:1.35}
+.arrow{
+  flex:0 0 auto;
+  align-self:center;
+  width:.5em;
+  height:.5em;
+  border-top:1.5px solid var(--ink-34);
+  border-right:1.5px solid var(--ink-34);
+  transform:rotate(45deg);
+  font-size:var(--fs-lead);
+}
+
+/* ---------- корпус телефона, только css ---------- */
+.phone{
+  --ph:clamp(220px, 52vh, 470px);
+  height:var(--ph);
+  width:calc(var(--ph) * .484);
+  flex:0 0 auto;
+  border:2px solid var(--ink);
+  border-radius:calc(var(--ph) * .085);
+  background:var(--paper);
+  padding:calc(var(--ph) * .022);
+  display:flex;
+  flex-direction:column;
+  gap:calc(var(--ph) * .016);
+  overflow:hidden;
+  position:relative;
+  font-size:calc(var(--ph) * .033);
+  line-height:1.3;
+}
+.phone .bar{
+  height:calc(var(--ph) * .012);
+  width:26%;
+  border-radius:999px;
+  background:var(--ink);
+  margin:calc(var(--ph) * .006) auto calc(var(--ph) * .01);
+  flex:0 0 auto;
+}
+.ph-top{display:flex;justify-content:space-between;align-items:center;font-family:"JetBrains Mono",monospace;font-size:.8em;color:var(--ink-52)}
+.ph-card{
+  border:1px solid var(--line);
+  border-radius:calc(var(--ph) * .045);
+  padding:calc(var(--ph) * .026);
+  display:flex;
+  flex-direction:column;
+  gap:calc(var(--ph) * .015);
+}
+.ph-shelf{
+  height:calc(var(--ph) * .13);
+  border-radius:calc(var(--ph) * .03);
+  background:var(--fog);
+}
+.ph-title{font-weight:600;font-size:1.05em;letter-spacing:-.01em;line-height:1.16}
+.ph-sub{font-size:.85em;color:var(--ink-52)}
+.ph-chip{
+  display:inline-flex;align-items:center;gap:.4em;
+  border:1px solid var(--seal);color:var(--seal);
+  background:var(--teal-wash);
+  border-radius:999px;padding:.28em .55em;
+  font-family:"JetBrains Mono",monospace;font-size:.72em;line-height:1;
+  align-self:flex-start;white-space:nowrap;
+}
+.ph-chip .dot{width:.5em;height:.5em}
+.ph-price{display:flex;align-items:baseline;gap:.45em;flex-wrap:wrap}
+.ph-old{font-family:"JetBrains Mono",monospace;font-size:.85em;color:var(--ink-34);text-decoration:line-through}
+.ph-new{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:1.2em;letter-spacing:-.02em}
+.ph-save{
+  background:var(--tangerine);color:var(--paper);
+  border-radius:999px;padding:.24em .5em;
+  font-family:"JetBrains Mono",monospace;font-weight:700;font-size:.7em;line-height:1;
+}
+.ph-btn{
+  background:var(--teal);color:var(--paper);
+  border-radius:var(--r-control);
+  padding:calc(var(--ph) * .028);
+  text-align:center;font-weight:600;font-size:1em;
+  letter-spacing:-.01em;
+}
+.ph-ticket{
+  border:1.5px dashed var(--ink);
+  border-radius:calc(var(--ph) * .035);
+  padding:calc(var(--ph) * .022);
+  display:flex;align-items:center;justify-content:space-between;gap:.4em;
+  font-family:"JetBrains Mono",monospace;
+}
+.ph-ticket b{font-size:1.14em;letter-spacing:.05em}
+.ph-ticket span{font-size:.74em;color:var(--ink-52)}
+
+/* строки остатков в телефоне магазина */
+.ph-row{
+  display:flex;align-items:center;gap:.55em;
+  padding:calc(var(--ph) * .019) 0;
+  border-bottom:1px solid var(--line-soft);
+}
+.ph-row:last-of-type{border-bottom:0}
+.cdot{width:.62em;height:.62em;border-radius:50%;flex:0 0 auto}
+.cdot.hi{background:var(--teal)}
+.cdot.mid{background:var(--ink-34)}
+.cdot.lo{background:var(--coral)}
+.ph-row .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph-row .qt{font-family:"JetBrains Mono",monospace;font-weight:700}
+.ph-row .tm{font-family:"JetBrains Mono",monospace;font-size:.72em;color:var(--ink-34)}
+.ph-meter{height:calc(var(--ph) * .014);border-radius:999px;background:var(--fog);overflow:hidden}
+.ph-meter i{display:block;height:100%;width:45%;background:var(--seal);border-radius:999px}
+
+/* ---------- слайд 11, возможности по остроте боли ---------- */
+.ranks{display:flex;flex-direction:column;gap:var(--sp-1)}
+.rank{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:var(--sp-3);
+  align-items:center;
+  padding:var(--sp-2) var(--sp-3);
+  border:1px solid var(--line);
+  border-radius:var(--r-control);
+  min-width:0;
+}
+.rank-n{font-family:"JetBrains Mono",monospace;font-size:var(--fs-rank);color:var(--ink-34);font-weight:700}
+.rank-b{min-width:0}
+.rank-t{font-weight:600;font-size:var(--fs-lead);letter-spacing:-.012em;line-height:1.2}
+.rank-d{font-size:var(--fs-small);color:var(--ink-52);line-height:1.35}
+.meter{display:flex;gap:3px;flex:0 0 auto}
+.meter i{width:clamp(9px,1.1vw,18px);height:clamp(5px,.66vh,9px);border-radius:999px;background:var(--line)}
+.meter i.on{background:var(--seal)}
+
+/* ---------- слайд 13, таймлайн ---------- */
+.timeline{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--sp-2);padding-top:var(--sp-3)}
+.timeline::before{
+  content:"";position:absolute;left:0;right:0;top:calc(var(--sp-3) * .34);
+  height:2px;background:var(--line);
+}
+.tl{display:flex;flex-direction:column;gap:.35em;position:relative;padding-top:var(--sp-3);min-width:0}
+.tl::before{
+  content:"";position:absolute;left:0;top:0;
+  width:clamp(9px,1vw,14px);height:clamp(9px,1vw,14px);
+  border-radius:50%;background:var(--paper);
+  border:2.5px solid var(--seal);
+}
+.tl.future::before{border-color:var(--ink-34)}
+.tl-w{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:var(--fs-num-sm);letter-spacing:-.02em;line-height:1}
+.tl.future .tl-w{color:var(--ink-34)}
+.tl-t{font-weight:600;font-size:var(--fs-body);line-height:1.22}
+.tl-d{font-size:var(--fs-small);color:var(--ink-52);line-height:1.35}
+
+/* ---------- слайд 10, витрина ---------- */
+.shop{
+  border:1px solid var(--line);
+  border-radius:var(--r-control);
+  padding:var(--sp-2);
+  display:flex;flex-direction:column;gap:.45em;
+  min-width:0;
+}
+.shelf{
+  height:clamp(26px,5.2vh,62px);
+  border-radius:10px;
+  background:var(--fog);
+  display:flex;align-items:flex-end;gap:3px;padding:5px;
+}
+.shelf b{flex:1 1 0;border-radius:3px;background:rgba(16,20,24,.13)}
+.shelf b:nth-child(1){height:62%}
+.shelf b:nth-child(2){height:88%}
+.shelf b:nth-child(3){height:46%}
+.shelf b:nth-child(4){height:74%}
+.shelf b:nth-child(5){height:56%}
+
+/* ---------- слайд 9, спринт ---------- */
+.pill-stat{
+  display:inline-flex;align-items:baseline;gap:.5em;
+  border:1px solid var(--seal);
+  border-radius:999px;
+  padding:.38em .95em;
+  font-family:"JetBrains Mono",monospace;
+  color:var(--seal);
+  font-size:var(--fs-small);
+  white-space:nowrap;
+}
+.pill-stat b{font-size:1.3em;font-weight:700;letter-spacing:-.02em}
+.channels{display:flex;gap:var(--sp-1);flex-wrap:wrap}
+
+/* ---------- слайд 10, сцена на кассе ---------- */
+.scene{border-color:var(--seal)}
+.scene-row{display:grid;grid-template-columns:1fr auto;gap:var(--sp-3);align-items:center}
+.bal{
+  display:flex;flex-direction:column;align-items:center;gap:.35em;
+  padding-left:var(--sp-3);
+  border-left:1px solid var(--line);
+}
+.bal-num{
+  font-family:"JetBrains Mono",monospace;font-weight:700;
+  font-size:var(--fs-num);line-height:1;letter-spacing:-.03em;
+  transition:color .4s var(--ease);
+}
+.bal-num.done{color:var(--seal)}
+.approve{
+  font-family:"Onest",sans-serif;font-weight:600;
+  font-size:var(--fs-small);
+  border:0;border-radius:var(--r-control);
+  background:var(--teal);color:var(--paper);
+  padding:.62em 1em;cursor:pointer;white-space:nowrap;
+  transition:background .3s var(--ease),color .3s var(--ease);
+}
+.approve[disabled]{background:var(--fog);color:var(--ink-52);cursor:default}
+
+/* ---------- слайд 13, ворота проверки ---------- */
+.gates{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2)}
+.gate{
+  border:1px solid var(--line);
+  border-left:3px solid var(--seal);
+  border-radius:var(--r-control);
+  padding:var(--sp-2) var(--sp-3);
+  display:flex;flex-direction:column;gap:.18em;min-width:0;
+}
+.gate-t{font-weight:600;font-size:var(--fs-body);line-height:1.2}
+.gate-m{font-family:"JetBrains Mono",monospace;font-size:var(--fs-small);color:var(--seal);line-height:1.35}
+.gate-stop{font-size:var(--fs-small);color:var(--coral);line-height:1.35}
+
+/* ---------- карточки персон ---------- */
+.persona{
+  border:1px solid var(--line);
+  border-radius:var(--r-card);
+  padding:var(--sp-4);
+  display:flex;flex-direction:column;gap:var(--sp-2);
+  min-width:0;
+}
+.persona-k{
+  font-family:"JetBrains Mono",monospace;
+  font-size:var(--fs-chip);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-34);
+}
+.tags{display:flex;gap:var(--sp-1);flex-wrap:wrap}
+
+/* ---------- логотип ----------
+   Тот же символ, что в брендбуке, docs/brand/brand-book.html.
+   Полумесяц выкушен маской из чаши буквы b, textLength держит
+   ширину слова ровно 700 единиц, поэтому кружки маски всегда на месте.
+   Ширина svg равна кеглю на 6.1, это отношение viewBox 720 к кеглю 118. */
+.wordmark{
+  display:block;
+  width:min(calc(var(--fs-display) * 6.1), 100%);
+  height:auto;
+  aspect-ratio:720 / 170;
+  fill:currentColor;
+  color:var(--ink);
+}
+
+/* ---------- служебные элементы, прогресс и точки ---------- */
+.progress{
+  position:fixed;top:0;left:0;right:0;height:3px;
+  background:var(--fog);z-index:40;
+}
+.progress i{
+  display:block;height:100%;width:0;
+  background:var(--teal);
+  transition:width .5s var(--ease);
+}
+.dots{
+  position:fixed;right:clamp(10px,1.6vw,26px);top:50%;
+  transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:clamp(6px,.9vh,11px);
+  z-index:40;
+}
+.dots button{
+  width:7px;height:7px;padding:0;border:0;border-radius:50%;
+  background:var(--ink-34);cursor:pointer;
+  transition:background .3s var(--ease),transform .3s var(--ease);
+}
+.dots button:hover{background:var(--ink-52)}
+.dots button[aria-current="true"]{background:var(--teal);transform:scale(1.72)}
+.dots.on-ink button{background:var(--paper-48)}
+.dots.on-ink button[aria-current="true"]{background:var(--teal)}
+.counter{
+  position:fixed;left:clamp(14px,2vw,30px);bottom:clamp(12px,2vh,26px);
+  font-family:"JetBrains Mono",monospace;
+  font-size:var(--fs-chip);color:var(--ink-34);z-index:40;
+  letter-spacing:.1em;
+}
+.counter.on-ink{color:var(--paper-48)}
+
+/* ---------- появление ---------- */
+.rise{
+  opacity:0;
+  transform:translateY(15px);
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+.is-active .rise{opacity:1;transform:none}
+.is-active .rise:nth-child(1){transition-delay:.04s}
+.is-active .rise:nth-child(2){transition-delay:.11s}
+.is-active .rise:nth-child(3){transition-delay:.18s}
+.is-active .rise:nth-child(4){transition-delay:.25s}
+.is-active .rise:nth-child(5){transition-delay:.32s}
+.stagger>*{
+  opacity:0;transform:translateY(13px);
+  transition:opacity .55s var(--ease),transform .55s var(--ease);
+}
+.is-active .stagger>*{opacity:1;transform:none}
+.is-active .stagger>*:nth-child(1){transition-delay:.16s}
+.is-active .stagger>*:nth-child(2){transition-delay:.22s}
+.is-active .stagger>*:nth-child(3){transition-delay:.28s}
+.is-active .stagger>*:nth-child(4){transition-delay:.34s}
+.is-active .stagger>*:nth-child(5){transition-delay:.40s}
+.is-active .stagger>*:nth-child(6){transition-delay:.46s}
+.is-active .stagger>*:nth-child(7){transition-delay:.52s}
+.is-active .stagger>*:nth-child(8){transition-delay:.58s}
+.is-active .stagger>*:nth-child(9){transition-delay:.64s}
+.is-active .stagger>*:nth-child(10){transition-delay:.70s}
+.is-active .stagger>*:nth-child(11){transition-delay:.76s}
+
+/* ---------- контрольные точки по ширине ---------- */
+@media (max-width:1000px){
+  .two-col,.two-col.even{grid-template-columns:1fr;gap:var(--sp-3)}
+  .flow{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-1)}
+  .arrow{display:none}
+  .timeline{grid-template-columns:repeat(2,1fr)}
+  .timeline::before{display:none}
+}
+/* макет с телефоном держится дольше, ему хватает узкой колонки */
+@media (max-width:700px){
+  .two-col.media{grid-template-columns:1fr;gap:var(--sp-3);justify-items:center}
+  .two-col.media .bullets{justify-self:stretch}
+}
+@media (max-width:620px){
+  .grid-3{grid-template-columns:1fr 1fr}
+  .flow{grid-template-columns:repeat(2,1fr)}
+  .rank{grid-template-columns:auto 1fr;gap:var(--sp-2)}
+  .meter{display:none}
+  .dots{display:none}
+  .gates{grid-template-columns:1fr}
+  .scene-row{grid-template-columns:1fr;gap:var(--sp-2)}
+  .bal{flex-direction:row;align-items:center;gap:var(--sp-2);padding-left:0;border-left:0}
+}
+@media (max-width:480px){
+  /* держим две колонки, один столбец сделал бы слайды слишком высокими */
+  .shelf{display:none}
+  .tags,.channels{gap:4px}
+  .chip{padding:.38em .6em}
+  .step-d{display:none}
+}
+
+/* ---------- контрольные точки по высоте, 700, 600 и 500 ---------- */
+@media (max-height:700px){
+  :root{
+    --pad-y:clamp(14px, 3.2vh, 34px);
+    --fs-display:clamp(2.1rem, min(7.6vw, 12vh), 5rem);
+    --fs-h1:clamp(1.4rem, min(3.9vw, 6.1vh), 2.6rem);
+  }
+  .card,.stat,.persona{padding:var(--sp-2)}
+  .phone{--ph:clamp(210px, 54vh, 360px)}
+}
+@media (max-height:600px){
+  :root{
+    --pad-y:clamp(12px, 2.6vh, 26px);
+    --sp-3:clamp(9px, 1.7vh, 16px);
+    --sp-4:clamp(12px, 2.4vh, 22px);
+    --fs-lead:clamp(.77rem, min(1.36vw, 2.1vh), 1.02rem);
+  }
+  .persona{padding:var(--sp-3)}
+  .bullets{gap:var(--sp-1)}
+  .phone{--ph:clamp(196px, 56vh, 320px)}
+}
+@media (max-height:500px){
+  :root{
+    --pad-y:clamp(10px, 2.2vh, 18px);
+    --pad-x:clamp(16px, 4vw, 40px);
+    --sp-2:clamp(6px, 1.2vh, 11px);
+    --sp-3:clamp(7px, 1.4vh, 13px);
+    --fs-display:clamp(1.7rem, min(6.2vw, 12.4vh), 3.4rem);
+    --fs-h1:clamp(1.1rem, min(3.2vw, 6vh), 1.9rem);
+    --fs-h2:clamp(.88rem, min(1.9vw, 3.4vh), 1.25rem);
+  }
+  .card-note,.step-d,.rank-d,.tl-d{display:none}
+  .phone{--ph:clamp(170px, 58vh, 260px)}
+  .counter{display:none}
+}
+
+/* ---------- уважение к настройке уменьшенного движения ---------- */
+@media (prefers-reduced-motion:reduce){
+  .deck{scroll-behavior:auto}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    transition-delay:0ms !important;
+  }
+  .rise,.stagger>*{opacity:1;transform:none}
+  .dot{animation:none}
+}
+
+/* ---------- печать, один слайд на страницу ---------- */
+@media print{
+  body,.deck{overflow:visible;height:auto}
+  .slide{height:100vh;page-break-after:always;break-after:page}
+  .progress,.dots,.counter{display:none}
+  .rise,.stagger>*{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- символ логотипа, тот же, что в брендбуке -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <mask id="lb-bite" maskUnits="userSpaceOnUse" x="0" y="0" width="720" height="170">
+      <rect x="0" y="0" width="720" height="170" fill="#fff"/>
+      <circle cx="450" cy="66" r="25" fill="#000"/>
+      <circle cx="471" cy="45" r="18" fill="#fff"/>
+    </mask>
+    <symbol id="lb-wordmark" viewBox="0 0 720 170">
+      <text x="10" y="126" textLength="700" lengthAdjust="spacing"
+            font-family="Unbounded, system-ui, sans-serif" font-weight="900" font-size="118"
+            mask="url(#lb-bite)">lastbite</text>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="progress" aria-hidden="true"><i id="bar"></i></div>
+<nav class="dots" id="dots" aria-label="Навигация по слайдам"></nav>
+<div class="counter" id="counter" aria-hidden="true">01 / 14</div>
+
+<main class="deck" id="deck" tabindex="0" aria-label="lastbite, презентация">
+
+  <!-- 01 обложка -->
+  <section class="slide" data-name="обложка">
+    <div class="wrap center">
+      <div class="rise"><span class="chip chip-verified"><i class="dot"></i>проверено 12 минут назад</span></div>
+      <h1 class="rise" style="margin:0;width:100%;display:flex;justify-content:center">
+        <svg class="wordmark" viewBox="0 0 720 170" role="img">
+          <title>lastbite, логотип с полумесяцем, выкушенным из буквы b</title>
+          <use href="#lb-wordmark"/>
+        </svg>
+      </h1>
+      <p class="h2 rise" style="max-width:24ch">каждое предложение настоящее</p>
+      <p class="small mono rise" style="letter-spacing:.12em">излишки еды, проверенные остатки, Ташкент</p>
+    </div>
+  </section>
+
+  <!-- 02 проблема -->
+  <section class="slide" data-name="проблема">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">проблема</p>
+        <h2 class="h1">полки нет ни<br>в одной базе</h2>
+      </div>
+      <div class="two-col">
+        <ul class="bullets rise">
+          <li>Небольшие магазины Ташкента работают почти без кассовых программ.</li>
+          <li>Остатки живут в голове владельца, а не в системе.</li>
+          <li>Пересчёт ста позиций стоит около пяти человеко-часов.</li>
+          <li>Излишки еды тихо умирают на полке, без цены и без покупателя.</li>
+        </ul>
+        <div class="stack stagger">
+          <div class="stat teal">
+            <span class="stat-num">~5 ч</span>
+            <span class="stat-label">человеко-часов на пересчёт 100 позиций. Предварительный потолок, замерим в первую неделю.</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">100</span>
+            <span class="stat-label">позиций в первой переписи по каждому магазину</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">1</span>
+            <span class="stat-label">место, где остатки лежат на самом деле, память владельца</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 кому больно -->
+  <section class="slide" data-name="кому больно">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">кому больно</p>
+        <h2 class="h1">двое людей, одна<br>недостающая цифра</h2>
+      </div>
+      <div class="two-col even rise">
+        <div class="persona">
+          <p class="persona-k">владелец магазина</p>
+          <p class="card-title">Он не может назначить цену тому, что не может пересчитать.</p>
+          <div class="tags">
+            <span class="chip chip-quiet">нет цифр</span>
+            <span class="chip chip-quiet">недостачи</span>
+            <span class="chip chip-quiet">списания по сроку</span>
+          </div>
+        </div>
+        <div class="persona">
+          <p class="persona-k">покупатель</p>
+          <p class="card-title">Она перестала верить слову «скидка».</p>
+          <div class="tags">
+            <span class="chip chip-quiet">устаревшие объявления</span>
+            <span class="chip chip-quiet">разобрали до прихода</span>
+            <span class="chip chip-quiet">никаких доказательств</span>
+          </div>
+        </div>
+      </div>
+      <p class="small rise">Это одна и та же проблема. Полку не видит никто.</p>
+    </div>
+  </section>
+
+  <!-- 04 суть, единственный тёмный слайд -->
+  <section class="slide ink" data-name="суть" data-theme="ink">
+    <div class="wrap" style="position:relative;z-index:1">
+      <p class="eyebrow rise">суть</p>
+      <h2 class="display rise" style="max-width:16ch">скидкам не верят, потому что не верят полке. мы продаём <span class="accent">проверенное</span>.</h2>
+      <div class="rise"><span class="chip chip-verified"><i class="dot"></i>проверено 12 минут назад</span></div>
+    </div>
+  </section>
+
+  <!-- 05 как это работает -->
+  <section class="slide" data-name="как это работает">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">как это работает</p>
+        <h2 class="h1">цепочка, от полки до выдачи</h2>
+      </div>
+      <div class="row rise" style="justify-content:center;gap:var(--sp-2)">
+        <span class="chip chip-verified"><i class="dot"></i>проверено 12 минут назад</span>
+        <span class="small">печать ставит человек, а не скрипт</span>
+      </div>
+      <div class="flow stagger">
+        <div class="step"><span class="step-n">01</span><span class="step-t">свидетельство</span><span class="step-d">пересчёт, фото, накладная</span></div>
+        <span class="arrow"></span>
+        <div class="step"><span class="step-n">02</span><span class="step-t">подтверждение человеком</span><span class="step-d">человек подписывает цифру</span></div>
+        <span class="arrow"></span>
+        <div class="step"><span class="step-n">03</span><span class="step-t">выделение остатка</span><span class="step-d">товар откладывается под предложение</span></div>
+        <span class="arrow"></span>
+        <div class="step"><span class="step-n">04</span><span class="step-t">публичное предложение</span><span class="step-d">цена и окно выдачи</span></div>
+        <span class="arrow"></span>
+        <div class="step"><span class="step-n">05</span><span class="step-t">атомарная бронь</span><span class="step-d">одна единица, один покупатель</span></div>
+        <span class="arrow"></span>
+        <div class="step"><span class="step-n">06</span><span class="step-t">выдача и сверка</span><span class="step-d">код сканируют, книга закрывается</span></div>
+      </div>
+      <p class="small rise">Каждое предложение у покупателя восходит к подтверждённому пересчёту. Нет подтверждения, нет предложения.</p>
+    </div>
+  </section>
+
+  <!-- 06 продукт, сторона покупателя -->
+  <section class="slide" data-name="продукт, покупатель">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">продукт, сторона покупателя</p>
+        <h2 class="h1">одна бронь,<br>один код</h2>
+      </div>
+      <div class="two-col media rise">
+        <div class="phone" aria-label="Макет приложения покупателя">
+          <div class="bar"></div>
+          <div class="ph-top"><span>рядом с вами</span><span>19:40</span></div>
+          <div class="ph-card">
+            <div class="ph-shelf"></div>
+            <div>
+              <p class="ph-title">Набор выпечки</p>
+              <p class="ph-sub">Пекарня на Касабе, 400 м</p>
+            </div>
+            <span class="ph-chip"><i class="dot"></i>проверено 12 минут назад</span>
+            <div class="ph-price">
+              <span class="ph-old">45 000</span>
+              <span class="ph-new">18 000</span>
+              <span class="ph-save">экономия 27 000</span>
+            </div>
+          </div>
+          <div class="ph-btn">Забронировать</div>
+          <div class="ph-ticket"><b>LB-7K2M</b><span>код выдачи</span></div>
+        </div>
+        <ul class="bullets">
+          <li>Старая цена зачёркнута. Экономия, единственное оранжевое на экране.</li>
+          <li>На чипе стоит время, а не прилагательное.</li>
+          <li>Одно нажатие бронирует ровно одну единицу. Двое не заберут одну и ту же.</li>
+          <li>Код выдачи закрывает всю передачу. Без аккаунта, без оплаты, без очереди.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 продукт, сторона магазина -->
+  <section class="slide" data-name="продукт, магазин">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">продукт, сторона магазина</p>
+        <h2 class="h1">пересчитать,<br>подтвердить, опубликовать</h2>
+      </div>
+      <div class="two-col media rise">
+        <div class="phone" aria-label="Макет приложения магазина">
+          <div class="bar"></div>
+          <div class="ph-top"><span>Остатки</span><span>3 позиции</span></div>
+          <div class="ph-card" style="gap:0">
+            <div class="ph-row"><i class="cdot hi"></i><span class="nm">Молоко 2.5%</span><span class="qt">12</span><span class="tm">12м</span></div>
+            <div class="ph-row"><i class="cdot mid"></i><span class="nm">Хлеб бородинский</span><span class="qt">4</span><span class="tm">6ч</span></div>
+            <div class="ph-row"><i class="cdot lo"></i><span class="nm">Йогурт клубника</span><span class="qt">7</span><span class="tm">3д</span></div>
+          </div>
+          <div class="ph-card">
+            <p class="ph-sub">Пересчёт, 18 из 40</p>
+            <div class="ph-meter"><i></i></div>
+          </div>
+          <div class="ph-btn">Подтвердить</div>
+        </div>
+        <ul class="bullets">
+          <li>У каждой строки своя точка уверенности и время последней проверки.</li>
+          <li>Пересчёт остаётся короткой конечной задачей, а не проектом.</li>
+          <li>Подтверждение делается в одно нажатие, и всегда человеком.</li>
+          <li>Ничто не уходит покупателям мимо панели проверки.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 построено и доказано -->
+  <section class="slide" data-name="построено и доказано">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">построено и доказано</p>
+        <h2 class="h1">это не обещание<br>из презентации</h2>
+      </div>
+      <div class="grid-3 stagger">
+        <div class="stat teal"><span class="stat-num">563</span><span class="stat-label">теста фронтенда проходят, включая сквозные сценарии</span></div>
+        <div class="stat teal"><span class="stat-num">144</span><span class="stat-label">теста бэкенда на живом Postgres, прогнаны дважды</span></div>
+        <div class="stat teal"><span class="stat-num">25</span><span class="stat-label">покупателей одновременно за одну единицу. Ноль перепродаж, три прогона подряд.</span></div>
+      </div>
+      <div class="card fog rise">
+        <p class="card-title">Один и тот же набор проверок проходит одинаково на заглушке в памяти и на живом стеке.</p>
+        <p class="card-note">Те же утверждения, обе стороны, модули без правок. Typecheck чистый, lint чистый, все шесть миграций собираются с нуля. Независимый аудит проходил трижды, и каждая находка закрыта до слияния.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 коммерческий клин, платный спринт -->
+  <section class="slide" data-name="коммерческий клин">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">коммерческий клин</p>
+        <h2 class="h1">Store Control Sprint</h2>
+      </div>
+      <div class="row rise">
+        <span class="pill-stat"><b>7-10</b> дней</span>
+        <span class="pill-stat"><b>100-300</b> топовых SKU</span>
+        <span class="pill-stat"><b>1</b> магазин за раз</span>
+      </div>
+      <div class="two-col top">
+        <ul class="bullets rise">
+          <li>Чистим каталог и приводим названия к одному виду.</li>
+          <li>Ставим приёмку и регулярные пересчёты.</li>
+          <li>Находим просрочку и возможности у поставщиков.</li>
+          <li>Включаем проверенные офферы.</li>
+        </ul>
+        <div class="stack stagger">
+          <div class="card fog">
+            <p class="eyebrow">оффер владельцу</p>
+            <p class="card-title">Понятный результат за фиксированные деньги. Депозит вперёд.</p>
+            <p class="card-note">Мы не продаём внедрение без конца. Мы продаём срок, список позиций и работающую приёмку.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow">откуда берём данные</p>
+            <div class="channels">
+              <span class="chip chip-quiet">штрихкод</span>
+              <span class="chip chip-quiet">CSV</span>
+              <span class="chip chip-quiet">накладные, OCR</span>
+              <span class="chip chip-quiet">физический пересчёт</span>
+              <span class="chip chip-quiet">видео</span>
+            </div>
+            <p class="card-note">Видео стоит в этом ряду как один канал сбора, не как отдельный продукт.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 демоплатформа и видео -->
+  <section class="slide" data-name="демоплатформа и видео">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">демоплатформа и видео</p>
+        <h2 class="h1">Камера замечает. LastBite готовит доказательства. Ваш менеджер <span class="accent">решает</span>.</h2>
+      </div>
+      <div class="grid-3 stagger">
+        <div class="shop">
+          <div class="shelf"><b></b><b></b><b></b><b></b><b></b></div>
+          <p class="step-t">Магазин без POS</p>
+          <p class="step-d">Проверенные офферы без кассовой программы.</p>
+          <span class="chip chip-verified" style="align-self:flex-start"><i class="dot"></i>проверено 12 мин</span>
+        </div>
+        <div class="shop">
+          <div class="shelf"><b></b><b></b><b></b><b></b><b></b></div>
+          <p class="step-t">Магазин с неполным POS</p>
+          <p class="step-d">Часть позиций живёт в кассе, часть в тетради.</p>
+          <span class="chip chip-quiet" style="align-self:flex-start">часть данных вручную</span>
+        </div>
+        <div class="shop">
+          <div class="shelf"><b></b><b></b><b></b><b></b><b></b></div>
+          <p class="step-t">Камерная лаборатория</p>
+          <p class="step-d">Отдельная площадка под наблюдение и замеры.</p>
+          <span class="chip chip-quiet" style="align-self:flex-start">отдельное соглашение</span>
+        </div>
+      </div>
+      <div class="card scene rise">
+        <div class="scene-row">
+          <div style="display:flex;flex-direction:column;gap:.3em;min-width:0">
+            <p class="eyebrow">сцена на кассе</p>
+            <p class="card-title">Возможное физическое изъятие, оплата неизвестна. Требуется решение менеджера.</p>
+            <p class="card-note" id="sceneNote">Пока решения нет, остаток не двигается. Витрина обновится только после подтверждения.</p>
+          </div>
+          <div class="bal">
+            <span class="eyebrow">остаток</span>
+            <span class="bal-num" id="bal">7</span>
+            <button class="approve" id="approveBtn" type="button">Подтвердить списание</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 что получает магазин -->
+  <section class="slide" data-name="что получает магазин">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">что получает магазин, по остроте боли</p>
+        <h2 class="h1">пять вещей, о которых<br>просят первыми</h2>
+      </div>
+      <div class="ranks stagger">
+        <div class="rank">
+          <span class="rank-n">01</span>
+          <div class="rank-b"><p class="rank-t">Оцифровка полки в таблицу</p><p class="rank-d">Остатки уходят из головы владельца и становятся строкой, которую видят все.</p></div>
+          <div class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        </div>
+        <div class="rank">
+          <span class="rank-n">02</span>
+          <div class="rank-b"><p class="rank-t">Список сроков годности</p><p class="rank-d">Что умрёт на этой неделе, по порядку, до списания.</p></div>
+          <div class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+        </div>
+        <div class="rank">
+          <span class="rank-n">03</span>
+          <div class="rank-b"><p class="rank-t">Оповещения о расхождениях</p><p class="rank-d">Пересчитано против ожидаемого, метка в момент расхождения.</p></div>
+          <div class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        </div>
+        <div class="rank">
+          <span class="rank-n">04</span>
+          <div class="rank-b"><p class="rank-t">Ежедневная сводка в Telegram</p><p class="rank-d">Одно сообщение утром, в приложении, которое владелец и так открывает.</p></div>
+          <div class="meter"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        </div>
+        <div class="rank">
+          <span class="rank-n">05</span>
+          <div class="rank-b"><p class="rank-t">Черновики заказов поставщикам</p><p class="rank-d">Список, который подтверждают, а не пишут по памяти.</p></div>
+          <div class="meter"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 рынок и модель -->
+  <section class="slide" data-name="рынок и модель">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">рынок и модель</p>
+        <h2 class="h1">сначала одна улица</h2>
+      </div>
+      <div class="grid-3 stagger">
+        <div class="card fog">
+          <p class="eyebrow">рынок, ориентировочно</p>
+          <p class="card-title">Магазинов у дома в Узбекистане десятки тысяч.</p>
+          <p class="card-note">Мы это не считали и цифру защищать не будем. Полевые ворота заменят догадку на пересчитанные магазины.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">выручка, спасённые продажи</p>
+          <p class="card-title">Комиссия со спасённых продаж</p>
+          <p class="card-note">Мы зарабатываем только на еде, которую иначе выбросили бы.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">выручка, инструменты</p>
+          <p class="card-title">Подписка на складские инструменты</p>
+          <p class="card-note">Оцифровка, список сроков и сводка стоят денег даже тогда, когда предложений нет.</p>
+        </div>
+      </div>
+      <p class="small mono rise">первые деньги приходят со спринта. комиссия и подписка идут следом, платежей в бете пока нет.</p>
+    </div>
+  </section>
+
+  <!-- 13 дорожная карта -->
+  <section class="slide" data-name="дорожная карта">
+    <div class="wrap">
+      <div class="head rise">
+        <p class="eyebrow">дорожная карта</p>
+        <h2 class="h1">ворота, а не вехи</h2>
+      </div>
+      <div class="timeline stagger">
+        <div class="tl">
+          <span class="tl-w">0-7</span>
+          <span class="tl-t">полевые ворота, дни</span>
+          <span class="tl-d">Обойти пять магазинов в одном квартале. Подтвердить боль минимум в трёх. Уйти с подписанным пилотом и задатком.</span>
+        </div>
+        <div class="tl">
+          <span class="tl-w">30</span>
+          <span class="tl-t">один живой магазин, дни</span>
+          <span class="tl-d">Второй магазин только после того, как первый станет устойчивым. Реальные пересчёты, предложения и выдачи.</span>
+        </div>
+        <div class="tl">
+          <span class="tl-w">90</span>
+          <span class="tl-t">от трёх до пяти магазинов, дни</span>
+          <span class="tl-d">Не менее 50 завершённых броней до любого расширения маркетплейса.</span>
+        </div>
+        <div class="tl future">
+          <span class="tl-w">далее</span>
+          <span class="tl-t">раскатка спринта</span>
+          <span class="tl-d">Видео входит в спринт только если ворота проверки открылись.</span>
+        </div>
+      </div>
+      <div class="gates rise">
+        <div class="gate">
+          <p class="gate-t">Ворота видео против штрихкода</p>
+          <p class="gate-m">2 замера по 100 SKU, порог 25%</p>
+          <p class="gate-stop">Если видео не быстрее штрихкода минимум на 25% до проверенного черновика, видео уходит из роадмапа.</p>
+        </div>
+        <div class="gate">
+          <p class="gate-t">Ворота сцены на кассе</p>
+          <p class="gate-m">30 постановочных событий, медиана ревью до 20 с</p>
+          <p class="gate-stop">Нужен ноль несанкционированных движений. Иначе сцена остаётся в камерной лаборатории.</p>
+        </div>
+      </div>
+      <p class="small rise">Правило остановки написано заранее. Закрытые ворота останавливают следующий шаг, а не сдвигаются тихо.</p>
+    </div>
+  </section>
+
+  <!-- 14 финал -->
+  <section class="slide" data-name="финал">
+    <div class="wrap center">
+      <h2 class="rise" style="margin:0;width:100%;display:flex;justify-content:center">
+        <svg class="wordmark" viewBox="0 0 720 170" role="img">
+          <title>lastbite, логотип с полумесяцем, выкушенным из буквы b</title>
+          <use href="#lb-wordmark"/>
+        </svg>
+      </h2>
+      <p class="h2 rise" style="max-width:20ch">сделаем полку честной</p>
+      <div class="rise"><span class="chip chip-verified"><i class="dot"></i>проверено 12 минут назад</span></div>
+      <p class="small mono rise" style="letter-spacing:.08em">hello@lastbite.uz &nbsp;&middot;&nbsp; +998 __ ___ __ __ &nbsp;&middot;&nbsp; Ташкент</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var deck = document.getElementById("deck");
+  var bar = document.getElementById("bar");
+  var dotsWrap = document.getElementById("dots");
+  var counter = document.getElementById("counter");
+  var slides = Array.prototype.slice.call(deck.querySelectorAll(".slide"));
+  var total = slides.length;
+  var index = 0;
+  var lock = false;
+
+  var reduceQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function reduced() { return reduceQuery.matches; }
+
+  // строим точки навигации
+  slides.forEach(function (s, i) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", "Слайд " + (i + 1) + ", " + (s.dataset.name || ""));
+    b.addEventListener("click", function () { go(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dotButtons = Array.prototype.slice.call(dotsWrap.children);
+
+  function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+  function paint(i) {
+    index = i;
+    dotButtons.forEach(function (b, k) {
+      b.setAttribute("aria-current", k === i ? "true" : "false");
+    });
+    bar.style.width = (total > 1 ? (i / (total - 1)) * 100 : 100) + "%";
+    counter.textContent = pad(i + 1) + " / " + pad(total);
+
+    // служебные элементы светлеют поверх тёмного слайда
+    var onInk = slides[i].dataset.theme === "ink";
+    dotsWrap.classList.toggle("on-ink", onInk);
+    counter.classList.toggle("on-ink", onInk);
+  }
+
+  function go(i) {
+    var target = Math.max(0, Math.min(total - 1, i));
+    deck.scrollTo({
+      top: target * deck.clientHeight,
+      behavior: reduced() ? "auto" : "smooth"
+    });
+    paint(target);
+  }
+
+  // появление при входе, и честный индекс во время нативной прокрутки
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting && e.intersectionRatio > 0.55) {
+        e.target.classList.add("is-active");
+        paint(slides.indexOf(e.target));
+      }
+    });
+  }, { root: deck, threshold: [0.55] });
+  slides.forEach(function (s) { io.observe(s); });
+
+  // колесо, один жест сдвигает ровно на один слайд
+  deck.addEventListener("wheel", function (e) {
+    if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    e.preventDefault();
+    if (lock || Math.abs(e.deltaY) < 6) return;
+    lock = true;
+    go(index + (e.deltaY > 0 ? 1 : -1));
+    window.setTimeout(function () { lock = false; }, reduced() ? 240 : 760);
+  }, { passive: false });
+
+  // клавиатура
+  window.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "ArrowDown" || k === "ArrowRight" || k === "PageDown" || k === " ") {
+      e.preventDefault(); go(index + 1);
+    } else if (k === "ArrowUp" || k === "ArrowLeft" || k === "PageUp") {
+      e.preventDefault(); go(index - 1);
+    } else if (k === "Home") {
+      e.preventDefault(); go(0);
+    } else if (k === "End") {
+      e.preventDefault(); go(total - 1);
+    }
+  });
+
+  // касание, нативная привязка ведёт жест, короткий флик ловим здесь
+  var startY = null, startT = 0;
+  deck.addEventListener("touchstart", function (e) {
+    startY = e.touches[0].clientY;
+    startT = Date.now();
+  }, { passive: true });
+  deck.addEventListener("touchend", function (e) {
+    if (startY === null) return;
+    var dy = startY - e.changedTouches[0].clientY;
+    var dt = Date.now() - startT;
+    if (dt < 320 && Math.abs(dy) > 42) go(index + (dy > 0 ? 1 : -1));
+    startY = null;
+  }, { passive: true });
+
+  // держим текущий слайд на месте при изменении размера окна
+  var rt = null;
+  window.addEventListener("resize", function () {
+    window.clearTimeout(rt);
+    rt = window.setTimeout(function () {
+      deck.scrollTo({ top: index * deck.clientHeight, behavior: "auto" });
+    }, 140);
+  });
+
+  // сцена на кассе, остаток меняется только после решения человека
+  var approveBtn = document.getElementById("approveBtn");
+  var balEl = document.getElementById("bal");
+  var sceneNote = document.getElementById("sceneNote");
+  if (approveBtn && balEl && sceneNote) {
+    approveBtn.addEventListener("click", function () {
+      balEl.textContent = "6";
+      balEl.classList.add("done");
+      approveBtn.disabled = true;
+      approveBtn.textContent = "Подтверждено менеджером";
+      sceneNote.textContent = "Менеджер подтвердил. Остаток уменьшен, витрина обновлена, запись ушла в журнал.";
+    });
+  }
+
+  slides[0].classList.add("is-active");
+  paint(0);
+  deck.focus({ preventScroll: true });
+}());
+</script>
+</body>
+</html>

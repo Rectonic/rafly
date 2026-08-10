@@ -1,0 +1,1292 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LastBite. Брендбук</title>
+<meta name="description" content="Брендбук LastBite. Логотип, палитра, шрифты, чип проверки, талон выдачи, компоненты, движение, съёмка и голос.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --teal:#16C79A;
+  --seal:#0E8A6C;
+  --ink:#101418;
+  --paper:#FFFFFF;
+  --fog:#F4F6F5;
+  --tangerine:#FF8C42;
+  --coral:#FF6B6B;
+  --amber:#B26A12;
+
+  --ink-70:rgba(16,20,24,0.74);
+  --ink-55:rgba(16,20,24,0.62);
+  --ink-40:rgba(16,20,24,0.54);
+  --line:rgba(16,20,24,0.10);
+  --line-2:rgba(16,20,24,0.16);
+
+  --r-ctl:16px;
+  --r-card:24px;
+  --shadow:0 2px 8px rgba(16,20,24,0.06);
+
+  --display:"Unbounded",system-ui,sans-serif;
+  --body:"Onest",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+
+/* ---------- reset ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:24px;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+img,svg{display:block;max-width:100%}
+h1,h2,h3,h4,p,ul,ol,figure,table{margin:0}
+ul{padding:0;list-style:none}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--seal);outline-offset:3px;border-radius:6px}
+.mark{fill:currentColor}
+
+/* ---------- type scale ---------- */
+.t-h2{font-family:var(--display);font-weight:500;font-size:28px;line-height:36px;letter-spacing:-0.01em}
+.t-h3{font-family:var(--body);font-weight:600;font-size:19px;line-height:28px}
+.t-body{font-size:16px;line-height:24px}
+.t-small{font-size:13px;line-height:18px}
+.mono{font-family:var(--mono);font-size:14px;line-height:20px}
+.muted{color:var(--ink-55)}
+.lede{font-size:19px;line-height:30px;color:var(--ink-70);max-width:62ch}
+
+@media (max-width:700px){
+  .t-h2{font-size:23px;line-height:31px}
+  .lede{font-size:17px;line-height:27px}
+}
+
+/* ---------- layout ---------- */
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 28px}
+@media (max-width:700px){.wrap{padding:0 18px}}
+
+.sec{padding:88px 0;border-top:1px solid var(--line);scroll-margin-top:64px}
+@media (max-width:700px){.sec{padding:56px 0}}
+.grid{display:grid;grid-template-columns:180px minmax(0,1fr);gap:48px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:1fr;gap:22px}}
+.rail{position:sticky;top:88px}
+@media (max-width:900px){.rail{position:static;display:flex;gap:12px;align-items:baseline}}
+.rail-num{font-family:var(--mono);font-size:13px;line-height:18px;color:var(--teal);font-weight:700}
+.rail-label{font-family:var(--mono);font-size:13px;line-height:18px;color:var(--ink-40);margin-top:2px}
+@media (max-width:900px){.rail-label{margin-top:0}}
+.stack>*+*{margin-top:20px}
+.stack-lg>*+*{margin-top:44px}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,0.88);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{display:flex;align-items:center;gap:24px;height:60px}
+.nav-mark{width:104px;flex:0 0 auto;color:var(--ink)}
+.nav-links{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;margin-left:auto}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{
+  font-family:var(--mono);font-size:12px;line-height:16px;
+  color:var(--ink-55);text-decoration:none;white-space:nowrap;
+  padding:8px 10px;border-radius:999px;
+  transition:color 200ms ease-out,background-color 200ms ease-out;
+}
+.nav-links a:hover{color:var(--ink);background:var(--fog)}
+.nav-links a[aria-current="true"]{color:var(--seal);background:var(--fog)}
+@media (max-width:700px){.nav-mark{width:84px}}
+
+/* ---------- cover ---------- */
+.cover{padding:96px 0 92px}
+.cover-mark{width:min(760px,100%);color:var(--teal);margin:22px 0 30px}
+.eyebrow{font-family:var(--mono);font-size:13px;line-height:18px;color:var(--ink-40);letter-spacing:0.02em}
+.cover-line{font-family:var(--display);font-weight:500;font-size:clamp(19px,3.2vw,30px);line-height:1.34;letter-spacing:-0.01em;max-width:24ch}
+.device-strip{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:40px}
+
+/* ---------- verified chip ---------- */
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1.5px solid var(--seal);border-radius:999px;
+  padding:6px 13px 6px 11px;background:var(--paper);
+  font-family:var(--mono);font-size:13px;line-height:18px;color:var(--seal);
+  text-transform:lowercase;white-space:nowrap;
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--teal);position:relative;flex:0 0 auto}
+.dot::after{
+  content:"";position:absolute;inset:-4px;border-radius:50%;
+  border:1.5px solid var(--teal);animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(0.55);opacity:0.9}
+  70%{transform:scale(1.6);opacity:0}
+  100%{transform:scale(1.6);opacity:0}
+}
+.chip.aging{border-color:var(--line-2);color:var(--ink-55)}
+.chip.aging .dot{background:var(--ink-40)}
+.chip.aging .dot::after{display:none}
+.chip.stale{border-color:rgba(178,106,18,0.45);color:var(--amber)}
+.chip.stale .dot{background:var(--amber)}
+.chip.stale .dot::after{display:none}
+.chip.never{border-color:var(--line-2);color:var(--ink-40)}
+.chip.never .dot{background:transparent;border:1.5px dashed var(--ink-40);width:9px;height:9px}
+.chip.never .dot::after{display:none}
+.chip.lg{font-size:16px;padding:10px 20px 10px 16px;gap:11px}
+.chip.lg .dot{width:9px;height:9px}
+
+/* ---------- ticket ---------- */
+.ticket{
+  display:inline-flex;align-items:stretch;background:var(--paper);
+  border:1.5px solid var(--ink);border-radius:14px;overflow:hidden;
+  background-image:repeating-linear-gradient(135deg,rgba(16,20,24,0.022) 0 2px,rgba(16,20,24,0) 2px 6px);
+}
+.ticket-stub{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:10px 14px;border-right:1.5px dashed var(--ink);position:relative;
+}
+.ticket-stub::before,.ticket-stub::after{
+  content:"";position:absolute;right:-7px;width:12px;height:12px;border-radius:50%;
+  background:var(--paper);border:1.5px solid var(--ink);
+}
+.ticket-stub::before{top:-8px;clip-path:inset(50% 0 0 0)}
+.ticket-stub::after{bottom:-8px;clip-path:inset(0 0 50% 0)}
+.ticket-kicker{font-family:var(--mono);font-size:10px;line-height:14px;color:var(--ink-40);text-transform:uppercase;letter-spacing:0.08em}
+.ticket-code{font-family:var(--mono);font-weight:700;font-size:20px;line-height:26px;letter-spacing:0.06em}
+.ticket-meta{display:flex;flex-direction:column;justify-content:center;padding:10px 16px;gap:2px}
+.ticket-meta span{font-family:var(--mono);font-size:12px;line-height:17px;color:var(--ink-55)}
+.ticket.lg .ticket-code{font-size:30px;line-height:38px}
+.ticket.lg .ticket-stub{padding:16px 22px}
+.ticket.lg .ticket-meta{padding:16px 22px}
+
+/* ---------- pills ---------- */
+.pill{
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;
+  padding:5px 12px;font-family:var(--mono);font-size:12px;line-height:17px;
+  border:1px solid transparent;white-space:nowrap;
+}
+.pill-live{background:rgba(22,199,154,0.12);color:var(--seal);border-color:rgba(14,138,108,0.28)}
+.pill-paused{background:var(--paper);color:var(--ink-70);border-color:var(--line-2)}
+.pill-sold{background:var(--fog);color:var(--ink-70);border-color:var(--line)}
+.pill-expired{background:var(--fog);color:var(--ink-40);border-color:var(--line)}
+.pill i{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto;opacity:0.85}
+
+/* ---------- buttons ---------- */
+.btn{
+  font-family:var(--body);font-weight:600;font-size:16px;line-height:24px;
+  border-radius:var(--r-ctl);padding:13px 24px;border:1.5px solid transparent;
+  cursor:pointer;transition:background-color 200ms ease-out,border-color 200ms ease-out,color 200ms ease-out,transform 200ms ease-out;
+}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:var(--teal);color:var(--paper)}
+.btn-primary:hover{background:var(--seal)}
+.btn-secondary{background:var(--paper);color:var(--ink);border-color:var(--line-2)}
+.btn-secondary:hover{border-color:var(--ink);background:var(--fog)}
+.btn-disabled{background:var(--fog);color:var(--ink-40);cursor:not-allowed}
+.btn-disabled:active{transform:none}
+
+/* ---------- stepper ---------- */
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line-2);border-radius:var(--r-ctl);overflow:hidden;background:var(--paper)}
+.stepper button{
+  width:44px;height:44px;border:0;background:var(--paper);cursor:pointer;
+  font-family:var(--body);font-size:20px;line-height:1;color:var(--ink);
+  transition:background-color 200ms ease-out;
+}
+.stepper button:hover:not(:disabled){background:var(--fog)}
+.stepper button:disabled{color:var(--ink-40);cursor:not-allowed}
+.stepper output{
+  min-width:52px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:700;
+  border-left:1.5px solid var(--line-2);border-right:1.5px solid var(--line-2);line-height:44px;
+}
+
+/* ---------- cards, tiles ---------- */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;box-shadow:var(--shadow)}
+.tile{background:var(--fog);border-radius:var(--r-card);padding:26px}
+.tile-ink{background:var(--ink);color:var(--paper);border-radius:var(--r-card);padding:26px}
+.note{border-left:2px solid var(--teal);padding:2px 0 2px 16px}
+.cols{display:grid;gap:16px}
+.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:860px){.c3,.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.c2,.c3,.c4{grid-template-columns:1fr}}
+
+/* ---------- swatches ---------- */
+.swatch{border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;background:var(--paper)}
+.swatch-chip{height:104px}
+.swatch-body{padding:16px 18px 18px}
+.swatch-name{font-weight:600;font-size:16px;line-height:22px}
+.swatch-hex{font-family:var(--mono);font-size:13px;line-height:18px;color:var(--ink-55);margin-top:3px}
+.swatch-role{font-size:13px;line-height:19px;color:var(--ink-70);margin-top:9px}
+.reserved{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11px;line-height:15px;color:var(--ink);background:var(--fog);border-radius:999px;padding:3px 9px}
+
+.ratio{display:flex;height:44px;border:1px solid var(--line-2);border-radius:12px;overflow:hidden}
+.ratio div{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;line-height:15px}
+.ratio-legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:12px}
+.ratio-legend span{font-family:var(--mono);font-size:12px;line-height:17px;color:var(--ink-55);display:flex;align-items:center;gap:7px}
+.ratio-legend i{width:9px;height:9px;border-radius:3px;display:block}
+
+/* ---------- specimen ---------- */
+.spec{border:1px solid var(--line);border-radius:var(--r-card);padding:26px}
+.spec-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:20px}
+.spec-name{font-family:var(--display);font-weight:500;font-size:20px;line-height:26px}
+.spec-meta{font-family:var(--mono);font-size:12px;line-height:17px;color:var(--ink-40)}
+.spec-display{font-family:var(--display);font-weight:900;font-size:clamp(24px,4.4vw,42px);line-height:1.18;letter-spacing:-0.02em}
+.spec-display.w5{font-weight:500}
+.spec-display.w7{font-weight:700}
+.spec-latin{color:var(--ink-55)}
+.spec-mono{font-family:var(--mono);font-size:clamp(15px,2.5vw,21px);line-height:1.62}
+
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;line-height:15px;color:var(--ink-40);text-transform:uppercase;letter-spacing:0.07em;font-weight:400}
+td{font-size:14px;line-height:21px}
+td.m{font-family:var(--mono);font-size:13px;line-height:19px;white-space:nowrap}
+.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-card)}
+.table-scroll table{min-width:600px}
+.table-scroll tr:last-child td{border-bottom:0}
+
+/* ---------- chain strip ---------- */
+.chain{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0;overflow-x:auto;scrollbar-width:none}
+.chain::-webkit-scrollbar{display:none}
+.chain li{padding:0 14px;border-left:1px solid var(--line-2);min-width:112px}
+.chain li:first-child{padding-left:0;border-left:0}
+.chain b{display:block;font-family:var(--mono);font-size:13px;line-height:19px;font-weight:400;color:var(--ink)}
+.chain span{display:block;font-family:var(--mono);font-size:11px;line-height:16px;color:var(--ink-55);margin-top:4px}
+@media (max-width:820px){.chain{grid-template-columns:repeat(7,minmax(112px,1fr))}}
+
+/* ---------- anatomy ---------- */
+.anatomy{background:var(--fog);border-radius:var(--r-card);padding:52px 26px;display:flex;justify-content:center}
+.anatomy-inner{position:relative;padding:60px 0 68px}
+.callout{position:absolute;font-family:var(--mono);font-size:11px;line-height:15px;color:var(--ink-55);white-space:nowrap}
+.callout::before{content:"";position:absolute;background:var(--ink-40)}
+.callout.up{bottom:100%;left:0;padding-bottom:14px}
+.callout.up::before{left:0;bottom:2px;width:1px;height:10px}
+.callout.up.b{padding-bottom:34px}
+.callout.up.b::before{height:30px}
+.callout.down{top:100%;left:0;padding-top:14px}
+.callout.down::before{left:0;top:2px;width:1px;height:10px}
+.callout.down.b{padding-top:34px}
+.callout.down.b::before{height:30px}
+@media (max-width:760px){
+  .anatomy{padding:24px 18px;display:block}
+  .anatomy-inner{padding:0}
+  .callout{position:static;display:block;margin-top:8px;white-space:normal}
+  .callout::before{display:none}
+  .callout.up{margin-top:0;margin-bottom:14px}
+}
+
+/* ---------- offer card ---------- */
+.offer{width:100%;max-width:340px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;box-shadow:var(--shadow)}
+.offer-photo{aspect-ratio:4/3;background:var(--fog);display:flex;align-items:center;justify-content:center}
+.offer-photo span{font-family:var(--mono);font-size:11px;color:var(--ink-40)}
+.offer-body{padding:16px 18px 18px}
+.offer-title{font-weight:600;font-size:17px;line-height:24px}
+.offer-seller{font-size:13px;line-height:18px;color:var(--ink-55);margin-top:2px}
+.offer-prices{display:flex;align-items:baseline;gap:10px;margin-top:14px;flex-wrap:wrap}
+.price-now{font-family:var(--mono);font-weight:700;font-size:19px;line-height:24px}
+.price-was{font-family:var(--mono);font-size:13px;line-height:18px;color:var(--ink-40);text-decoration:line-through}
+.save{font-family:var(--mono);font-size:12px;line-height:17px;color:var(--paper);background:var(--tangerine);border-radius:999px;padding:3px 9px;font-weight:700}
+.offer-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;flex-wrap:wrap}
+
+/* ---------- imagery ---------- */
+.shelf{aspect-ratio:4/3;border-radius:var(--r-ctl);overflow:hidden;background:#EDE7DE;position:relative}
+.shelf i{position:absolute;display:block;border-radius:4px}
+.shelf-plank{background:#C9BCA9}
+.treated{filter:saturate(0.86) contrast(1.03) brightness(1.02)}
+.treated-wrap{border-radius:var(--r-ctl);overflow:hidden;box-shadow:0 2px 8px rgba(14,138,108,0.18)}
+.img-caption{font-family:var(--mono);font-size:11px;line-height:16px;color:var(--ink-40);margin-top:10px}
+
+/* ---------- do and do not ---------- */
+.dd{border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden}
+.dd-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.dd-row:last-child{border-bottom:0}
+@media (max-width:640px){.dd-row{grid-template-columns:1fr}}
+.dd-cell{padding:16px 18px}
+.dd-cell+.dd-cell{border-left:1px solid var(--line)}
+@media (max-width:640px){.dd-cell+.dd-cell{border-left:0;border-top:1px solid var(--line)}}
+.dd-tag{font-family:var(--mono);font-size:11px;line-height:15px;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px}
+.dd-yes .dd-tag{color:var(--seal)}
+.dd-no .dd-tag{color:var(--coral)}
+.dd-no{background:var(--fog)}
+.dd-ru{font-size:15px;line-height:22px}
+.dd-en{font-family:var(--mono);font-size:12px;line-height:18px;color:var(--ink-55);margin-top:5px}
+
+/* ---------- misuse ---------- */
+.dont{position:relative;background:var(--fog);border-radius:var(--r-ctl);padding:26px 18px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.dont::before,.dont::after{content:"";position:absolute;left:50%;top:50%;width:130%;height:1.5px;background:var(--coral);opacity:0.85}
+.dont::before{transform:translate(-50%,-50%) rotate(24deg)}
+.dont::after{transform:translate(-50%,-50%) rotate(-24deg)}
+.dont svg{width:100%;max-width:170px;color:var(--ink)}
+.dont-cap{font-family:var(--mono);font-size:11px;line-height:16px;color:var(--ink-55);margin-top:10px}
+.m-stretch svg{transform:scaleX(1.42)}
+.m-color svg{color:var(--coral)}
+.m-shadow svg{filter:drop-shadow(0 6px 10px rgba(16,20,24,0.55))}
+.m-outline .mark{fill:none;stroke:currentColor;stroke-width:5}
+
+/* ---------- motion demo ---------- */
+.motion-demo{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.tapbox{
+  width:96px;height:96px;border-radius:var(--r-ctl);background:var(--fog);border:1.5px solid var(--line-2);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--ink-55);
+  cursor:pointer;transition:transform 200ms ease-out,background-color 200ms ease-out,border-color 200ms ease-out;
+}
+.tapbox:active{transform:scale(0.96);background:rgba(22,199,154,0.12);border-color:var(--seal)}
+
+/* ---------- reveal ---------- */
+.js .rv{opacity:0;transform:translateY(14px)}
+.js .rv.in{opacity:1;transform:none;transition:opacity 520ms ease-out,transform 520ms ease-out}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--line);padding:38px 0 64px}
+.foot p{font-family:var(--mono);font-size:12px;line-height:19px;color:var(--ink-40)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.001ms !important;animation-iteration-count:1 !important;transition-duration:0.001ms !important}
+  .js .rv{opacity:1;transform:none}
+  .dot::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- wordmark symbol, reused across the page -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <mask id="lb-bite" maskUnits="userSpaceOnUse" x="0" y="0" width="720" height="170">
+      <rect x="0" y="0" width="720" height="170" fill="#fff"/>
+      <circle cx="450" cy="66" r="25" fill="#000"/>
+      <circle cx="471" cy="45" r="18" fill="#fff"/>
+    </mask>
+    <symbol id="lb-wordmark" viewBox="0 0 720 170">
+      <text x="10" y="126" textLength="700" lengthAdjust="spacing"
+            font-family="Unbounded, system-ui, sans-serif" font-weight="900" font-size="118"
+            mask="url(#lb-bite)">lastbite</text>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <svg class="nav-mark mark" viewBox="0 0 720 170" role="img"><title>Логотип LastBite</title><use href="#lb-wordmark"/></svg>
+    <nav class="nav-links" aria-label="Разделы брендбука">
+      <a href="#idea">01 идея</a>
+      <a href="#logo">02 логотип</a>
+      <a href="#color">03 цвет</a>
+      <a href="#type">04 шрифты</a>
+      <a href="#chip">05 чип</a>
+      <a href="#ticket">06 талон</a>
+      <a href="#components">07 компоненты</a>
+      <a href="#motion">08 движение</a>
+      <a href="#imagery">09 съёмка</a>
+      <a href="#voice">10 голос</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ cover ============ -->
+  <section class="cover wrap" aria-labelledby="cover-title">
+    <p class="eyebrow">брендбук &middot; v1 &middot; ташкент &middot; 2026</p>
+    <svg class="cover-mark mark" viewBox="0 0 720 170" role="img"><title>Логотип LastBite, слово lastbite строчными буквами с полумесяцем, выкушенным из буквы b</title><use href="#lb-wordmark"/></svg>
+    <h1 class="cover-line" id="cover-title">маркетплейс, где каждое предложение настоящее</h1>
+    <div class="device-strip">
+      <span class="chip"><span class="dot"></span>проверено 12 минут назад</span>
+      <span class="ticket">
+        <span class="ticket-stub"><span class="ticket-kicker">код выдачи</span><span class="ticket-code">LB-7K2M</span></span>
+        <span class="ticket-meta"><span>забрать до 21:00</span><span>Asia/Tashkent</span></span>
+      </span>
+      <span class="pill pill-sold"><i></i>раскуплено</span>
+    </div>
+  </section>
+
+  <!-- ============ 01 ============ -->
+  <section class="sec" id="idea">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">01</div><div class="rail-label">идея</div></div>
+      <div class="stack">
+        <h2 class="t-h2">Цепочка доверия и есть продукт</h2>
+        <p class="lede">LastBite превращает неопределённость полки в несколько предложений, за которые кто-то в магазине расписался. Свидетельство, проверка человеком, выделение единиц, предложение, бронь, выдача, сверка. К покупателю ничего не попадает, пока сотрудник не взял на себя ответственность. Бренд существует, чтобы эту цепочку было видно, поэтому у дизайна есть задача важнее остальных: показывать, откуда взялось каждое утверждение.</p>
+        <p class="lede">Видео станет следующим звеном. Сотрудник проходит по залу с телефоном, и запись превращается в наблюдения, а не в истину. Публикует по-прежнему человек. Значит, бренд обязан работать в магазине под закрытие: одна рука занята телефоном, свет плохой, на кассе очередь. Крупные зоны нажатия, простые глаголы, ничего, что придётся перечитывать.</p>
+        <p class="lede">Честность работает как эстетика. Мы показываем «раскуплено» крупно, а не прячем карточку. Мы пишем, когда остаток проверяли в последний раз, и если это было давно, говорим об этом предупреждающим цветом, а не убираем строку. Скидку показываем только тогда, когда за ней стоит подтверждённая старая цена. Всё, что переживает эти правила, выглядит спокойнее категории, и спокойствие тут и есть вся эстетика.</p>
+
+        <div class="tile" style="margin-top:16px">
+          <p class="eyebrow" style="margin-bottom:16px">цепочка целиком</p>
+          <ol class="chain">
+            <li><b>свидетельство</b><span>пересчёт, импорт, видео</span></li>
+            <li><b>проверка</b><span>подтверждает человек</span></li>
+            <li><b>выделение</b><span>единицы отложены</span></li>
+            <li><b>предложение</b><span>публично, с ценой</span></li>
+            <li><b>бронь</b><span>атомарно, одна штука</span></li>
+            <li><b>выдача</b><span>код на кассе</span></li>
+            <li><b>сверка</b><span>остаток сведён</span></li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="sec" id="logo">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">02</div><div class="rail-label">логотип</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Логотип</h2>
+          <p class="lede">Один вариант знака. Слово набрано строчными в Unbounded 900, из верхнего правого угла буквы b выкушен полумесяц. Строчные потому, что мы не кричим. Укус потому, что мы продаём именно последний кусок.</p>
+        </div>
+
+        <div class="cols c3">
+          <div>
+            <div class="tile" style="background:var(--paper);border:1px solid var(--line);display:flex;align-items:center;min-height:150px">
+              <svg class="mark" viewBox="0 0 720 170" style="color:var(--teal)" role="img"><title>Логотип LastBite цветом Bite Teal на белом</title><use href="#lb-wordmark"/></svg>
+            </div>
+            <p class="dont-cap">основной &middot; Bite Teal на Paper</p>
+          </div>
+          <div>
+            <div class="tile-ink" style="display:flex;align-items:center;min-height:150px">
+              <svg class="mark" viewBox="0 0 720 170" style="color:var(--paper)" role="img"><title>Логотип LastBite белым на тёмном фоне Ink</title><use href="#lb-wordmark"/></svg>
+            </div>
+            <p class="dont-cap">инверсия &middot; Paper на Ink</p>
+          </div>
+          <div>
+            <div class="tile" style="display:flex;align-items:center;min-height:150px">
+              <svg class="mark" viewBox="0 0 720 170" style="color:var(--ink)" role="img"><title>Логотип LastBite в один тон, цветом Ink</title><use href="#lb-wordmark"/></svg>
+            </div>
+            <p class="dont-cap">один тон &middot; Ink, для документов и печатей</p>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div class="stack">
+            <h3 class="t-h3">Охранное поле</h3>
+            <p class="t-body muted">Со всех четырёх сторон оставляйте свободным поле высотой в букву l. Внутрь не заходит ни текст, ни край фотографии, ни кнопка.</p>
+            <div class="tile" style="background:var(--paper);border:1px solid var(--line);padding:18px">
+              <svg viewBox="0 0 900 350" role="img">
+                <title>Схема охранного поля: отступ высотой в букву l со всех четырёх сторон логотипа</title>
+                <rect x="1" y="1" width="898" height="348" fill="none" stroke="rgba(16,20,24,0.16)" stroke-dasharray="7 7"/>
+                <rect x="90" y="90" width="720" height="170" fill="none" stroke="rgba(22,199,154,0.55)" stroke-dasharray="5 5"/>
+                <use class="mark" href="#lb-wordmark" x="90" y="90" width="720" height="170" style="color:#101418"/>
+                <rect x="40" y="90" width="16" height="90" fill="#16C79A"/>
+                <text x="40" y="206" font-family="JetBrains Mono, monospace" font-size="20" fill="rgba(16,20,24,0.55)">l</text>
+                <text x="560" y="48" font-family="JetBrains Mono, monospace" font-size="19" fill="rgba(16,20,24,0.4)">охранное поле = высота l</text>
+              </svg>
+            </div>
+          </div>
+
+          <div class="stack">
+            <h3 class="t-h3">Минимальный размер</h3>
+            <p class="t-body muted">Меньше этого укус затягивается и читается как грязь. Если нужен совсем мелкий знак, берите однотонный Ink без укуса, а не знак, который никто не разберёт.</p>
+            <div class="table-scroll">
+              <table>
+                <tr><th>контекст</th><th>минимальная ширина</th><th>примечание</th></tr>
+                <tr><td>экран, основной</td><td class="m">120 px</td><td>шапка приложения, навигация</td></tr>
+                <tr><td>экран, плотный</td><td class="m">88 px</td><td>чеки, строки списка</td></tr>
+                <tr><td>печать</td><td class="m">24 мм</td><td>ценник на полке, наклейка на дверь</td></tr>
+                <tr><td>вышивка, гравировка</td><td class="m">32 мм</td><td>только один тон</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <h3 class="t-h3">Как нельзя</h3>
+          <p class="t-body muted">Четыре способа испортить знак. Версии с градиентом не существует.</p>
+          <div class="cols c4">
+            <div>
+              <div class="dont m-stretch"><svg class="mark" viewBox="0 0 720 170" role="img"><title>Логотип нельзя растягивать</title><use href="#lb-wordmark"/></svg></div>
+              <p class="dont-cap" style="text-align:center">без растяжения</p>
+            </div>
+            <div>
+              <div class="dont m-color"><svg class="mark" viewBox="0 0 720 170" role="img"><title>Логотипу нельзя менять цвет</title><use href="#lb-wordmark"/></svg></div>
+              <p class="dont-cap" style="text-align:center">без замены цвета</p>
+            </div>
+            <div>
+              <div class="dont m-shadow"><svg class="mark" viewBox="0 0 720 170" role="img"><title>Логотипу нельзя добавлять тень</title><use href="#lb-wordmark"/></svg></div>
+              <p class="dont-cap" style="text-align:center">без теней</p>
+            </div>
+            <div>
+              <div class="dont m-outline"><svg class="mark" viewBox="0 0 720 170" role="img"><title>Логотип нельзя делать контурным</title><use href="#lb-wordmark"/></svg></div>
+              <p class="dont-cap" style="text-align:center">без контурных версий</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="sec" id="color">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">03</div><div class="rail-label">цвет</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Семь цветов, два из них закреплены</h2>
+          <p class="lede">Страница почти всегда белая. Бирюзовый несёт знак и каждое основное действие. Два цвета закреплены за смыслом и не используются для украшения: как только они появятся в декоре, покупатель перестанет верить им там, где они действительно важны.</p>
+        </div>
+
+        <div class="cols c4">
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#16C79A"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Bite Teal</div>
+              <div class="swatch-hex">#16C79A</div>
+              <p class="swatch-role">Знак, основная кнопка, активные состояния, живой пульс.</p>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#0E8A6C"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Deep Seal</div>
+              <div class="swatch-hex">#0E8A6C</div>
+              <p class="swatch-role">Печать проверки. Обводка и текст чипа, нажатое состояние. Бирюзовый, который читается на белом.</p>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#101418"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Ink</div>
+              <div class="swatch-hex">#101418</div>
+              <p class="swatch-role">Весь основной текст. Почти чёрные поверхности в тёмных сценах.</p>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#FFFFFF;border-bottom:1px solid var(--line)"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Paper</div>
+              <div class="swatch-hex">#FFFFFF</div>
+              <p class="swatch-role">Основная поверхность. Ответ по умолчанию на вопрос, какого цвета это должно быть.</p>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#F4F6F5;border-bottom:1px solid var(--line)"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Fog</div>
+              <div class="swatch-hex">#F4F6F5</div>
+              <p class="swatch-role">Вторая поверхность. Карточки на белом, заглушки фото, честный серый.</p>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#FF8C42"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Tangerine</div>
+              <div class="swatch-hex">#FF8C42</div>
+              <p class="swatch-role">Выгода и скидки. Сумма экономии, процент, и больше ничего.</p>
+              <span class="reserved">закреплён</span>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#FF6B6B"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Coral</div>
+              <div class="swatch-hex">#FF6B6B</div>
+              <p class="swatch-role">Сюрприз-наборы и тревога. Сорванная бронь, расхождение остатка, необратимые подтверждения.</p>
+              <span class="reserved">закреплён</span>
+            </div>
+          </div>
+          <div class="swatch">
+            <div class="swatch-chip" style="background:#B26A12"></div>
+            <div class="swatch-body">
+              <div class="swatch-name">Amber</div>
+              <div class="swatch-hex">#B26A12</div>
+              <p class="swatch-role">Служебный оттенок текста вне палитры. Одна задача: устаревшая проверка. Только текст, никогда не заливка.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">Tangerine закреплён</p>
+            <p class="t-body muted" style="margin-top:8px">Только там, где покупатель экономит, и только если есть подтверждённая старая цена. Нет старой цены, значит нет ни тега скидки, ни зачёркивания, ни процента. Придуманная выгода быстрее всего лишает нас магазина.</p>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">Coral закреплён</p>
+            <p class="t-body muted" style="margin-top:8px">Сюрприз-наборы и настоящая тревога. Не для нагнетания, не для таймеров, не для карточки «раскуплено». Раскуплено остаётся нормальным исходом, и ему положен честный серый.</p>
+          </div>
+        </div>
+
+        <div class="stack">
+          <h3 class="t-h3">Пропорция использования</h3>
+          <div class="ratio" role="img" aria-label="Пропорция: 70 процентов белого, 20 процентов Ink, 8 процентов бирюзового, 2 процента смысловых цветов">
+            <div style="flex:70;background:var(--paper);color:var(--ink-55)">70 бумага</div>
+            <div style="flex:20;background:var(--ink);color:var(--paper)">20 ink</div>
+            <div style="flex:8;background:var(--teal);color:var(--paper)">8</div>
+            <div style="flex:1;background:var(--tangerine)"></div>
+            <div style="flex:1;background:var(--coral)"></div>
+          </div>
+          <div class="ratio-legend">
+            <span><i style="background:var(--paper);border:1px solid var(--line-2)"></i>70 бумага и туман</span>
+            <span><i style="background:var(--ink)"></i>20 ink, текст и тёмные поверхности</span>
+            <span><i style="background:var(--teal)"></i>8 бирюза и печать</span>
+            <span><i style="background:var(--tangerine)"></i><i style="background:var(--coral);margin-left:-3px"></i>2 смысловые</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="sec" id="type">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">04</div><div class="rail-label">типографика</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Три гарнитуры, строгие роли</h2>
+          <p class="lede">Unbounded здесь гость, а не хозяин: он появляется в логотипе и в заголовках, и больше нигде. Onest говорит на обоих алфавитах. JetBrains Mono держит всё, что человек может прочитать вслух кассиру, то есть коды, время, количества и цены в данных.</p>
+        </div>
+
+        <div class="spec">
+          <div class="spec-head">
+            <span class="spec-name">Unbounded</span>
+            <span class="spec-meta">дисплей &middot; 500 700 900 &middot; кириллица и латиница</span>
+          </div>
+          <p class="spec-display">каждое предложение настоящее</p>
+          <p class="spec-display spec-latin" lang="en" style="margin-top:10px">every offer is real</p>
+          <div style="display:flex;flex-wrap:wrap;gap:26px;margin-top:24px;align-items:baseline">
+            <span class="spec-display w5" style="font-size:24px">Medium 500</span>
+            <span class="spec-display w7" style="font-size:24px">Bold 700</span>
+            <span class="spec-display" style="font-size:24px">Black 900</span>
+          </div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-head">
+            <span class="spec-name" style="font-family:var(--body);font-weight:600">Onest</span>
+            <span class="spec-meta">текст &middot; 400 500 600 700 &middot; кириллица и латиница</span>
+          </div>
+          <p style="font-size:20px;line-height:30px;max-width:56ch">Магазин подтвердил четыре хлебных набора, забрать с 19:00 до 21:00. Забронируйте один и покажите код на кассе. В приложении ничего не списывается.</p>
+          <p class="spec-latin" lang="en" style="font-size:20px;line-height:30px;max-width:56ch;margin-top:14px">The shop approved four bread boxes for pickup between 19:00 and 21:00. Reserve one and show the code at the till.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:22px;margin-top:22px;align-items:baseline;font-size:19px">
+            <span style="font-weight:400">Обычный Regular</span>
+            <span style="font-weight:500">Средний Medium</span>
+            <span style="font-weight:600">Полужирный Semibold</span>
+            <span style="font-weight:700">Жирный Bold</span>
+          </div>
+        </div>
+
+        <div class="spec">
+          <div class="spec-head">
+            <span class="spec-name" style="font-family:var(--mono);font-weight:700">JetBrains Mono</span>
+            <span class="spec-meta">данные &middot; 400 700 &middot; кириллица и латиница</span>
+          </div>
+          <p class="spec-mono" style="font-weight:700">LB-7K2M &nbsp; LB-QX48</p>
+          <p class="spec-mono">проверено 12 минут назад</p>
+          <p class="spec-mono">забрать до 21:00 &middot; Asia/Tashkent</p>
+          <p class="spec-mono">12 000 сум &nbsp; <span style="color:var(--ink-40);text-decoration:line-through">24 900 сум</span> &nbsp; 4 шт</p>
+          <p class="t-small muted" style="margin-top:16px">Цены в сумах, тысячи всегда разделяются пробелом. Сум никогда не форматируется как доллар, время выдачи никогда не сокращается.</p>
+        </div>
+
+        <div class="stack">
+          <h3 class="t-h3">Шкала</h3>
+          <div class="table-scroll">
+            <table>
+              <tr><th>роль</th><th>гарнитура</th><th>размер и интерлиньяж</th><th>образец</th></tr>
+              <tr>
+                <td>дисплей</td><td>Unbounded 700</td><td class="m">44 / 56</td>
+                <td style="font-family:var(--display);font-weight:700;font-size:20px;line-height:28px">Забронировать</td>
+              </tr>
+              <tr>
+                <td>заголовок</td><td>Unbounded 500</td><td class="m">28 / 36</td>
+                <td style="font-family:var(--display);font-weight:500;font-size:18px;line-height:26px">Рядом сегодня</td>
+              </tr>
+              <tr>
+                <td>текст</td><td>Onest 400</td><td class="m">16 / 24</td>
+                <td style="font-size:16px;line-height:24px">Забрать с 19:00 до 21:00.</td>
+              </tr>
+              <tr>
+                <td>мелкий</td><td>Onest 400</td><td class="m">13 / 18</td>
+                <td style="font-size:13px;line-height:18px">Отмена бесплатна до начала окна.</td>
+              </tr>
+              <tr>
+                <td>данные</td><td>JetBrains Mono 400</td><td class="m">14 / 20</td>
+                <td class="m">проверено 12 минут назад</td>
+              </tr>
+            </table>
+          </div>
+          <div class="note">
+            <p class="t-small muted">Русская строка примерно на пять процентов длиннее английской. Ширину чипа и кнопки нельзя фиксировать по английскому тексту. Каждое состояние проверяется сначала на русском.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="sec" id="chip">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">05</div><div class="rail-label">чип проверки</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Чип «проверено»</h2>
+          <p class="lede">Это главный элемент бренда, всё остальное его поддерживает. Чип говорит, что человек в конкретном магазине посмотрел на остаток в конкретное время, и печатает это время, чтобы покупатель решил сам. Если убрать с экрана LastBite один элемент и экран перестанет быть нашим, то это он.</p>
+        </div>
+
+        <div class="anatomy">
+          <div class="anatomy-inner">
+            <span class="chip lg"><span class="dot"></span>проверено 12 минут назад</span>
+            <span class="callout up" style="left:16px">пульсирующая точка, 7 px, Bite Teal, 2 с</span>
+            <span class="callout up b" style="left:auto;right:0">обводка 1.5 px, Deep Seal</span>
+            <span class="callout down" style="left:56px">JetBrains Mono 13 / 18, строчные, Deep Seal</span>
+            <span class="callout down b" style="left:auto;right:0">радиус 999, отступы 6 / 13</span>
+          </div>
+        </div>
+
+        <div class="stack">
+          <h3 class="t-h3">Состояния</h3>
+          <p class="t-body muted">Свежесть и есть сообщение. По мере старения свидетельства чип теряет пульс, потом уверенность, потом бирюзу. Он не исчезает никогда.</p>
+          <div class="table-scroll">
+            <table>
+              <tr><th>состояние</th><th>возраст</th><th>чип</th><th>английский</th></tr>
+              <tr>
+                <td>свежий</td><td class="m">меньше 30 минут</td>
+                <td><span class="chip"><span class="dot"></span>проверено 12 минут назад</span></td>
+                <td lang="en"><span class="chip"><span class="dot"></span>verified 12 min ago</span></td>
+              </tr>
+              <tr>
+                <td>стареет</td><td class="m">от 30 минут до 24 часов</td>
+                <td><span class="chip aging"><span class="dot"></span>проверено 6 часов назад</span></td>
+                <td lang="en"><span class="chip aging"><span class="dot"></span>verified 6 h ago</span></td>
+              </tr>
+              <tr>
+                <td>устарел</td><td class="m">больше 24 часов</td>
+                <td><span class="chip stale"><span class="dot"></span>проверено 2 дня назад</span></td>
+                <td lang="en"><span class="chip stale"><span class="dot"></span>verified 2 days ago</span></td>
+              </tr>
+              <tr>
+                <td>данных нет</td><td class="m">проверки не было</td>
+                <td><span class="chip never"><span class="dot"></span>ещё не проверено</span></td>
+                <td lang="en"><span class="chip never"><span class="dot"></span>not verified yet</span></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="dd">
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Печатать настоящий интервал от последнего подтверждённого пересчёта или импорта.</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Округлять устаревшее время вниз или обновлять подпись, когда на полку никто не смотрел.</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Пульс только для свежих данных, не больше одного пульсирующего чипа на карточку.</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Пульсировать всем рядом сразу или анимировать обводку.</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Ставить чип рядом с тем, что он подтверждает: обычно это количество или заголовок предложения.</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Брать форму чипа под что угодно. Это не универсальный бейдж.</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Строчные в обоих алфавитах, всегда моноширинный, всегда один порядок слов.</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Набирать текстовой гарнитурой, начинать с заглавной или ставить иконку вместо точки.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="sec" id="ticket">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">06</div><div class="rail-label">талон</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Талон выдачи</h2>
+          <p class="lede">Бронь заканчивается у прилавка, поэтому код выдачи выглядит как то, что передают из рук в руки. Отрывной корешок, моноширинный код, едва заметная фактура бумаги. Это единственный объект системы, который покупатель показывает другому человеку, и именно поэтому он никогда не бывает украшением.</p>
+        </div>
+
+        <div class="anatomy">
+          <div class="anatomy-inner">
+            <span class="ticket lg">
+              <span class="ticket-stub"><span class="ticket-kicker">код выдачи</span><span class="ticket-code">LB-7K2M</span></span>
+              <span class="ticket-meta"><span>Нонвой 12, Чиланзар</span><span>забрать до 21:00</span><span>держим до 21:00</span></span>
+            </span>
+            <span class="callout up" style="left:0">вырубка и перфорация, пунктир 1.5 px</span>
+            <span class="callout down" style="left:0">JetBrains Mono 700, трекинг 0.06 em</span>
+            <span class="callout down b" style="left:auto;right:0">радиус 14, фактура бумаги 2 процента</span>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--seal)">используем</p>
+            <ul class="stack t-body muted" style="margin-top:12px">
+              <li>Экран подтверждённой брони, один раз и крупно.</li>
+              <li>Список броней покупателя, по одному талону на активную бронь, мелко.</li>
+              <li>Очередь выдачи у продавца, где кассир вводит или сверяет код.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="color:var(--coral)">никогда</p>
+            <ul class="stack t-body muted" style="margin-top:12px">
+              <li>Как маркетинговая форма, заголовок раздела или картинка пустого состояния.</li>
+              <li>До подтверждения брони сервером. Черновых кодов не бывает.</li>
+              <li>В скриншотах, логах, аналитике и обращениях в поддержку. Код остаётся секретом.</li>
+              <li>С выдуманным кодом. Нужен пример, берите LB-7K2M и подписывайте, что это образец.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="note">
+          <p class="t-small muted">Код появляется, когда сервер подтвердил бронь, и остаётся доступным до конечного состояния. Если бронь отменили или она истекла, талон сереет, а код зачёркивается, но из списка покупателя не исчезает.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="sec" id="components">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">07</div><div class="rail-label">компоненты</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Компоненты</h2>
+          <p class="lede">Шестнадцать пикселей радиуса у того, что нажимают, двадцать четыре у того, что держит содержимое, пилюли у того, что описывает состояние. Тень одна и почти невидимая. Если компоненту нужна тень потяжелее, значит сломана вёрстка.</p>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">кнопки</p>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:16px">
+              <button class="btn btn-primary" type="button">Забронировать</button>
+              <button class="btn btn-secondary" type="button">Подробнее</button>
+              <button class="btn btn-disabled" type="button" disabled>Раскуплено</button>
+            </div>
+            <p class="t-small muted" style="margin-top:16px">Основная кнопка бирюзовая и одна на экран. Вторичная выглядит как волосяная линия на белом. Отключённая основная становится серой, а не приглушённо бирюзовой, потому что тусклая бирюза всё равно читается как нажимаемая.</p>
+          </div>
+
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">счётчик количества</p>
+            <div style="margin-top:16px">
+              <div class="stepper">
+                <button type="button" aria-label="Уменьшить количество" disabled>&minus;</button>
+                <output>1</output>
+                <button type="button" aria-label="Увеличить количество" disabled>+</button>
+              </div>
+            </div>
+            <p class="t-small muted" style="margin-top:16px">Показан заблокированным, потому что в бете бронируется ровно одна единица. Обе кнопки выключены, а число остаётся на виду, вместо того чтобы прятать счётчик и заставлять покупателя гадать.</p>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div>
+            <p class="eyebrow" style="color:var(--ink);margin-bottom:16px">карточка предложения</p>
+            <article class="offer">
+              <div class="offer-photo"><span>фото 4:3</span></div>
+              <div class="offer-body">
+                <h3 class="offer-title">Пекарня, вечерний набор</h3>
+                <p class="offer-seller">Нонвой 12, Чиланзар &middot; 600 м</p>
+                <div class="offer-prices">
+                  <span class="price-now">12 000 сум</span>
+                  <span class="price-was">24 900 сум</span>
+                  <span class="save">выгода 52%</span>
+                </div>
+                <div class="offer-foot">
+                  <span class="chip"><span class="dot"></span>проверено 12 минут назад</span>
+                  <span class="pill pill-live"><i></i>в продаже</span>
+                </div>
+                <p class="t-small muted" style="margin-top:12px">Забрать до 21:00 &middot; осталось 4</p>
+              </div>
+            </article>
+          </div>
+
+          <div class="stack">
+            <p class="eyebrow" style="color:var(--ink)">правила карточки</p>
+            <ul class="stack t-body muted">
+              <li>Пока настоящего снимка нет, на месте фото лежит ровный блок Fog. Ни иллюстраций, ни иконок, ни подставной еды.</li>
+              <li>Пара цен появляется только при подтверждённой старой цене. Без неё показываем одну цену и никакого тега.</li>
+              <li>Tangerine трогает только тег выгоды и больше ничего на карточке.</li>
+              <li>Чип проверки стоит слева внизу и всегда в паре с пилюлей состояния справа.</li>
+              <li>Остаток называем прямо. Не пишем «осталось всего 4».</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="stack">
+          <p class="eyebrow" style="color:var(--ink)">пилюли состояния</p>
+          <div class="table-scroll">
+            <table>
+              <tr><th>состояние</th><th>пилюля</th><th>английский</th><th>правило</th></tr>
+              <tr>
+                <td>в продаже</td>
+                <td><span class="pill pill-live"><i></i>в продаже</span></td>
+                <td lang="en"><span class="pill pill-live"><i></i>live</span></td>
+                <td>Бирюзовая подложка, текст Deep Seal. Единственная пилюля с цветом бренда.</td>
+              </tr>
+              <tr>
+                <td>пауза</td>
+                <td><span class="pill pill-paused"><i></i>пауза</span></td>
+                <td lang="en"><span class="pill pill-paused"><i></i>paused</span></td>
+                <td>Контур на белом. Живёт на стороне продавца, покупатель просто перестаёт видеть карточку.</td>
+              </tr>
+              <tr>
+                <td>раскуплено</td>
+                <td><span class="pill pill-sold"><i></i>раскуплено</span></td>
+                <td lang="en"><span class="pill pill-sold"><i></i>sold out</span></td>
+                <td>Честный серый, показываем с достоинством. Раскуплено значит магазин сработал.</td>
+              </tr>
+              <tr>
+                <td>истекло</td>
+                <td><span class="pill pill-expired"><i></i>истекло</span></td>
+                <td lang="en"><span class="pill pill-expired"><i></i>expired</span></td>
+                <td>Честный серый, контраст ниже. Состояние конечное, назад не возвращается.</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="sec" id="motion">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">08</div><div class="rail-label">движение</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Движение</h2>
+          <p class="lede">Смысл несут две анимации. Нажатие подтверждает, что его приняли, а пульс печати говорит, что данные свежие. Всё остальное в продукте стоит на месте, потому что кассиру под закрытие живой интерфейс не нужен.</p>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">попробуйте</p>
+            <div class="motion-demo" style="margin-top:16px">
+              <button class="tapbox" type="button">нажмите</button>
+              <span class="chip lg"><span class="dot"></span>проверено только что</span>
+            </div>
+            <p class="t-small muted" style="margin-top:16px">200 мс ease-out на нажатие, 2 с ease-in-out на пульс. При prefers-reduced-motion обе останавливаются полностью, а точка остаётся на месте, а не пропадает.</p>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <tr><th>событие</th><th>длительность</th><th>кривая</th></tr>
+              <tr><td>нажатие</td><td class="m">200 мс</td><td class="m">ease-out</td></tr>
+              <tr><td>пульс печати</td><td class="m">2000 мс</td><td class="m">ease-in-out</td></tr>
+              <tr><td>смена состояния</td><td class="m">160 мс</td><td class="m">ease-out</td></tr>
+              <tr><td>переход экрана</td><td class="m">240 мс</td><td class="m">ease-out</td></tr>
+              <tr><td>появление при скролле</td><td class="m">520 мс</td><td class="m">ease-out</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="dd">
+          <div class="dd-row">
+            <div class="dd-cell dd-yes"><p class="dd-tag">так</p><p class="dd-ru">Анимируем только прозрачность и трансформацию. Раскладку никогда.</p></div>
+            <div class="dd-cell dd-no"><p class="dd-tag">не так</p><p class="dd-ru">Параллакс. У еды на полке нет глубины.</p></div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes"><p class="dd-tag">так</p><p class="dd-ru">Список приходит целиком. Если очень нужно, задержка не больше 40 мс.</p></div>
+            <div class="dd-cell dd-no"><p class="dd-tag">не так</p><p class="dd-ru">Плавающие, парящие и дышащие карточки. Карточки стоят на месте.</p></div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes"><p class="dd-tag">так</p><p class="dd-ru">После двух секунд ожидания показываем текст, а не один спиннер.</p></div>
+            <div class="dd-cell dd-no"><p class="dd-tag">не так</p><p class="dd-ru">Крутиться вечно. Спиннер без слов читается как сломанный экран.</p></div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes"><p class="dd-tag">так</p><p class="dd-ru">Уважаем prefers-reduced-motion везде, включая пульс.</p></div>
+            <div class="dd-cell dd-no"><p class="dd-tag">не так</p><p class="dd-ru">Отскоки, перелёты и пружины. Уверенность не качается.</p></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section class="sec" id="imagery">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">09</div><div class="rail-label">съёмка</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Съёмка</h2>
+          <p class="lede">Настоящие полки, настоящие руки, дневной свет. Мы снимаем угловые магазины Ташкента, и еда там обычная, в конце своего дня. Постановочная раскладка была бы такой же ложью, как придуманная скидка, поэтому мы снимаем то, что действительно стоит на полке, телефоном, там, где оно стоит.</p>
+        </div>
+
+        <div class="cols c2">
+          <div>
+            <div class="shelf" role="img" aria-label="Исходный кадр полки без обработки">
+              <i class="shelf-plank" style="left:0;right:0;top:31%;height:10px;border-radius:0"></i>
+              <i class="shelf-plank" style="left:0;right:0;top:69%;height:10px;border-radius:0"></i>
+              <i style="left:7%;top:11%;width:15%;height:20%;background:#B9713F"></i>
+              <i style="left:25%;top:8%;width:12%;height:23%;background:#8E9C6A"></i>
+              <i style="left:40%;top:13%;width:17%;height:18%;background:#D8C48A"></i>
+              <i style="left:60%;top:9%;width:11%;height:22%;background:#A5553E"></i>
+              <i style="left:74%;top:12%;width:19%;height:19%;background:#C8A96F"></i>
+              <i style="left:9%;top:47%;width:19%;height:22%;background:#7F8E9B"></i>
+              <i style="left:31%;top:44%;width:13%;height:25%;background:#C2743C"></i>
+              <i style="left:47%;top:49%;width:16%;height:20%;background:#9AA47B"></i>
+              <i style="left:66%;top:45%;width:12%;height:24%;background:#B0553F"></i>
+              <i style="left:81%;top:48%;width:13%;height:21%;background:#D9C08C"></i>
+              <i style="left:12%;top:82%;width:22%;height:14%;background:#BE8A50"></i>
+              <i style="left:38%;top:80%;width:18%;height:16%;background:#8C9B76"></i>
+              <i style="left:60%;top:83%;width:26%;height:13%;background:#C7B08A"></i>
+            </div>
+            <p class="img-caption">исходник &middot; снято телефоном, без обработки</p>
+          </div>
+          <div>
+            <div class="treated-wrap">
+              <div class="shelf treated" role="img" aria-label="Тот же кадр с фирменной обработкой: чуть приглушённая насыщенность и бирюзовая тень">
+                <i class="shelf-plank" style="left:0;right:0;top:31%;height:10px;border-radius:0"></i>
+                <i class="shelf-plank" style="left:0;right:0;top:69%;height:10px;border-radius:0"></i>
+                <i style="left:7%;top:11%;width:15%;height:20%;background:#B9713F"></i>
+                <i style="left:25%;top:8%;width:12%;height:23%;background:#8E9C6A"></i>
+                <i style="left:40%;top:13%;width:17%;height:18%;background:#D8C48A"></i>
+                <i style="left:60%;top:9%;width:11%;height:22%;background:#A5553E"></i>
+                <i style="left:74%;top:12%;width:19%;height:19%;background:#C8A96F"></i>
+                <i style="left:9%;top:47%;width:19%;height:22%;background:#7F8E9B"></i>
+                <i style="left:31%;top:44%;width:13%;height:25%;background:#C2743C"></i>
+                <i style="left:47%;top:49%;width:16%;height:20%;background:#9AA47B"></i>
+                <i style="left:66%;top:45%;width:12%;height:24%;background:#B0553F"></i>
+                <i style="left:81%;top:48%;width:13%;height:21%;background:#D9C08C"></i>
+                <i style="left:12%;top:82%;width:22%;height:14%;background:#BE8A50"></i>
+                <i style="left:38%;top:80%;width:18%;height:16%;background:#8C9B76"></i>
+                <i style="left:60%;top:83%;width:26%;height:13%;background:#C7B08A"></i>
+              </div>
+            </div>
+            <p class="img-caption">обработка &middot; насыщенность 86 &middot; контраст 103 &middot; тень 0 2px 8px rgba(14,138,108,0.18)</p>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--seal)">снимаем</p>
+            <ul class="stack t-body muted" style="margin-top:12px">
+              <li>Дневной свет или свет самого магазина. Без кольцевой лампы и вспышки.</li>
+              <li>Руки в кадре. Продавец выкладывает, покупатель забирает.</li>
+              <li>Ценники, ящики, скотч и беспорядок остаются. Это и есть свидетельство.</li>
+              <li>С уровня глаз, оттуда, где стоит покупатель.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="color:var(--coral)">никогда</p>
+            <ul class="stack t-body muted" style="margin-top:12px">
+              <li>Глянец стоковых фото. Ни разделочных досок, ни рассыпанной зелени.</li>
+              <li>Съёмка строго сверху и накрытые столы.</li>
+              <li>Модели, которые улыбаются в камеру с бумажным пакетом.</li>
+              <li>Тяжёлый грейдинг. Обработка слабая и всегда одна и та же.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section class="sec" id="voice">
+    <div class="wrap grid">
+      <div class="rail"><div class="rail-num">10</div><div class="rail-label">голос</div></div>
+      <div class="stack-lg">
+
+        <div class="stack">
+          <h2 class="t-h2">Голос и текст</h2>
+          <p class="lede">Простые глаголы, обычный регистр, никаких восторженных прилагательных. Русский идёт первым, английский повторяет смысл, а не слова. Когда что-то ломается, мы говорим, что произошло и что верно прямо сейчас. Хорошая новость обходится без восклицательного знака, плохая без театральных извинений.</p>
+        </div>
+
+        <div class="dd">
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Раскуплено</p>
+              <p class="dd-en" lang="en">Sold out</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Упс, всё разобрали. Повезёт в другой раз.</p>
+              <p class="dd-en" lang="en">Oops, all gone. Better luck next time.</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Остаток проверен 12 минут назад</p>
+              <p class="dd-en" lang="en">Stock last verified 12 minutes ago</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Всегда свежее и всегда в наличии</p>
+              <p class="dd-en" lang="en">Always fresh, always available</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Забрать до 21:00</p>
+              <p class="dd-en" lang="en">Collect by 21:00</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Спешите, скоро закончится</p>
+              <p class="dd-en" lang="en">Hurry, ends soon</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Ещё не проверено</p>
+              <p class="dd-en" lang="en">Not verified yet</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Спрятать строку, если данных нет</p>
+              <p class="dd-en" lang="en">Hide the line when there is no evidence</p>
+            </div>
+          </div>
+          <div class="dd-row">
+            <div class="dd-cell dd-yes">
+              <p class="dd-tag">так</p>
+              <p class="dd-ru">Покажите код на кассе. Оплата в магазине.</p>
+              <p class="dd-en" lang="en">Show the code at the till. Pay in the shop.</p>
+            </div>
+            <div class="dd-cell dd-no">
+              <p class="dd-tag">не так</p>
+              <p class="dd-ru">Оплатите сейчас в одно касание</p>
+              <p class="dd-en" lang="en">Checkout now, one tap payment</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="cols c2">
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">ошибки</p>
+            <ul class="stack" style="margin-top:14px">
+              <li>
+                <p class="dd-ru">Последнюю единицу только что забронировал другой покупатель.</p>
+                <p class="dd-en" lang="en">The last unit was just reserved by another buyer.</p>
+                <p class="t-small muted" style="margin-top:6px">Называем причину. Не пишем «что-то пошло не так».</p>
+              </li>
+              <li>
+                <p class="dd-ru">Не удалось забронировать. Бронь не создана, деньги не списывались.</p>
+                <p class="dd-en" lang="en">We could not hold this. Nothing was reserved and nothing was charged.</p>
+                <p class="t-small muted" style="margin-top:6px">Сразу говорим, что верно прямо сейчас.</p>
+              </li>
+              <li>
+                <p class="dd-ru">Магазин нашёл меньше единиц, чем ожидалось. Бронь отменена.</p>
+                <p class="dd-en" lang="en">The shop found fewer units than expected. Your reservation is cancelled.</p>
+                <p class="t-small muted" style="margin-top:6px">Ошибка магазина остаётся ошибкой магазина. Не сваливаем на систему.</p>
+              </li>
+            </ul>
+          </div>
+          <div class="card">
+            <p class="eyebrow" style="color:var(--ink)">пустые состояния</p>
+            <ul class="stack" style="margin-top:14px">
+              <li>
+                <p class="dd-ru">Рядом пока нет предложений. Магазины обычно публикуют после 18:00.</p>
+                <p class="dd-en" lang="en">No offers near you right now. Shops usually publish after 18:00.</p>
+              </li>
+              <li>
+                <p class="dd-ru">Очередь выдачи пуста. Следующее окно откроется в 19:00.</p>
+                <p class="dd-en" lang="en">No pickups in the queue. The next window opens at 19:00.</p>
+              </li>
+              <li>
+                <p class="dd-ru">Сегодня ничего не пересчитано. Пересчитайте полку, чтобы опубликовать предложение.</p>
+                <p class="dd-en" lang="en">Nothing counted today. Count a shelf to publish an offer.</p>
+              </li>
+            </ul>
+            <p class="t-small muted" style="margin-top:16px">В каждом пустом состоянии есть одно действие или одно настоящее время. Никаких картинок с разведёнными руками.</p>
+          </div>
+        </div>
+
+        <div class="note">
+          <p class="t-small muted">В большинстве ташкентских магазинов рабочий язык русский, поэтому экраны продавца пишутся сначала по-русски и только потом читаются по-английски. Узбекский появится, когда его попросит пилотный магазин, не раньше.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>Брендбук LastBite v1 &middot; docs/brand/brand-book.html &middot; палитра, шрифты и фирменные элементы общие с питч-деком и UI-китом</p>
+    <p style="margin-top:6px">каждое предложение настоящее</p>
+  </div>
+</footer>
+
+<script>
+document.documentElement.classList.add("js");
+
+/* scroll reveal, skipped entirely when the reader asked for less motion */
+var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var targets = document.querySelectorAll(".sec > .wrap > .grid, .cover > *");
+targets.forEach(function (el) { el.classList.add("rv"); });
+
+if (reduce || !("IntersectionObserver" in window)) {
+  targets.forEach(function (el) { el.classList.add("in"); });
+} else {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.04 });
+  targets.forEach(function (el) { io.observe(el); });
+}
+
+/* mark the section currently on screen in the anchor nav */
+var links = Array.prototype.slice.call(document.querySelectorAll(".nav-links a"));
+var sections = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+var spy = new IntersectionObserver(function (entries) {
+  entries.forEach(function (entry) {
+    if (!entry.isIntersecting) return;
+    var i = sections.indexOf(entry.target);
+    links.forEach(function (a, n) {
+      if (n === i) { a.setAttribute("aria-current", "true"); }
+      else { a.removeAttribute("aria-current"); }
+    });
+  });
+}, { rootMargin: "-60px 0px -70% 0px" });
+sections.forEach(function (s) { if (s) spy.observe(s); });
+</script>
+
+</body>
+</html>

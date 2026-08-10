@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="ru" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LastBite. Экраны продукта</title>
+<meta name="description" content="Экраны продукта LastBite в целевом минимальном стиле.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>document.documentElement.className = 'js'</script>
+<style>
+/* tokens */
+:root{
+  --teal:#16C79A;
+  --seal:#0E8A6C;
+  --ink:#101418;
+  --paper:#FFFFFF;
+  --fog:#F4F6F5;
+  --tangerine:#FF8C42;
+  --coral:#FF6B6B;
+  --gray:#8A9299;
+  --amber:#E0A63C;
+  --line:rgba(16,20,24,.10);
+  --line2:rgba(16,20,24,.16);
+  --sans:'Onest',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --display:'Unbounded',var(--sans);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --s:.60;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1420px;margin:0 auto;padding:0 28px}
+
+/* page head */
+.page-head{padding:72px 0 44px}
+.wm{font-family:var(--display);font-weight:900;font-size:40px;letter-spacing:-.02em;line-height:1}
+.wm .dot{color:var(--teal)}
+.page-head p{margin:16px 0 0;font-size:18px;color:var(--ink);max-width:44ch}
+.meta{margin-top:22px;font-family:var(--mono);font-size:12px;color:var(--gray);letter-spacing:.02em}
+.rule{height:1px;background:var(--line);margin:0}
+
+/* phone rail */
+.rail{display:flex;flex-wrap:wrap;justify-content:center;gap:26px 22px;padding:52px 0 60px}
+.unit{margin:0;width:calc(410px * var(--s));min-width:236px}
+.frame-box{width:calc(410px * var(--s));height:calc(864px * var(--s));position:relative}
+.device{
+  position:absolute;top:0;left:0;width:410px;height:864px;
+  transform:scale(var(--s));transform-origin:0 0;
+  padding:10px;border-radius:42px;background:var(--ink);
+}
+.screen{
+  width:390px;height:844px;border-radius:32px;overflow:hidden;
+  background:var(--paper);position:relative;display:flex;flex-direction:column;
+  font-size:15px;color:var(--ink);
+}
+.cap{margin-top:18px;font-size:12.5px;line-height:1.62;color:#3A4249}
+.cap b{display:block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);margin-bottom:7px}
+
+/* status bar */
+.sb{height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;padding:0 22px 0 24px;position:relative}
+.sb-t{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.01em}
+.island{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:102px;height:27px;border-radius:99px;background:var(--ink)}
+.sb-i{display:flex;align-items:flex-end;gap:2.5px}
+.bar{width:3px;background:var(--ink);border-radius:1px;display:block}
+.b1{height:4px}.b2{height:7px}.b3{height:10px}
+.bat{width:21px;height:11px;border:1.3px solid var(--ink);border-radius:3px;position:relative;margin-left:5px}
+.bat::before{content:"";position:absolute;inset:1.6px;width:11px;background:var(--ink);border-radius:1px}
+.bat::after{content:"";position:absolute;right:-3.4px;top:3.4px;width:2px;height:4px;background:var(--ink);border-radius:0 2px 2px 0}
+
+/* screen primitives */
+.ph{background:var(--fog);background-image:repeating-linear-gradient(45deg,rgba(16,20,24,.05) 0 1px,rgba(16,20,24,0) 1px 9px)}
+.chip{display:inline-flex;align-items:center;height:34px;padding:0 15px;border-radius:99px;background:var(--fog);font-size:13.5px;font-weight:500;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper);font-weight:600}
+.mini{display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:99px;background:var(--fog);font-size:12px;color:#454D54}
+.save{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:99px;background:var(--tangerine);color:var(--ink);font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:-.01em}
+.surprise{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:99px;background:var(--coral);color:var(--paper);font-size:11px;font-weight:600}
+.gone{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:99px;background:#EFF1F0;color:var(--gray);font-size:12px;font-weight:600}
+.old{font-family:var(--mono);font-size:12.5px;color:var(--gray);text-decoration:line-through}
+.now{font-family:var(--mono);font-weight:700;font-size:19px;letter-spacing:-.02em}
+.sum{font-family:var(--mono);font-weight:700;font-size:12.5px;color:var(--gray)}
+.mo{font-family:var(--mono);font-size:12.5px}
+.muted{color:var(--gray)}
+
+/* verified chip, signature device one */
+.vchip{display:inline-flex;align-items:center;gap:7px;height:27px;padding:0 11px 0 10px;border:1.5px solid var(--seal);border-radius:99px;background:var(--paper);
+  font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--seal);letter-spacing:.005em;white-space:nowrap}
+.vdot{width:7px;height:7px;border-radius:50%;background:var(--teal);flex:0 0 7px}
+.pulse{animation:pdot 2s ease-out infinite}
+@keyframes pdot{
+  0%{box-shadow:0 0 0 0 rgba(22,199,154,.60)}
+  70%{box-shadow:0 0 0 7px rgba(22,199,154,0)}
+  100%{box-shadow:0 0 0 0 rgba(22,199,154,0)}
+}
+
+/* ticket, signature device two */
+.ticket{position:relative;background:var(--fog);border:1.5px dashed rgba(16,20,24,.34);border-radius:16px;padding:13px 18px;overflow:hidden}
+.ticket::before,.ticket::after{content:"";position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--paper);transform:translateY(-50%)}
+.ticket::before{left:-9px}
+.ticket::after{right:-9px}
+.tk-l{font-family:var(--mono);font-size:10px;color:var(--gray);letter-spacing:.09em;text-transform:uppercase}
+.tk-c{font-family:var(--mono);font-weight:700;font-size:27px;letter-spacing:.10em;margin-top:3px;line-height:1.1}
+
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;height:54px;border-radius:16px;font-weight:600;font-size:16.5px}
+.btn-teal{background:var(--teal);color:var(--ink)}
+.btn-seal{background:var(--seal);color:var(--paper);height:60px;font-size:17px}
+.btn-line{border:1.5px solid var(--ink);color:var(--ink);background:var(--paper)}
+.ico{display:block}
+
+/* frame 1 buyer feed */
+.f1-head{display:flex;align-items:center;justify-content:space-between;padding:2px 18px 0;height:38px;flex:0 0 38px}
+.wm-s{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:-.02em}
+.wm-s .dot{color:var(--teal)}
+.loc{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:#454D54;font-weight:500}
+.f1-search{margin:10px 18px 0;height:46px;flex:0 0 46px;border-radius:16px;background:var(--fog);display:flex;align-items:center;gap:10px;padding:0 14px;color:#7B838A;font-size:14.5px}
+.chips{display:flex;gap:8px;padding:12px 18px 0;flex:0 0 44px;overflow:hidden}
+.chips .chip{padding:0 13px}
+.feed{flex:1;padding:14px 18px 0;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.card{flex:none;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:var(--paper)}
+.card-img{height:92px;position:relative}
+.card-img .save{position:absolute;left:12px;top:12px}
+.card-b{padding:11px 14px 12px}
+.c-title{font-size:15.5px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
+.c-shop{font-size:12.5px;color:var(--gray);margin-top:3px}
+.c-price{display:flex;align-items:baseline;gap:9px;margin-top:9px;line-height:1.15}
+.c-meta{display:flex;align-items:center;justify-content:space-between;margin-top:11px}
+.c-left{font-size:12px;color:#454D54;font-weight:500}
+.card.gone-card{border-color:rgba(16,20,24,.07);background:#FCFDFC}
+.gone-row{display:flex;gap:12px;padding:11px 13px;align-items:center}
+.gone-th{width:58px;height:58px;border-radius:16px;flex:0 0 58px;background:#F0F2F1;background-image:repeating-linear-gradient(45deg,rgba(16,20,24,.04) 0 1px,rgba(16,20,24,0) 1px 9px)}
+.gone-b{flex:1;min-width:0}
+.gone-t{font-size:14.5px;font-weight:600;color:var(--gray);line-height:1.25}
+.gone-m{display:flex;align-items:center;gap:8px;margin-top:7px}
+
+/* tab bar */
+.tabbar{flex:0 0 82px;border-top:1px solid var(--line);display:flex;align-items:flex-start;padding:11px 8px 0;background:var(--paper)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:500;color:var(--gray)}
+.tab.on{color:var(--ink);font-weight:600}
+.home-ind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:99px;background:var(--ink);opacity:.85}
+
+/* frame 2 offer detail */
+.f2-nav{height:46px;flex:0 0 46px;display:flex;align-items:center;justify-content:space-between;padding:0 18px}
+.rnd{width:36px;height:36px;border-radius:50%;background:var(--fog);display:flex;align-items:center;justify-content:center}
+.hero{height:140px;flex:0 0 140px;margin:0 18px;border-radius:24px;position:relative}
+.hero .save{position:absolute;left:14px;top:14px}
+.f2-body{padding:14px 18px 0}
+.d-title{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.03em;line-height:1.2}
+.d-shop{font-size:12.5px;color:var(--gray);margin-top:6px}
+.d-price{display:flex;align-items:baseline;gap:10px;margin-top:10px;line-height:1.15}
+.d-win{margin-top:10px;height:44px;border-radius:16px;background:var(--fog);display:flex;align-items:center;gap:9px;padding:0 14px}
+.d-alg{margin-top:10px}
+.d-lab{font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
+.d-chips{display:flex;gap:6px;margin-top:8px}
+.f2-cta{margin:12px 18px 0}
+.scrim{position:absolute;inset:0 0 322px 0;background:linear-gradient(180deg,rgba(16,20,24,.05) 0%,rgba(16,20,24,.13) 60%,rgba(16,20,24,.17) 100%)}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:322px;background:var(--paper);border-radius:28px 28px 0 0;padding:10px 20px 0;box-shadow:0 -18px 44px rgba(16,20,24,.22)}
+.grab{width:38px;height:4px;border-radius:99px;background:rgba(16,20,24,.16);margin:0 auto 14px}
+.sh-t{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.03em}
+.sh-s{font-size:12.5px;color:var(--gray);margin-top:5px}
+.sh-hint{font-size:13px;color:#454D54;margin-top:10px;text-align:center}
+.sh-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.sh-cancel{text-align:center;margin-top:11px;font-size:13.5px;color:var(--gray);text-decoration:underline;text-underline-offset:3px}
+
+/* frame 3 seller inventory */
+.s-head{padding:2px 18px 0;flex:0 0 52px;display:flex;align-items:center;justify-content:space-between}
+.s-title{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.03em}
+.seg{display:flex;gap:7px;padding:8px 18px 0;flex:0 0 46px;overflow:hidden}
+.seg .chip{height:32px;font-size:12.5px;padding:0 13px}
+.inv{flex:1;overflow:hidden;padding:8px 0 0}
+.inv-h{padding:12px 18px 6px;font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
+.inv-r{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--line)}
+.inv-n{flex:1;min-width:0}
+.inv-t{font-size:14.5px;font-weight:600;line-height:1.25;letter-spacing:-.01em}
+.inv-s{display:flex;align-items:center;gap:6px;margin-top:5px;font-family:var(--mono);font-size:11px;color:var(--gray)}
+.cd{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.cd-hi{background:var(--teal)}
+.cd-md{background:var(--amber)}
+.cd-lo{background:var(--gray)}
+.inv-c{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:-.02em}
+.exc{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:99px;background:var(--coral);color:var(--paper);font-size:11px;font-weight:600;margin-left:8px}
+.fab{position:absolute;right:18px;bottom:104px;height:50px;padding:0 20px;border-radius:99px;background:var(--teal);color:var(--ink);display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;box-shadow:0 8px 20px rgba(16,20,24,.16)}
+.botbar{flex:0 0 88px;border-top:1px solid var(--line);padding:14px 18px 0;background:var(--paper)}
+
+/* frame 4 publish review */
+.p-head{padding:4px 18px 0;flex:0 0 62px}
+.p-title{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.03em;line-height:1.22}
+.p-sub{padding:0 18px;font-size:12.5px;color:var(--gray);margin-top:6px}
+.p-card{margin:12px 18px 0;border:1px solid var(--line);border-radius:24px;padding:4px 16px}
+.p-r{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line)}
+.p-r:last-child{border-bottom:0}
+.p-k{font-size:12px;color:var(--gray);flex:0 0 96px;padding-top:2px}
+.p-v{font-size:13.5px;font-weight:500;text-align:right;line-height:1.35}
+.p-prev{margin:12px 18px 0;background:var(--fog);border-radius:24px;padding:12px 14px}
+.p-prev-l{font-family:var(--mono);font-size:10px;letter-spacing:.10em;text-transform:uppercase;color:var(--gray)}
+.p-prev-c{display:flex;align-items:center;gap:12px;margin-top:10px;background:var(--paper);border-radius:16px;padding:10px}
+.p-prev-th{width:52px;height:52px;border-radius:12px;flex:0 0 52px}
+.p-tog{margin:14px 18px 0;border:1.5px solid var(--seal);border-radius:24px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.sw{width:50px;height:30px;border-radius:99px;background:var(--seal);position:relative;flex:0 0 50px}
+.sw::after{content:"";position:absolute;top:3px;right:3px;width:24px;height:24px;border-radius:50%;background:var(--paper)}
+.p-tog-t{display:block;font-size:14.5px;font-weight:600}
+.p-tog-s{display:block;font-size:12px;color:var(--gray);margin-top:3px;line-height:1.35}
+.p-foot{padding:0 18px;margin-top:12px;font-size:11.5px;color:var(--gray);text-align:center}
+.p-cta{margin:16px 18px 0}
+
+/* frame 5 showroom */
+.sr-head{flex:0 0 46px;display:flex;align-items:center;padding:0 18px}
+.store{position:relative;overflow:hidden;margin:6px 18px 0;padding:16px;border-radius:24px;background:var(--fog)}
+.store-n{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:-.03em}
+.store-a{font-size:12.5px;color:#454D54;margin-top:6px}
+.store-b{margin-top:12px}
+.ribbon{position:absolute;top:16px;right:-46px;width:160px;transform:rotate(45deg);background:rgba(16,20,24,.07);color:rgba(16,20,24,.44);
+  font-family:var(--mono);font-size:10px;letter-spacing:.34em;text-transform:uppercase;text-align:center;padding:6px 0;pointer-events:none}
+.grid-l{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 18px 0}
+.tile{border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--paper)}
+.tile-i{height:100px;position:relative}
+.tile-i .save,.tile-i .surprise{position:absolute;left:8px;top:8px}
+.tile-b{padding:9px 11px 11px}
+.tile-t{font-size:12.5px;font-weight:600;line-height:1.25;min-height:31px}
+.tile-p{display:flex;align-items:baseline;gap:6px;margin-top:5px;line-height:1.15}
+.tile-p .now{font-size:15px}
+.tile.dim{background:#FCFDFC}
+.tile.dim .tile-t{color:var(--gray)}
+.sr-note{margin:14px 18px 0;background:var(--fog);border-radius:16px;padding:12px 14px;font-size:12px;color:#454D54;line-height:1.4}
+.sr-foot{margin-top:auto;padding:0 18px 22px}
+.sr-next{display:flex;align-items:center;justify-content:space-between;padding:12px 0 14px;font-size:12px;color:var(--gray)}
+
+/* tokens strip */
+.tokens{padding:70px 0 90px}
+.sec-h{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gray);margin:0 0 22px}
+.swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:16px}
+.sw-c{border-radius:24px;overflow:hidden;border:1px solid var(--line)}
+.sw-p{height:96px}
+.sw-m{padding:12px 14px 14px}
+.sw-n{font-size:13.5px;font-weight:600}
+.sw-h{font-family:var(--mono);font-size:11px;color:var(--gray);margin-top:3px}
+.sw-u{font-size:11.5px;color:#3A4249;margin-top:8px;line-height:1.45;min-height:33px}
+.rules{margin:26px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px 30px}
+.rules li{font-size:13px;color:#3A4249;padding-left:18px;position:relative;line-height:1.55}
+.rules li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--teal)}
+
+.scale{border-top:1px solid var(--line);margin-top:64px;padding-top:36px}
+.sc-r{display:flex;align-items:baseline;gap:26px;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.sc-s{flex:1;min-width:220px}
+.sc-l{font-family:var(--mono);font-size:11px;color:var(--gray);letter-spacing:.02em}
+.t-wm{font-family:var(--display);font-weight:900;font-size:34px;letter-spacing:-.03em}
+.t-h1{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:-.03em}
+.t-h2{font-size:17px;font-weight:600}
+.t-b{font-size:15px}
+.t-s{font-size:13px;color:var(--gray)}
+.t-m{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:.08em}
+.t-m2{font-family:var(--mono);font-size:13px}
+
+.radii{border-top:1px solid var(--line);margin-top:56px;padding-top:36px;display:flex;gap:20px;flex-wrap:wrap}
+.rad{width:120px}
+.rad-b{height:84px;background:var(--fog);border:1.5px solid var(--line2)}
+.rad-l{font-family:var(--mono);font-size:11px;color:var(--gray);margin-top:10px;line-height:1.45}
+.r16{border-radius:16px}.r24{border-radius:24px}.r99{border-radius:99px}.r32{border-radius:32px}
+.rad-note{width:auto;max-width:330px;display:flex;align-items:flex-end}
+
+.devices{border-top:1px solid var(--line);margin-top:56px;padding-top:44px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:44px}
+.dev-stage{background:var(--fog);border-radius:24px;padding:46px 28px;display:flex;align-items:center;justify-content:center;position:relative}
+.dev-stage .ticket::before,.dev-stage .ticket::after{background:var(--fog)}
+.dev-name{font-size:15px;font-weight:600;margin-top:20px}
+.big-v{transform:scale(1.7);transform-origin:center}
+.big-t{width:236px;background:var(--paper)}
+.pin{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.anat{margin:16px 0 0;padding:0;list-style:none;counter-reset:a}
+.anat li{position:relative;padding-left:30px;font-size:12.5px;color:#3A4249;line-height:1.55;margin-bottom:9px;counter-increment:a}
+.anat li::before{content:counter(a);position:absolute;left:0;top:1px;width:19px;height:19px;border-radius:50%;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+footer{border-top:1px solid var(--line);padding:30px 0 70px;font-family:var(--mono);font-size:11.5px;color:var(--gray);line-height:1.6}
+
+/* reveal */
+.js [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .55s ease,transform .55s cubic-bezier(.2,.7,.3,1)}
+.js [data-reveal].in{opacity:1;transform:none}
+
+@media (max-width:1379px){:root{--s:.52}.wrap{padding:0 22px}}
+@media (max-width:1199px){:root{--s:.66}}
+@media (max-width:899px){:root{--s:.60}.page-head{padding:52px 0 32px}.wm{font-size:32px}}
+@media (max-width:639px){:root{--s:.78}.rail{gap:44px 0}}
+@media (max-width:399px){:root{--s:.66}}
+
+@media (prefers-reduced-motion:reduce){
+  .pulse{animation:none}
+  .js [data-reveal]{opacity:1;transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="page-head">
+    <div class="wm">lastbite<span class="dot">.</span></div>
+    <p>Экраны продукта. Система в работе.</p>
+    <div class="meta">версия 1 / 390x844 / строки продукта настоящие</div>
+  </header>
+</div>
+<div class="rule"></div>
+
+<div class="wrap">
+<section class="rail">
+
+  <!-- 1 лента покупателя -->
+  <figure class="unit" data-reveal>
+    <div class="frame-box">
+      <div class="device"><div class="screen">
+        <div class="sb">
+          <span class="sb-t">18:42</span>
+          <span class="island"></span>
+          <span class="sb-i"><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bat"></i></span>
+        </div>
+
+        <div class="f1-head">
+          <span class="wm-s">lastbite<span class="dot">.</span></span>
+          <span class="loc">
+            <svg class="ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16C79A" stroke-width="2.2"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+            ул. Касаба
+          </span>
+        </div>
+
+        <div class="f1-search">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7B838A" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          Поиск по магазинам
+        </div>
+
+        <div class="chips">
+          <span class="chip on">Всё</span>
+          <span class="chip">Хлеб</span>
+          <span class="chip">Молочное</span>
+          <span class="chip">Сюрприз-бокс</span>
+        </div>
+
+        <div class="feed">
+          <article class="card">
+            <div class="card-img ph"><span class="save">-50%</span></div>
+            <div class="card-b">
+              <div class="c-title">Вечерний набор выпечки</div>
+              <div class="c-shop">Пекарня Нон</div>
+              <div class="c-price">
+                <span class="old">40 000</span>
+                <span class="now">20 000</span>
+                <span class="sum">сум</span>
+              </div>
+              <div class="c-meta">
+                <span class="vchip"><i class="vdot pulse"></i>проверено 12 мин назад</span>
+                <span class="c-left">300 м</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-img ph"><span class="save">-40%</span></div>
+            <div class="card-b">
+              <div class="c-title">Молочный набор на утро</div>
+              <div class="c-shop">Магазин на Касабе</div>
+              <div class="c-price">
+                <span class="old">25 000</span>
+                <span class="now">15 000</span>
+                <span class="sum">сум</span>
+              </div>
+              <div class="c-meta">
+                <span class="vchip"><i class="vdot"></i>проверено 40 мин назад</span>
+                <span class="c-left">600 м</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="card gone-card">
+            <div class="gone-row">
+              <div class="gone-th"></div>
+              <div class="gone-b">
+                <div class="gone-t">Сюрприз-бокс на вечер</div>
+                <div class="gone-m">
+                  <span class="gone">разобрали</span>
+                  <span class="mo muted">18:05</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <nav class="tabbar">
+          <span class="tab on">
+            <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="7" rx="2.4"/><rect x="3" y="14" width="18" height="6" rx="2.4"/></svg>
+            Лента
+          </span>
+          <span class="tab">
+            <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20s-7.4-4.7-7.4-9.7A4 4 0 0 1 12 7.6 4 4 0 0 1 19.4 10.3C19.4 15.3 12 20 12 20z"/></svg>
+            Избранное
+          </span>
+          <span class="tab">
+            <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h13A2.5 2.5 0 0 1 21 8.5v1a2.5 2.5 0 0 0 0 5v1a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 15.5v-1a2.5 2.5 0 0 0 0-5z"/></svg>
+            Брони
+          </span>
+          <span class="tab">
+            <svg class="ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c1.2-3.6 4-5.2 7-5.2s5.8 1.6 7 5.2"/></svg>
+            Профиль
+          </span>
+        </nav>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+    <figcaption class="cap">
+      <b>01 лента покупателя</b>
+      Текст держит один тёмный цвет, мятный тратится только на бронь, поэтому на экране всегда одно очевидное следующее действие. Выгода живёт в мандариновом чипе и больше нигде. Разобранный набор остаётся в ленте серым и с минутой, когда его забрали: спрятать его значило бы показать магазин надёжнее, чем он есть.
+    </figcaption>
+  </figure>
+
+  <!-- 2 карточка и бронь -->
+  <figure class="unit" data-reveal>
+    <div class="frame-box">
+      <div class="device"><div class="screen">
+        <div class="sb">
+          <span class="sb-t">18:44</span>
+          <span class="island"></span>
+          <span class="sb-i"><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bat"></i></span>
+        </div>
+
+        <div class="f2-nav">
+          <span class="rnd"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></span>
+          <span class="rnd"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="2"><path d="M12 20s-7.4-4.7-7.4-9.7A4 4 0 0 1 12 7.6 4 4 0 0 1 19.4 10.3C19.4 15.3 12 20 12 20z"/></svg></span>
+        </div>
+
+        <div class="hero ph"><span class="save">-50%</span></div>
+
+        <div class="f2-body">
+          <div class="d-title">Вечерний набор выпечки</div>
+          <div class="d-shop">Пекарня Нон, ул. Касаба, 14</div>
+          <div class="d-price">
+            <span class="old">40 000</span>
+            <span class="now" style="font-size:24px">20 000</span>
+            <span class="sum">сум</span>
+          </div>
+          <div class="d-win">
+            <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="1.9"><circle cx="12" cy="12" r="8.4"/><path d="M12 7.6V12l3 1.8"/></svg>
+            <span class="mo">забрать 18:00-21:00</span>
+          </div>
+          <div class="d-alg">
+            <div class="d-lab">аллергены</div>
+            <div class="d-chips">
+              <span class="mini">глютен</span>
+              <span class="mini">молоко</span>
+              <span class="mini">яйцо</span>
+              <span class="mini">кунжут</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="f2-cta"><span class="btn btn-teal">Забронировать</span></div>
+
+        <div class="scrim"></div>
+
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="sh-t">Бронь подтверждена</div>
+          <div class="sh-s">Пекарня Нон, ул. Касаба, 14</div>
+
+          <div class="ticket" style="margin-top:14px">
+            <div class="tk-l">код брони</div>
+            <div class="tk-c">LB-7K2M</div>
+          </div>
+          <div class="sh-hint">покажите код на кассе</div>
+
+          <div class="sh-row">
+            <span class="vchip"><i class="vdot pulse"></i>проверено 12 мин назад</span>
+            <span class="mo muted">18:00-21:00</span>
+          </div>
+          <div class="sh-cancel">Отменить бронь</div>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+    <figcaption class="cap">
+      <b>02 карточка и бронь</b>
+      Один кадр держит и решение, и его результат. Шторка подтверждения поднимается над затемнённой карточкой, и талон живёт именно там. Код набран моноширинным и достаточно крупно, чтобы прочитать его через прилавок. Отмена остаётся простой подчёркнутой строкой: её всегда видно, но она не спорит с главной кнопкой.
+    </figcaption>
+  </figure>
+
+  <!-- 3 остатки продавца -->
+  <figure class="unit" data-reveal>
+    <div class="frame-box">
+      <div class="device"><div class="screen">
+        <div class="sb">
+          <span class="sb-t">14:32</span>
+          <span class="island"></span>
+          <span class="sb-i"><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bat"></i></span>
+        </div>
+
+        <div class="s-head">
+          <span class="s-title">Остатки</span>
+          <span class="mo muted">обновлено 14:32</span>
+        </div>
+
+        <div class="seg">
+          <span class="chip on">Все</span>
+          <span class="chip">Требует проверки</span>
+          <span class="chip">Исключения</span>
+        </div>
+
+        <div class="inv">
+          <div class="inv-h">требует проверки</div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Хлеб «Нон» 400 г</span>
+              <span class="inv-s"><i class="cd cd-md"></i>проверено 3 ч назад</span>
+            </span>
+            <span class="inv-c">12 шт</span>
+          </div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Самса с мясом<span class="exc">расхождение</span></span>
+              <span class="inv-s"><i class="cd cd-lo"></i>проверено 2 дня назад</span>
+            </span>
+            <span class="inv-c">6 шт</span>
+          </div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Молоко 2,5% 900 мл</span>
+              <span class="inv-s"><i class="cd cd-md"></i>проверено 3 ч назад</span>
+            </span>
+            <span class="inv-c">9 шт</span>
+          </div>
+
+          <div class="inv-h">проверено сегодня</div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Круассан с маслом</span>
+              <span class="inv-s"><i class="cd cd-hi"></i>проверено 20 мин назад</span>
+            </span>
+            <span class="inv-c">18 шт</span>
+          </div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Слойка с сыром</span>
+              <span class="inv-s"><i class="cd cd-hi"></i>проверено 20 мин назад</span>
+            </span>
+            <span class="inv-c">7 шт</span>
+          </div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t">Кефир 1 л</span>
+              <span class="inv-s"><i class="cd cd-hi"></i>проверено 35 мин назад</span>
+            </span>
+            <span class="inv-c">4 шт</span>
+          </div>
+
+          <div class="inv-r">
+            <span class="inv-n">
+              <span class="inv-t" style="color:#8A9299">Творог 5% 200 г</span>
+              <span class="inv-s"><i class="cd cd-lo"></i>списано 12:40</span>
+            </span>
+            <span class="inv-c" style="color:#8A9299">0 шт</span>
+          </div>
+        </div>
+
+        <span class="fab">
+          <svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          Опубликовать
+        </span>
+
+        <div class="botbar"><span class="btn btn-line">Пересчёт</span></div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+    <figcaption class="cap">
+      <b>03 остатки продавца</b>
+      У каждого числа своя свежесть. Точка уверенности янтарная и намеренно не мандариновая, чтобы устаревший остаток нельзя было принять за скидку. Отметки времени моноширинные и относительные, потому что персонал читает их между покупателями. Коралловый появляется один раз, на расхождении, а нулевая строка остаётся серой вместо того, чтобы исчезнуть.
+    </figcaption>
+  </figure>
+
+  <!-- 4 утверждение публикации -->
+  <figure class="unit" data-reveal>
+    <div class="frame-box">
+      <div class="device"><div class="screen">
+        <div class="sb">
+          <span class="sb-t">14:36</span>
+          <span class="island"></span>
+          <span class="sb-i"><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bat"></i></span>
+        </div>
+
+        <div class="p-head">
+          <span class="rnd" style="margin-bottom:8px"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></span>
+          <div class="p-title">Проверка перед публикацией</div>
+        </div>
+        <div class="p-sub">Покупатели увидят ровно эти поля</div>
+
+        <div class="p-card">
+          <div class="p-r"><span class="p-k">Название</span><span class="p-v">Вечерний набор выпечки</span></div>
+          <div class="p-r"><span class="p-k">Состав</span><span class="p-v">нон 400 г, самса с мясом 2 шт, слойка с сыром 2 шт</span></div>
+          <div class="p-r"><span class="p-k">Аллергены</span><span class="p-v">глютен, молоко, кунжут</span></div>
+          <div class="p-r">
+            <span class="p-k">Цена</span>
+            <span class="p-v" style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end">
+              <span class="old">40 000</span><span class="now" style="font-size:17px">20 000</span><span class="save">-50%</span>
+            </span>
+          </div>
+          <div class="p-r"><span class="p-k">Самовывоз</span><span class="p-v mo">сегодня 18:00-21:00</span></div>
+          <div class="p-r"><span class="p-k">Количество</span><span class="p-v mo">5 наборов</span></div>
+        </div>
+
+        <div class="p-prev">
+          <div class="p-prev-l">как увидит покупатель</div>
+          <div class="p-prev-c">
+            <span class="p-prev-th ph"></span>
+            <span style="flex:1;min-width:0">
+              <span class="c-title" style="font-size:13.5px;display:block">Вечерний набор выпечки</span>
+              <span style="display:flex;align-items:baseline;gap:7px;margin-top:5px">
+                <span class="old" style="font-size:11px">40 000</span>
+                <span class="now" style="font-size:15px">20 000</span>
+                <span class="sum" style="font-size:11px">сум</span>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="p-tog">
+          <span style="flex:1">
+            <span class="p-tog-t">Отложено физически</span>
+            <span class="p-tog-s">наборы собраны и убраны с полки</span>
+          </span>
+          <span class="sw"></span>
+        </div>
+
+        <div class="p-cta"><span class="btn btn-seal">Утвердить и опубликовать</span></div>
+        <div class="p-foot">публикация только после вашего утверждения</div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+    <figcaption class="cap">
+      <b>04 утверждение публикации</b>
+      Кнопка утверждения тёмно-зелёная, а не мятная. Публикация это действие доверия, а не покупка, и путать их нельзя. Все публичные поля собраны на одной карточке, чтобы к покупателю ничего не ушло незамеченным. Тумблер отложенного набора задаёт единственный вопрос, который экран не может проверить сам.
+    </figcaption>
+  </figure>
+
+  <!-- 5 витрина демо -->
+  <figure class="unit" data-reveal>
+    <div class="frame-box">
+      <div class="device"><div class="screen">
+        <div class="sb">
+          <span class="sb-t">14:35</span>
+          <span class="island"></span>
+          <span class="sb-i"><i class="bar b1"></i><i class="bar b2"></i><i class="bar b3"></i><i class="bat"></i></span>
+        </div>
+
+        <div class="sr-head">
+          <span class="rnd"><svg class="ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#101418" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></span>
+        </div>
+
+        <div class="store">
+          <span class="ribbon">демо</span>
+          <div class="store-n">Магазин на Касабе</div>
+          <div class="store-a">ул. Касаба, 14 · 300 м · до 22:00</div>
+          <div class="store-b"><span class="vchip"><i class="vdot pulse"></i>проверено камерой 12 мин назад</span></div>
+        </div>
+
+        <div class="grid-l">
+          <span style="font-size:14.5px;font-weight:600">Сейчас на витрине</span>
+          <span class="mo muted">4 позиции</span>
+        </div>
+
+        <div class="tiles">
+          <div class="tile">
+            <div class="tile-i ph"><span class="save">-50%</span></div>
+            <div class="tile-b">
+              <div class="tile-t">Набор выпечки</div>
+              <div class="tile-p"><span class="old" style="font-size:11px">40 000</span><span class="now">20 000</span></div>
+            </div>
+          </div>
+
+          <div class="tile">
+            <div class="tile-i ph"><span class="surprise">Сюрприз-бокс</span></div>
+            <div class="tile-b">
+              <div class="tile-t">Что осталось к вечеру</div>
+              <div class="tile-p"><span class="old" style="font-size:11px">30 000</span><span class="now">15 000</span></div>
+            </div>
+          </div>
+
+          <div class="tile">
+            <div class="tile-i ph"><span class="save">-40%</span></div>
+            <div class="tile-b">
+              <div class="tile-t">Молочный набор</div>
+              <div class="tile-p"><span class="old" style="font-size:11px">25 000</span><span class="now">15 000</span></div>
+            </div>
+          </div>
+
+          <div class="tile dim">
+            <div class="tile-i" style="background:#F0F2F1;background-image:repeating-linear-gradient(45deg,rgba(16,20,24,.035) 0 1px,rgba(16,20,24,0) 1px 9px)"></div>
+            <div class="tile-b">
+              <div class="tile-t">Самса, 4 шт</div>
+              <div class="tile-p"><span class="gone">разобрали</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sr-note">Витрина собрана из остатков, которые магазин подтвердил вручную.</div>
+
+        <div class="sr-foot">
+          <div class="sr-next">
+            <span>следующая проверка</span>
+            <span class="mo">14:47</span>
+          </div>
+          <span class="btn btn-teal">Открыть магазин</span>
+        </div>
+        <span class="home-ind"></span>
+      </div></div>
+    </div>
+    <figcaption class="cap">
+      <b>05 витрина демо</b>
+      Демонстрационный блок честен насчёт себя. Отметка камеры всегда со временем, лента «демо» не снимается, поэтому скриншот невозможно выдать за живой магазин. В сетке одновременно живой набор, сюрприз-бокс и разобранная позиция: это единственное место, где все три смысловых цвета видны сразу.
+    </figcaption>
+  </figure>
+
+</section>
+</div>
+
+<div class="rule"></div>
+
+<div class="wrap">
+<section class="tokens">
+
+  <h2 class="sec-h">Цвет</h2>
+  <div class="swatches" data-reveal>
+    <div class="sw-c"><div class="sw-p" style="background:#16C79A"></div><div class="sw-m">
+      <div class="sw-n">Мятный</div><div class="sw-h">#16C79A · bite teal</div>
+      <div class="sw-u">Бренд и кнопка покупателя. Всегда с тёмным текстом, никогда с белым.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#0E8A6C"></div><div class="sw-m">
+      <div class="sw-n">Печать</div><div class="sw-h">#0E8A6C · deep seal</div>
+      <div class="sw-u">Отметка проверки и утверждение продавца. Цвет доверия, а не вторая кнопка.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#101418"></div><div class="sw-m">
+      <div class="sw-n">Чернила</div><div class="sw-h">#101418 · ink</div>
+      <div class="sw-u">Весь текст, активные чипы, корпус телефона. Держит страницу.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(16,20,24,.10)"></div><div class="sw-m">
+      <div class="sw-n">Бумага</div><div class="sw-h">#FFFFFF · paper</div>
+      <div class="sw-u">Все поверхности. Высота задаётся волосяными линиями, а не заливкой.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#F4F6F5"></div><div class="sw-m">
+      <div class="sw-n">Туман</div><div class="sw-h">#F4F6F5 · fog</div>
+      <div class="sw-u">Карточки, поля ввода, заглушки фото, неактивные чипы.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#FF8C42"></div><div class="sw-m">
+      <div class="sw-n">Мандарин</div><div class="sw-h">#FF8C42 · tangerine</div>
+      <div class="sw-u">Только выгода. Если это не скидка, это не этот цвет.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#FF6B6B"></div><div class="sw-m">
+      <div class="sw-n">Коралл</div><div class="sw-h">#FF6B6B · coral</div>
+      <div class="sw-u">Сюрприз-бокс у покупателя, расхождение у продавца.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#8A9299"></div><div class="sw-m">
+      <div class="sw-n">Честный серый</div><div class="sw-h">#8A9299 · honest gray</div>
+      <div class="sw-u">Разобрали, истекло, списано. Плохая новость не бывает красной.</div></div></div>
+
+    <div class="sw-c"><div class="sw-p" style="background:#E0A63C"></div><div class="sw-m">
+      <div class="sw-n">Тусклый янтарь</div><div class="sw-h">#E0A63C · stale amber</div>
+      <div class="sw-u">Только средняя уверенность. Приглушён нарочно, чтобы не путался с мандарином.</div></div></div>
+  </div>
+
+  <ul class="rules" data-reveal>
+    <li>Один акцент на экран. Мятный это действие, всё остальное чернила и туман.</li>
+    <li>У коралла ровно два значения, и две поверхности никогда не встречаются на одном экране, поэтому смысл всегда однозначен.</li>
+    <li>Доступность проговаривается, а не подразумевается. Серый плюс время лучше спрятанной карточки.</li>
+    <li>Мятный несёт тёмный текст, печать несёт белый. Эта пара зафиксирована.</li>
+  </ul>
+
+  <div class="scale" data-reveal>
+    <h2 class="sec-h">Типографика</h2>
+    <div class="sc-r"><span class="sc-s t-wm">lastbite.</span><span class="sc-l">Unbounded 900 / 40 / только логотип</span></div>
+    <div class="sc-r"><span class="sc-s t-h1">Вечерний набор выпечки</span><span class="sc-l">Unbounded 700 / 20 / только заголовки экранов</span></div>
+    <div class="sc-r"><span class="sc-s t-h2">Проверка перед публикацией</span><span class="sc-l">Onest 600 / 17 / заголовки блоков</span></div>
+    <div class="sc-r"><span class="sc-s t-b">Покупатели увидят ровно эти поля</span><span class="sc-l">Onest 400 / 15 / основной текст</span></div>
+    <div class="sc-r"><span class="sc-s t-s">Пекарня Нон, ул. Касаба, 14</span><span class="sc-l">Onest 500 / 13 / подписи, честный серый</span></div>
+    <div class="sc-r"><span class="sc-s t-m">LB-7K2M &nbsp; 20 000</span><span class="sc-l">JetBrains Mono 700 / коды и цены</span></div>
+    <div class="sc-r"><span class="sc-s t-m2">забрать 18:00-21:00 &nbsp; проверено 12 мин назад</span><span class="sc-l">JetBrains Mono 400 / окна и отметки времени</span></div>
+  </div>
+
+  <div class="radii" data-reveal>
+    <div style="width:100%"><h2 class="sec-h">Форма</h2></div>
+    <div class="rad"><div class="rad-b r16"></div><div class="rad-l">16<br>кнопки и поля</div></div>
+    <div class="rad"><div class="rad-b r24"></div><div class="rad-l">24<br>карточки</div></div>
+    <div class="rad"><div class="rad-b r99"></div><div class="rad-l">пилюля<br>чипы</div></div>
+    <div class="rad"><div class="rad-b r32"></div><div class="rad-l">32<br>экран телефона</div></div>
+    <div class="rad rad-note">
+      <div class="rad-l" style="margin:0 0 4px">Зона нажатия никогда не меньше 44. Кнопки от 54 до 60, потому что продавец жмёт их одной рукой, держа поднос.</div>
+    </div>
+  </div>
+
+  <div class="devices">
+    <div data-reveal>
+      <h2 class="sec-h">Фирменный элемент 1</h2>
+      <div class="dev-stage">
+        <span class="vchip big-v"><i class="vdot pulse"></i>проверено 12 мин назад</span>
+        <span class="pin" style="left:calc(50% - 158px);top:13px">1</span>
+        <span class="pin" style="left:calc(50% - 128px);bottom:13px">2</span>
+        <span class="pin" style="right:calc(50% - 158px);top:13px">3</span>
+        <span class="pin" style="right:calc(50% - 128px);bottom:13px">4</span>
+      </div>
+      <div class="dev-name">Чип проверки</div>
+      <ol class="anat">
+        <li>Рамка цвета печати, 1.5 px, на бумаге. Это контур, а не заливка, поэтому чип стоит на карточке и не спорит с ценой.</li>
+        <li>Мятная точка с пульсацией 2 секунды. Пульс означает живое состояние и выключается, когда система просит меньше движения.</li>
+        <li>Моноширинный, строчными, всегда относительное время. Точное время читают как часы работы.</li>
+        <li>Утверждение ограничено. Чип говорит не «проверено», а когда именно. Свежесть и есть продукт.</li>
+      </ol>
+    </div>
+
+    <div data-reveal>
+      <h2 class="sec-h">Фирменный элемент 2</h2>
+      <div class="dev-stage">
+        <div class="ticket big-t">
+          <div class="tk-l">код брони</div>
+          <div class="tk-c">LB-7K2M</div>
+        </div>
+        <span class="pin" style="left:calc(50% - 142px);top:13px">1</span>
+        <span class="pin" style="left:calc(50% - 142px);bottom:13px">2</span>
+        <span class="pin" style="right:calc(50% - 142px);top:13px">3</span>
+        <span class="pin" style="right:calc(50% - 142px);bottom:13px">4</span>
+      </div>
+      <div class="dev-name">Талон</div>
+      <ol class="anat">
+        <li>Пунктирный край 1.5 px и вырезы по бокам. Читается как отрывной корешок, а его и ждёт кассир.</li>
+        <li>Две буквы, дефис, четыре знака. Достаточно коротко, чтобы продиктовать вслух через прилавок в шумном магазине.</li>
+        <li>JetBrains Mono 700 с широким трекингом, чтобы ноль и буква О не спорили.</li>
+        <li>Внутри ничего не зависит от сети. Талон это обещание, с которым покупатель приходит в магазин.</li>
+      </ol>
+    </div>
+  </div>
+
+</section>
+</div>
+
+<div class="wrap">
+  <footer>lastbite, экраны продукта / мятный 16C79A, печать 0E8A6C, чернила 101418 / Unbounded, Onest, JetBrains Mono</footer>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('[data-reveal]');
+  var i;
+  if (reduce || !('IntersectionObserver' in window)) {
+    for (i = 0; i < els.length; i++) { els[i].classList.add('in'); }
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    for (var j = 0; j < entries.length; j++) {
+      if (entries[j].isIntersecting) {
+        entries[j].target.classList.add('in');
+        io.unobserve(entries[j].target);
+      }
+    }
+  }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 });
+  for (i = 0; i < els.length; i++) { io.observe(els[i]); }
+})();
+</script>
+
+</body>
+</html>

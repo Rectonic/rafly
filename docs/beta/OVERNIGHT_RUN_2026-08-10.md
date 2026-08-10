@@ -12,7 +12,7 @@ inventory evidence, human validation, approved allocation, public offer, atomic 
 
 | Check | Result |
 | --- | --- |
-| Frontend jest | 562 passed, 0 failed (includes 11 cross product journeys) |
+| Frontend jest | 563 passed, 0 failed (includes 11 cross product journeys) |
 | Backend integration (local supabase) | 144 passed, 12 documented conformance skips, 0 failed, run twice |
 | Conformance suites against the REAL stack | green on both the fake and the real stack, unmodified modules |
 | Reservation concurrency (25 racers, 10 same key, 2 same key fulfills) | green, three consecutive runs |
