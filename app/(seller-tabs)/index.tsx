@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
+import { ShopSellerBetaEntryV2 } from "@/components/seller/ShopSellerBetaEntryV2";
 import { StatsCard } from "@/components/seller/StatsCard";
 import { useT } from "@/i18n";
 import { useAuth } from "@/lib/seller/auth-store";
@@ -101,6 +102,7 @@ export default function SellerDashboardScreen() {
           </View>
         ))}
       </View>
+      <ShopSellerBetaEntryV2 />
       <Pressable
         accessibilityLabel={primaryActionLabel}
         accessibilityRole="button"
