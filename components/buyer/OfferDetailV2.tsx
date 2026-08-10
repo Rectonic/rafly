@@ -137,13 +137,17 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
         { style: "cancel", text: t.buyerV2.reservation.cancelConfirmDismiss },
         {
           onPress: () => {
-            // The reservations list is a point in time snapshot from the
-            // last fetch, cancelHook only tracks the action's own status,
-            // so the terminal status the buyer sees still needs a refetch
-            // after a successful cancel to stop showing the stale held
-            // reservation from that snapshot.
+            // displayReservation prefers reserveHook.reservation, the
+            // object captured at reserve time with status held. Cancelling
+            // updates the server and cancelHook's own per-id status map,
+            // but never touches that captured object, so without abandon()
+            // the panel would keep showing held forever after a successful
+            // cancel. Abandoning falls back to existingReservation, which
+            // the refetch below brings up to date with the real terminal
+            // status.
             void cancelHook.cancel(reservationId).then((result) => {
               if (result?.ok) {
+                reserveHook.abandon();
                 void refreshReservations();
               }
             });
