@@ -29,6 +29,15 @@ export interface SellerTranslations {
     bannerSubtitle: string;
     bannerOpen: string;
   };
+  digest: {
+    title: string;
+    subtitle: string;
+    composeButton: string;
+    loading: string;
+    retry: string;
+    copyHint: string;
+    errorFallback: string;
+  };
   roles: {
     staff: string;
     manager: string;
@@ -332,6 +341,15 @@ export const sellerEn: SellerTranslations = {
     bannerSubtitle:
       "Verified inventory, backend approved offers, and safe pickup fulfillment.",
     bannerOpen: "Open Shop Seller beta",
+  },
+  digest: {
+    title: "Daily owner brief",
+    subtitle: "Current action items and raw seven-day operating counts.",
+    composeButton: "сводка дня",
+    loading: "Preparing the brief...",
+    retry: "Retry",
+    copyHint: "Press and hold the text, then choose Copy.",
+    errorFallback: "Unable to prepare the daily brief.",
   },
   roles: {
     staff: "Staff",
@@ -675,6 +693,15 @@ export const sellerRu: SellerTranslations = {
     bannerSubtitle:
       "Проверенные остатки, предложения с подтверждением бэкенда и безопасная выдача.",
     bannerOpen: "Открыть бета-версию",
+  },
+  digest: {
+    title: "Сводка владельца",
+    subtitle: "Текущие задачи и фактические показатели за семь дней.",
+    composeButton: "сводка дня",
+    loading: "Формируем сводку...",
+    retry: "Повторить",
+    copyHint: "Нажмите и удерживайте текст, затем выберите «Копировать».",
+    errorFallback: "Не удалось сформировать сводку дня.",
   },
   roles: {
     staff: "Сотрудник",

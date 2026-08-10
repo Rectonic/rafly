@@ -209,6 +209,149 @@ export function runSellerApiConformance(
       });
     });
 
+    describe("composeOwnerDigestV2", () => {
+      it("allows managers and owners while denying staff and non-members", async () => {
+        const managerDigest = expectOk(
+          await manager.composeOwnerDigestV2(harness.scenario.storeId)
+        );
+        const ownerDigest = expectOk(
+          await owner.composeOwnerDigestV2(harness.scenario.storeId)
+        );
+
+        expect(managerDigest.storeName).toBe(harness.scenario.storeName);
+        expect(ownerDigest).toEqual({
+          ...managerDigest,
+          generatedAt: ownerDigest.generatedAt,
+        });
+        expectErrorCode(
+          await staff.composeOwnerDigestV2(harness.scenario.storeId),
+          "forbidden"
+        );
+        expectErrorCode(
+          await stranger.composeOwnerDigestV2(harness.scenario.storeId),
+          "forbidden"
+        );
+      });
+
+      it("reports raw seven-day activity counts without a mismatch percentage", async () => {
+        expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "digest-count-1",
+            lines: [],
+          })
+        );
+        expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "digest-count-2",
+            lines: [],
+          })
+        );
+
+        const fulfilledOffer = expectOk(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "digest-publish-fulfilled",
+              title: "Digest fulfilled offer",
+            })
+          )
+        );
+        const fulfilledHold = expectOk(
+          await harness.buyerApi().reserveOfferV2(
+            buildReserveInput(harness, fulfilledOffer, {
+              clientReservationId: "digest-fulfilled-reservation",
+              installationId: `${harness.scenario.installationA}-digest`,
+            })
+          )
+        );
+        expectOk(
+          await manager.fulfillReservationV2({
+            storeId: harness.scenario.storeId,
+            pickupCode: requirePickupCode(fulfilledHold),
+            idempotencyKey: "digest-fulfill",
+          })
+        );
+
+        const mismatchOffer = expectOk(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "digest-publish-mismatch",
+              title: "Digest mismatch offer",
+            })
+          )
+        );
+        expectOk(
+          await harness.buyerApi().reserveOfferV2(
+            buildReserveInput(harness, mismatchOffer, {
+              clientReservationId: "digest-mismatch-reservation",
+              installationId: `${harness.scenario.installationB}-digest`,
+            })
+          )
+        );
+        expectOk(
+          await manager.reportStockMismatchV2({
+            storeId: harness.scenario.storeId,
+            offerId: mismatchOffer.id,
+            observedQuantity: 0,
+            reason: "digest raw count proof",
+            idempotencyKey: "digest-mismatch",
+          })
+        );
+
+        const digest = expectOk(
+          await owner.composeOwnerDigestV2(harness.scenario.storeId)
+        );
+
+        expect(digest.countActivity7d).toEqual({
+          daysWithCountSession: 1,
+          days: 7,
+        });
+        expect(digest.offers7d).toEqual({
+          published: 2,
+          fulfilled: 1,
+          cancelledBySeller: 0,
+          expiredNoShow: 0,
+          failedStockMismatch: 1,
+        });
+        expect(digest).not.toHaveProperty("mismatchRate");
+        expect(digest).not.toHaveProperty("deadStock");
+      });
+
+      it("caps open exceptions and paused offers at ten", async () => {
+        for (let index = 0; index < 11; index += 1) {
+          const offer = expectOk(
+            await manager.approveAndPublishOfferV2(
+              buildPublishInput(harness, {
+                idempotencyKey: `digest-cap-publish-${index}`,
+                title: `Digest capped offer ${index}`,
+                allocation: {
+                  storeProductId: harness.scenario.lowConfidenceProductId,
+                  quantity: 1,
+                  physicallySetAside: true,
+                },
+              })
+            )
+          );
+          expectOk(
+            await manager.reportStockMismatchV2({
+              storeId: harness.scenario.storeId,
+              offerId: offer.id,
+              observedQuantity: 0,
+              reason: `digest capped exception ${index}`,
+              idempotencyKey: `digest-cap-mismatch-${index}`,
+            })
+          );
+        }
+
+        const digest = expectOk(
+          await manager.composeOwnerDigestV2(harness.scenario.storeId)
+        );
+        expect(digest.openExceptions).toHaveLength(10);
+        expect(digest.pausedOffers).toHaveLength(10);
+      });
+    });
+
     describe("recordInventoryCountV2", () => {
       it("lets staff record a count and proposes one adjustment per differing line", async () => {
         const before = expectOk(

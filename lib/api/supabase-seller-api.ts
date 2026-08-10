@@ -22,6 +22,7 @@ import {
   mapImportBatchRow,
   mapInventoryRow,
   mapMembershipRow,
+  mapOwnerDigestV2,
   mapProposalRow,
   mapSellerOfferRow,
   mapSellerPickupRow,
@@ -47,6 +48,7 @@ import type {
   ImportBatchV2,
   InventorySummaryV2,
   MarketplaceOfferV2,
+  OwnerDigestV2,
   PauseOfferV2Input,
   PublishOfferV2Input,
   RecordInventoryCountV2Input,
@@ -236,6 +238,26 @@ export function makeSupabaseSellerApi(
           return commandErrorFrom(error);
         }
         return ok(((data ?? []) as ExpiryWatchRow[]).map(mapExpiryWatchRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async composeOwnerDigestV2(
+      storeId: string
+    ): Promise<Result<OwnerDigestV2>> {
+      try {
+        const { data, error } = await client.rpc("compose_owner_digest_v2", {
+          p_store_id: storeId,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        if (!data) {
+          return err("unknown", "owner digest returned no result");
+        }
+        return ok(mapOwnerDigestV2(data as OwnerDigestV2));
       } catch (thrown) {
         return commandErrorFrom(thrown);
       }

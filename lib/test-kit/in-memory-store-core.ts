@@ -33,6 +33,7 @@ import {
   type InventorySummaryV2,
   type MarketplaceOfferStatusV2,
   type MarketplaceOfferV2,
+  type OwnerDigestV2,
   type PauseOfferV2Input,
   type PublishOfferV2Input,
   type RecordInventoryCountV2Input,
@@ -176,6 +177,7 @@ interface OfferRecord {
   pickupInstructions: string | null;
   cancellationPolicy: string | null;
   lastVerifiedAt: string;
+  createdAt: string;
   status: MarketplaceOfferStatusV2;
   allocation: OfferAllocationRecord;
 }
@@ -226,6 +228,11 @@ interface InventoryObservationRecord {
   createdAt: string;
 }
 
+interface CountSessionRecord {
+  storeId: string;
+  createdAt: string;
+}
+
 function padSequence(value: number, width: number): string {
   return String(value).padStart(width, "0");
 }
@@ -258,7 +265,7 @@ export class InMemoryStoreCore {
   >();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
   /** Which store first claimed each client supplied count session id. */
-  private readonly countSessionStores = new Map<string, string>();
+  private readonly countSessions = new Map<string, CountSessionRecord>();
 
   private readonly movements: StockMovementV2[] = [];
   private readonly auditEntries: AuditEntryV2[] = [];
@@ -388,6 +395,8 @@ export class InMemoryStoreCore {
         this.guard(() => this.listStoreInventory(userId, storeId)),
       listExpiryWatchlistV2: async (storeId) =>
         this.guard(() => this.listExpiryWatchlist(userId, storeId)),
+      composeOwnerDigestV2: async (storeId) =>
+        this.guard(() => this.composeOwnerDigest(userId, storeId)),
       recordInventoryCountV2: async (input) =>
         this.guard(() => this.recordInventoryCount(userId, input)),
       approveStockAdjustmentV2: async (input) =>
@@ -733,6 +742,151 @@ export class InMemoryStoreCore {
     return ok(items);
   }
 
+  private composeOwnerDigest(
+    userId: string,
+    storeId: string
+  ): Result<OwnerDigestV2> {
+    const access = this.requireRole(storeId, userId, MANAGER_ROLES);
+    if (!access.ok) return access;
+
+    const store = this.stores.get(storeId);
+    if (!store) {
+      return err("not_found", `store ${storeId} does not exist`);
+    }
+
+    const nowMs = Date.parse(this.now);
+    const sevenDaysAgoMs = nowMs - 7 * 86_400_000;
+    const staleBeforeMs = nowMs - 14 * 86_400_000;
+    const utcToday = new Date(this.now).toISOString().slice(0, 10);
+    const expiryLimitMs = Date.parse(utcToday) + 3 * 86_400_000;
+
+    const staleVerification = [...this.products.values()]
+      .filter(
+        (product) =>
+          product.storeId === storeId &&
+          product.onHandQuantity > 0 &&
+          (product.lastVerifiedAt === null ||
+            Date.parse(product.lastVerifiedAt) < staleBeforeMs)
+      )
+      .sort((left, right) => {
+        if (left.lastVerifiedAt === null && right.lastVerifiedAt !== null) return -1;
+        if (left.lastVerifiedAt !== null && right.lastVerifiedAt === null) return 1;
+        const byTime =
+          Date.parse(left.lastVerifiedAt ?? "") -
+          Date.parse(right.lastVerifiedAt ?? "");
+        return byTime || left.id.localeCompare(right.id);
+      })
+      .slice(0, 10)
+      .map((product) => ({
+        productName: product.productName,
+        onHand: product.onHandQuantity,
+        lastVerifiedAt: product.lastVerifiedAt,
+      }));
+
+    const expiryRisk = [...this.products.values()]
+      .filter(
+        (product) =>
+          product.storeId === storeId &&
+          product.expiryDate !== null &&
+          Date.parse(product.expiryDate) <= expiryLimitMs
+      )
+      .sort(
+        (left, right) =>
+          Date.parse(left.expiryDate as string) -
+            Date.parse(right.expiryDate as string) ||
+          left.id.localeCompare(right.id)
+      )
+      .slice(0, 10)
+      .map((product) => ({
+        productName: product.productName,
+        expiryDate: product.expiryDate as string,
+        daysToExpiry: Math.round(
+          (Date.parse(product.expiryDate as string) - Date.parse(utcToday)) /
+            86_400_000
+        ),
+        onHand: product.onHandQuantity,
+      }));
+
+    const openExceptions = [...this.exceptions.values()]
+      .filter(
+        (exception) =>
+          exception.storeId === storeId && exception.status === "open"
+      )
+      .sort(
+        (left, right) =>
+          Date.parse(right.createdAt) - Date.parse(left.createdAt) ||
+          right.id.localeCompare(left.id)
+      )
+      .slice(0, 10)
+      .map((exception) => ({
+        kind: exception.kind,
+        message: exception.message,
+        createdAt: exception.createdAt,
+      }));
+
+    const pausedOffers = [...this.offers.values()]
+      .filter((offer) => offer.storeId === storeId && offer.status === "paused")
+      .sort(
+        (left, right) =>
+          Date.parse(right.createdAt) - Date.parse(left.createdAt) ||
+          right.id.localeCompare(left.id)
+      )
+      .slice(0, 10)
+      .map((offer) => ({
+        title: offer.title,
+        pausedSinceVersionNote: null,
+      }));
+
+    const countDays = new Set(
+      [...this.countSessions.values()]
+        .filter(
+          (session) =>
+            session.storeId === storeId &&
+            Date.parse(session.createdAt) >= sevenDaysAgoMs
+        )
+        .map((session) =>
+          new Date(session.createdAt).toISOString().slice(0, 10)
+        )
+    );
+    const recentOffers = [...this.offers.values()].filter(
+      (offer) =>
+        offer.storeId === storeId && Date.parse(offer.createdAt) >= sevenDaysAgoMs
+    );
+    const recentReservations = [...this.reservations.values()].filter(
+      (reservation) =>
+        reservation.storeId === storeId &&
+        Date.parse(reservation.createdAt) >= sevenDaysAgoMs
+    );
+
+    return ok({
+      storeName: store.name,
+      generatedAt: this.now,
+      staleVerification,
+      expiryRisk,
+      openExceptions,
+      pausedOffers,
+      countActivity7d: {
+        daysWithCountSession: countDays.size,
+        days: 7,
+      },
+      offers7d: {
+        published: recentOffers.length,
+        fulfilled: recentReservations.filter(
+          (reservation) => reservation.status === "fulfilled"
+        ).length,
+        cancelledBySeller: recentReservations.filter(
+          (reservation) => reservation.status === "cancelled_by_seller"
+        ).length,
+        expiredNoShow: recentReservations.filter(
+          (reservation) => reservation.status === "expired_no_show"
+        ).length,
+        failedStockMismatch: recentReservations.filter(
+          (reservation) => reservation.status === "failed_stock_mismatch"
+        ).length,
+      },
+    });
+  }
+
   private recordInventoryCount(
     userId: string,
     input: RecordInventoryCountV2Input
@@ -747,8 +901,11 @@ export class InMemoryStoreCore {
     // lie. This check runs before the lines are looked at so a caller who
     // reuses the id hears about the id, not about a product they were never
     // going to be allowed to count.
-    const sessionOwner = this.countSessionStores.get(input.countSessionId);
-    if (sessionOwner !== undefined && sessionOwner !== input.storeId) {
+    const existingSession = this.countSessions.get(input.countSessionId);
+    if (
+      existingSession !== undefined &&
+      existingSession.storeId !== input.storeId
+    ) {
       return err(
         "idempotency_conflict",
         `count session ${input.countSessionId} belongs to another store`
@@ -790,7 +947,10 @@ export class InMemoryStoreCore {
       counted.push(product);
     }
 
-    this.countSessionStores.set(input.countSessionId, input.storeId);
+    this.countSessions.set(input.countSessionId, {
+      storeId: input.storeId,
+      createdAt: this.now,
+    });
 
     const created: StockAdjustmentProposalV2[] = [];
     input.lines.forEach((line, index) => {
@@ -1069,6 +1229,7 @@ export class InMemoryStoreCore {
       pickupInstructions: input.pickupInstructions,
       cancellationPolicy: input.cancellationPolicy,
       lastVerifiedAt: product.lastVerifiedAt ?? this.now,
+      createdAt: this.now,
       status: "live",
       allocation: {
         storeProductId: input.allocation.storeProductId,

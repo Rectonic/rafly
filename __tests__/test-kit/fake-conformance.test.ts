@@ -74,6 +74,63 @@ describe("InMemoryStoreCore", () => {
   runSellerApiConformance(makeHarness);
 
   describe("determinism", () => {
+    it("returns honest zeros for a manager-owned empty store", async () => {
+      const core = new InMemoryStoreCore();
+      const storeId = core.createStore({
+        name: "Empty digest store",
+        pilotModeEnabled: true,
+        shopSellerBetaEnabled: true,
+      });
+      core.addMembership({ storeId, userId: "empty-owner", role: "owner" });
+
+      const digest = expectOk(
+        await core
+          .sellerApi({ userId: "empty-owner" })
+          .composeOwnerDigestV2(storeId)
+      );
+
+      expect(digest).toEqual({
+        storeName: "Empty digest store",
+        generatedAt: core.getNow(),
+        staleVerification: [],
+        expiryRisk: [],
+        openExceptions: [],
+        pausedOffers: [],
+        countActivity7d: { daysWithCountSession: 0, days: 7 },
+        offers7d: {
+          published: 0,
+          fulfilled: 0,
+          cancelledBySeller: 0,
+          expiredNoShow: 0,
+          failedStockMismatch: 0,
+        },
+      });
+    });
+
+    it("caps stale verification and expiry risk facts at ten", async () => {
+      const core = new InMemoryStoreCore();
+      const scenario = makeDefaultScenario(core);
+      for (let index = 0; index < 12; index += 1) {
+        core.addProduct({
+          storeId: scenario.storeId,
+          productName: `Digest risk ${String(index).padStart(2, "0")}`,
+          onHandQuantity: index + 1,
+          confidence: "low",
+          lastVerifiedAt: null,
+          expiryDate: "2026-08-11",
+        });
+      }
+
+      const digest = expectOk(
+        await core
+          .sellerApi({ userId: scenario.ownerUserId })
+          .composeOwnerDigestV2(scenario.storeId)
+      );
+
+      expect(digest.staleVerification).toHaveLength(10);
+      expect(digest.expiryRisk).toHaveLength(10);
+    });
+
     it("reads the expiry watchlist without applying the lazy offer expiry sweep", async () => {
       const harness = makeHarness();
       const manager = harness.sellerApi({

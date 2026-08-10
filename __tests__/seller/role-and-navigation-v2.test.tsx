@@ -273,6 +273,7 @@ describe("Seller v2 role and navigation", () => {
       await waitFor(() =>
         expect(screen.getByTestId("seller-dashboard-beta-banner")).toBeTruthy()
       );
+      expect(screen.getByTestId("owner-digest-v2-card")).toBeTruthy();
       screen.getByTestId("seller-dashboard-screen");
     });
 

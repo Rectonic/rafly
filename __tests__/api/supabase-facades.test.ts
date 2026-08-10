@@ -247,6 +247,7 @@ describe("never throws", () => {
     ["listStoreOffersV2", () => sellerApi.listStoreOffersV2("store-1")],
     ["listStoreInventoryV2", () => sellerApi.listStoreInventoryV2("store-1")],
     ["listExpiryWatchlistV2", () => sellerApi.listExpiryWatchlistV2("store-1")],
+    ["composeOwnerDigestV2", () => sellerApi.composeOwnerDigestV2("store-1")],
     [
       "recordInventoryCountV2",
       () =>
@@ -412,6 +413,83 @@ describe("expiry watchlist facade wiring", () => {
     expect(calls).toEqual([
       {
         name: "list_expiry_watchlist_v2",
+        args: { p_store_id: "store-1" },
+      },
+    ]);
+  });
+});
+
+describe("owner digest facade wiring", () => {
+  it("calls the manager-only RPC and maps its structured action brief", async () => {
+    const calls: RpcCall[] = [];
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpcCalls: calls,
+        rpc: () => ({
+          data: {
+            storeName: "Chorsu Corner Market",
+            generatedAt: "2026-08-11T08:00:00+00:00",
+            staleVerification: [
+              {
+                productName: "Fresh bread",
+                onHand: 7,
+                lastVerifiedAt: "2026-07-20T08:00:00+00:00",
+              },
+            ],
+            expiryRisk: [],
+            openExceptions: [],
+            pausedOffers: [
+              { title: "Rescue box", pausedSinceVersionNote: null },
+            ],
+            countActivity7d: { daysWithCountSession: 2, days: 7 },
+            offers7d: {
+              published: 3,
+              fulfilled: 2,
+              cancelledBySeller: 0,
+              expiredNoShow: 1,
+              failedStockMismatch: 1,
+            },
+          },
+          error: null,
+        }),
+        from: () => {
+          throw new Error("owner digest must not use direct table access");
+        },
+      })
+    );
+
+    const result = await api.composeOwnerDigestV2("store-1");
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        storeName: "Chorsu Corner Market",
+        generatedAt: "2026-08-11T08:00:00.000Z",
+        staleVerification: [
+          {
+            productName: "Fresh bread",
+            onHand: 7,
+            lastVerifiedAt: "2026-07-20T08:00:00.000Z",
+          },
+        ],
+        expiryRisk: [],
+        openExceptions: [],
+        pausedOffers: [
+          { title: "Rescue box", pausedSinceVersionNote: null },
+        ],
+        countActivity7d: { daysWithCountSession: 2, days: 7 },
+        offers7d: {
+          published: 3,
+          fulfilled: 2,
+          cancelledBySeller: 0,
+          expiredNoShow: 1,
+          failedStockMismatch: 1,
+        },
+      },
+    });
+    expect(calls).toEqual([
+      {
+        name: "compose_owner_digest_v2",
         args: { p_store_id: "store-1" },
       },
     ]);

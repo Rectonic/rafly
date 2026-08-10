@@ -25,6 +25,7 @@ export type {
   FulfillReservationV2Input,
   ImportBatchV2,
   InventorySummaryV2,
+  OwnerDigestV2,
   PauseOfferV2Input,
   PublishOfferV2Input,
   RecordInventoryCountV2Input,

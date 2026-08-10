@@ -7,6 +7,7 @@ import type {
   FulfillReservationV2Input,
   ImportBatchV2,
   InventorySummaryV2,
+  OwnerDigestV2,
   PauseOfferV2Input,
   PublishOfferV2Input,
   RecordInventoryCountV2Input,
@@ -25,6 +26,7 @@ export interface SellerStoreApiV2 {
   listStoreOffersV2(storeId: string): Promise<Result<MarketplaceOfferV2[]>>
   listStoreInventoryV2(storeId: string): Promise<Result<InventorySummaryV2[]>>
   listExpiryWatchlistV2(storeId: string): Promise<Result<ExpiryWatchItemV2[]>>
+  composeOwnerDigestV2(storeId: string): Promise<Result<OwnerDigestV2>>
   recordInventoryCountV2(input: RecordInventoryCountV2Input): Promise<Result<StockAdjustmentProposalV2[]>>
   approveStockAdjustmentV2(input: ApproveStockAdjustmentV2Input): Promise<Result<StockAdjustmentProposalV2>>
   approveAndPublishOfferV2(input: PublishOfferV2Input): Promise<Result<MarketplaceOfferV2>>

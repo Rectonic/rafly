@@ -26,6 +26,7 @@ import type {
   InventorySummaryV2,
   MarketplaceOfferStatusV2,
   MarketplaceOfferV2,
+  OwnerDigestV2,
   BuyerReservationV2,
   ReservationStatusV2,
   Result,
@@ -405,6 +406,44 @@ export function mapExpiryWatchRow(row: ExpiryWatchRow): ExpiryWatchItemV2 {
     confidence: row.confidence,
     hasOpenExceptions: row.has_open_exceptions,
     activeOfferId: row.active_offer_id,
+  };
+}
+
+export function mapOwnerDigestV2(digest: OwnerDigestV2): OwnerDigestV2 {
+  return {
+    storeName: digest.storeName,
+    generatedAt: toIsoDateTime(digest.generatedAt),
+    staleVerification: digest.staleVerification.map((item) => ({
+      productName: item.productName,
+      onHand: item.onHand,
+      lastVerifiedAt: toIsoDateTimeOrNull(item.lastVerifiedAt),
+    })),
+    expiryRisk: digest.expiryRisk.map((item) => ({
+      productName: item.productName,
+      expiryDate: item.expiryDate,
+      daysToExpiry: item.daysToExpiry,
+      onHand: item.onHand,
+    })),
+    openExceptions: digest.openExceptions.map((item) => ({
+      kind: item.kind,
+      message: item.message,
+      createdAt: toIsoDateTime(item.createdAt),
+    })),
+    pausedOffers: digest.pausedOffers.map((item) => ({
+      title: item.title,
+      pausedSinceVersionNote: null,
+    })),
+    countActivity7d: {
+      daysWithCountSession: digest.countActivity7d.daysWithCountSession,
+      days: 7,
+    },
+    offers7d: {
+      published: digest.offers7d.published,
+      fulfilled: digest.offers7d.fulfilled,
+      cancelledBySeller: digest.offers7d.cancelledBySeller,
+      expiredNoShow: digest.offers7d.expiredNoShow,
+      failedStockMismatch: digest.offers7d.failedStockMismatch,
+    },
   };
 }
 

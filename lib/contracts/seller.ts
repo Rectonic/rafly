@@ -30,6 +30,42 @@ export interface ExpiryWatchItemV2 {
   activeOfferId: string | null
 }
 
+export interface OwnerDigestV2 {
+  storeName: string
+  generatedAt: IsoDateTime
+  staleVerification: {
+    productName: string
+    onHand: number
+    lastVerifiedAt: IsoDateTime | null
+  }[]
+  expiryRisk: {
+    productName: string
+    expiryDate: IsoDate
+    daysToExpiry: number
+    onHand: number
+  }[]
+  openExceptions: {
+    kind: StoreExceptionV2['kind']
+    message: string
+    createdAt: IsoDateTime
+  }[]
+  pausedOffers: {
+    title: string
+    pausedSinceVersionNote: null
+  }[]
+  countActivity7d: {
+    daysWithCountSession: number
+    days: 7
+  }
+  offers7d: {
+    published: number
+    fulfilled: number
+    cancelledBySeller: number
+    expiredNoShow: number
+    failedStockMismatch: number
+  }
+}
+
 export interface RecordInventoryCountV2Input {
   storeId: string
   countSessionId: string
