@@ -58,6 +58,32 @@ export interface SellerTranslations {
     recordCountButton: string;
     publishButton: string;
   };
+  count: {
+    title: string;
+    forbiddenTitle: string;
+    forbiddenMessage: string;
+    selectProductsTitle: string;
+    selectLabel: string;
+    selectedLabel: string;
+    observedQuantityLabel: string;
+    submitButton: string;
+    submitting: string;
+    submitErrorFallback: string;
+    retry: string;
+    proposalsTitle: string;
+    noChangesTitle: string;
+    proposalLine: (current: number, proposed: number) => string;
+    pendingApproval: string;
+    approveButton: string;
+    rejectButton: string;
+    deciding: string;
+    approvedLabel: string;
+    rejectedLabel: string;
+    staleTitle: string;
+    staleMessage: string;
+    alreadyDecidedTitle: string;
+    decisionErrorFallback: string;
+  };
 }
 
 export const sellerEn: SellerTranslations = {
@@ -107,6 +133,32 @@ export const sellerEn: SellerTranslations = {
     recordCountButton: "Record a count",
     publishButton: "New offer",
   },
+  count: {
+    title: "Count session",
+    forbiddenTitle: "Counts are staff, manager, and owner only",
+    forbiddenMessage: "Your role cannot record a physical count for this store.",
+    selectProductsTitle: "Select the products you physically counted",
+    selectLabel: "Select",
+    selectedLabel: "Selected",
+    observedQuantityLabel: "Observed quantity",
+    submitButton: "Submit count",
+    submitting: "Submitting count...",
+    submitErrorFallback: "Unable to submit this count.",
+    retry: "Retry",
+    proposalsTitle: "Adjustment proposals",
+    noChangesTitle: "No changes, every observed quantity matched on hand stock.",
+    proposalLine: (current, proposed) => `${current} on record, ${proposed} counted`,
+    pendingApproval: "Awaiting manager approval",
+    approveButton: "Approve",
+    rejectButton: "Reject",
+    deciding: "Saving decision...",
+    approvedLabel: "Approved",
+    rejectedLabel: "Rejected",
+    staleTitle: "This proposal changed",
+    staleMessage: "Someone else decided this proposal first. Refreshed to the latest version.",
+    alreadyDecidedTitle: "Already decided",
+    decisionErrorFallback: "Unable to save this decision.",
+  },
 };
 
 export const sellerRu: SellerTranslations = {
@@ -155,5 +207,31 @@ export const sellerRu: SellerTranslations = {
     exceptionActionButton: "Пересчитать",
     recordCountButton: "Записать пересчёт",
     publishButton: "Новое предложение",
+  },
+  count: {
+    title: "Сессия пересчёта",
+    forbiddenTitle: "Пересчёт доступен только сотрудникам, менеджерам и владельцам",
+    forbiddenMessage: "Ваша роль не позволяет записывать физический пересчёт для этого магазина.",
+    selectProductsTitle: "Выберите товары, которые вы физически пересчитали",
+    selectLabel: "Выбрать",
+    selectedLabel: "Выбрано",
+    observedQuantityLabel: "Фактическое количество",
+    submitButton: "Отправить пересчёт",
+    submitting: "Отправка пересчёта...",
+    submitErrorFallback: "Не удалось отправить этот пересчёт.",
+    retry: "Повторить",
+    proposalsTitle: "Предложения по корректировке",
+    noChangesTitle: "Изменений нет, все фактические количества совпали с учётными.",
+    proposalLine: (current, proposed) => `${current} по учёту, ${proposed} по пересчёту`,
+    pendingApproval: "Ожидает решения менеджера",
+    approveButton: "Одобрить",
+    rejectButton: "Отклонить",
+    deciding: "Сохраняем решение...",
+    approvedLabel: "Одобрено",
+    rejectedLabel: "Отклонено",
+    staleTitle: "Это предложение изменилось",
+    staleMessage: "Кто-то другой уже принял решение по этому предложению. Показана последняя версия.",
+    alreadyDecidedTitle: "Уже решено",
+    decisionErrorFallback: "Не удалось сохранить это решение.",
   },
 };

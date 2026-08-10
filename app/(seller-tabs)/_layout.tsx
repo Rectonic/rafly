@@ -92,6 +92,13 @@ export default function SellerTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="count-session-v2"
+        options={{
+          href: null,
+          title: t.sellerV2.count.title,
+        }}
+      />
+      <Tabs.Screen
         name="orders"
         options={{
           tabBarButtonTestID: "seller-tab-orders",
