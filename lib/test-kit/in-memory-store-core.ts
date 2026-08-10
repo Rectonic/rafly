@@ -27,6 +27,7 @@ import {
   type BuyerReservationV2,
   type CancelReservationV2Input,
   type DecideStagedRecordV2Input,
+  type ExpiryWatchItemV2,
   type FulfillReservationV2Input,
   type ImportBatchV2,
   type InventorySummaryV2,
@@ -385,6 +386,8 @@ export class InMemoryStoreCore {
         this.guard(() => this.listStoreOffers(userId, storeId)),
       listStoreInventoryV2: async (storeId) =>
         this.guard(() => this.listStoreInventory(userId, storeId)),
+      listExpiryWatchlistV2: async (storeId) =>
+        this.guard(() => this.listExpiryWatchlist(userId, storeId)),
       recordInventoryCountV2: async (input) =>
         this.guard(() => this.recordInventoryCount(userId, input)),
       approveStockAdjustmentV2: async (input) =>
@@ -685,6 +688,49 @@ export class InMemoryStoreCore {
       .filter((product) => product.storeId === storeId)
       .map((product) => this.projectInventory(product));
     return ok(summaries);
+  }
+
+  private listExpiryWatchlist(
+    userId: string,
+    storeId: string
+  ): Result<ExpiryWatchItemV2[]> {
+    const access = this.requireRole(storeId, userId);
+    if (!access.ok) return access;
+
+    const todayMs = Date.parse(new Date(this.now).toISOString().slice(0, 10));
+    const nowMs = Date.parse(this.now);
+    const items = [...this.products.values()]
+      .filter((product) => product.storeId === storeId && product.expiryDate !== null)
+      .map((product) => {
+        const daysToExpiry = Math.round(
+          (Date.parse(product.expiryDate as string) - todayMs) / 86_400_000
+        );
+        const activeOffer = [...this.offers.values()]
+          .reverse()
+          .find(
+            (offer) =>
+              offer.allocation.storeProductId === product.id &&
+              (offer.status === "live" || offer.status === "paused") &&
+              Date.parse(offer.pickupEnd) > nowMs
+          );
+        return {
+          storeProductId: product.id,
+          productName: product.productName,
+          expiryDate: product.expiryDate as string,
+          daysToExpiry,
+          onHandQuantity: product.onHandQuantity,
+          confidence: product.confidence,
+          hasOpenExceptions: this.hasOpenExceptionFor(product.id),
+          activeOfferId: activeOffer?.id ?? null,
+        };
+      })
+      .filter((item) => item.daysToExpiry <= 14)
+      .sort(
+        (left, right) =>
+          left.daysToExpiry - right.daysToExpiry ||
+          left.storeProductId.localeCompare(right.storeProductId)
+      );
+    return ok(items);
   }
 
   private recordInventoryCount(

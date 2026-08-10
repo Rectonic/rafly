@@ -21,6 +21,7 @@
 
 import type {
   CommandErrorCode,
+  ExpiryWatchItemV2,
   ImportBatchV2,
   InventorySummaryV2,
   MarketplaceOfferStatusV2,
@@ -380,6 +381,30 @@ export function mapInventoryRow(row: InventoryRow): InventorySummaryV2 {
     expiryDate: row.expiry_date,
     hasOpenExceptions: row.has_open_exceptions,
     version: row.version,
+  };
+}
+
+export interface ExpiryWatchRow {
+  store_product_id: string;
+  product_name: string;
+  expiry_date: string;
+  days_to_expiry: number;
+  on_hand_quantity: number;
+  confidence: StockConfidenceV2;
+  has_open_exceptions: boolean;
+  active_offer_id: string | null;
+}
+
+export function mapExpiryWatchRow(row: ExpiryWatchRow): ExpiryWatchItemV2 {
+  return {
+    storeProductId: row.store_product_id,
+    productName: row.product_name,
+    expiryDate: row.expiry_date,
+    daysToExpiry: row.days_to_expiry,
+    onHandQuantity: row.on_hand_quantity,
+    confidence: row.confidence,
+    hasOpenExceptions: row.has_open_exceptions,
+    activeOfferId: row.active_offer_id,
   };
 }
 

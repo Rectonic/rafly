@@ -20,7 +20,7 @@ import {
 import { runSellerApiConformance } from "@/lib/test-kit/conformance/seller-api-conformance";
 import { parseSellerCsv } from "@/lib/seller/csv-parse";
 
-function makeHarness(): ConformanceHarness {
+function makeHarness(): ConformanceHarness & { core: InMemoryStoreCore } {
   const core = new InMemoryStoreCore();
   const baseScenario = makeDefaultScenario(core);
   core.addProduct({
@@ -47,6 +47,7 @@ function makeHarness(): ConformanceHarness {
   const scenario = { ...baseScenario, otherStoreProductId };
 
   return {
+    core,
     scenario,
     buyerApi: () => core.buyerApi(),
     sellerApi: (actor) => {
@@ -73,6 +74,49 @@ describe("InMemoryStoreCore", () => {
   runSellerApiConformance(makeHarness);
 
   describe("determinism", () => {
+    it("reads the expiry watchlist without applying the lazy offer expiry sweep", async () => {
+      const harness = makeHarness();
+      const manager = harness.sellerApi({
+        userId: harness.scenario.managerUserId,
+      });
+      const offer = expectOk(
+        await manager.approveAndPublishOfferV2(buildPublishInput(harness))
+      );
+      harness.setNow(
+        new Date(Date.parse(harness.scenario.pickupEnd) + 60_000).toISOString()
+      );
+
+      const items = expectOk(
+        await manager.listExpiryWatchlistV2(harness.scenario.storeId)
+      );
+
+      expect(
+        items.find(
+          (item) =>
+            item.storeProductId === harness.scenario.highConfidenceProductId
+        )?.activeOfferId
+      ).toBeNull();
+      const storedOffers = (
+        harness.core as unknown as {
+          offers: Map<string, { status: string }>;
+        }
+      ).offers;
+      expect(storedOffers.get(offer.id)?.status).toBe("live");
+    });
+
+    it("derives expiry days from the UTC date of an offset timestamp", async () => {
+      const harness = makeHarness();
+      harness.setNow("2026-08-10T23:30:00-02:00");
+
+      const items = expectOk(
+        await harness
+          .sellerApi({ userId: harness.scenario.staffUserId })
+          .listExpiryWatchlistV2(harness.scenario.storeId)
+      );
+
+      expect(items.map((item) => item.daysToExpiry)).toEqual([-2, 1, 4]);
+    });
+
     it("uploads the clean CSV fixture into deterministic staged records", async () => {
       const harness = makeHarness();
       const parsed = parseSellerCsv(

@@ -142,6 +142,73 @@ export function runSellerApiConformance(
       });
     });
 
+    describe("listExpiryWatchlistV2", () => {
+      it("orders urgent products first, preserves negative days, and keeps suggestions client-side", async () => {
+        const items = expectOk(
+          await staff.listExpiryWatchlistV2(harness.scenario.storeId)
+        );
+
+        expect(items.map((item) => item.storeProductId)).toEqual([
+          harness.scenario.expiredProductId,
+          harness.scenario.highConfidenceProductId,
+          harness.scenario.lowConfidenceProductId,
+        ]);
+        const todayMs = Date.parse(
+          new Date(harness.scenario.now).toISOString().slice(0, 10)
+        );
+        expect(items.map((item) => item.daysToExpiry)).toEqual(
+          items.map((item) =>
+            Math.round((Date.parse(item.expiryDate) - todayMs) / 86_400_000)
+          )
+        );
+        expect(items[0].daysToExpiry).toBe(-1);
+        expect(items[0]).not.toHaveProperty("suggestion");
+        expect(items[0]).not.toHaveProperty("action");
+        expect(items[0]).not.toHaveProperty("discountPercent");
+      });
+
+      it("surfaces a paused offer allocated from the product", async () => {
+        const published = await publishOffer(harness);
+        expectOk(
+          await manager.pauseOfferV2({
+            storeId: harness.scenario.storeId,
+            offerId: published.id,
+            idempotencyKey: "pause-expiry-watch-offer",
+            expectedVersion: published.version,
+          })
+        );
+
+        const items = expectOk(
+          await manager.listExpiryWatchlistV2(harness.scenario.storeId)
+        );
+        const product = items.find(
+          (item) =>
+            item.storeProductId === harness.scenario.highConfidenceProductId
+        );
+
+        expect(product?.activeOfferId).toBe(published.id);
+      });
+
+      it("refuses non-members and cross-store reads with forbidden", async () => {
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+
+        expectErrorCode(
+          await stranger.listExpiryWatchlistV2(harness.scenario.storeId),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.listExpiryWatchlistV2(harness.scenario.storeId),
+          "forbidden"
+        );
+        expectErrorCode(
+          await manager.listExpiryWatchlistV2(harness.scenario.otherStoreId),
+          "forbidden"
+        );
+      });
+    });
+
     describe("recordInventoryCountV2", () => {
       it("lets staff record a count and proposes one adjustment per differing line", async () => {
         const before = expectOk(

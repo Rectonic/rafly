@@ -246,6 +246,7 @@ describe("never throws", () => {
     ["getMyStoreMembershipsV2", () => sellerApi.getMyStoreMembershipsV2()],
     ["listStoreOffersV2", () => sellerApi.listStoreOffersV2("store-1")],
     ["listStoreInventoryV2", () => sellerApi.listStoreInventoryV2("store-1")],
+    ["listExpiryWatchlistV2", () => sellerApi.listExpiryWatchlistV2("store-1")],
     [
       "recordInventoryCountV2",
       () =>
@@ -361,6 +362,59 @@ describe("never throws", () => {
     expect(sellerCalls.map(([name]) => name).sort()).toEqual(
       Object.keys(sellerApiForKeys).sort()
     );
+  });
+});
+
+describe("expiry watchlist facade wiring", () => {
+  it("calls the member-only RPC and maps its factual row", async () => {
+    const calls: RpcCall[] = [];
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpcCalls: calls,
+        rpc: () => ({
+          data: [
+            {
+              store_product_id: "product-1",
+              product_name: "Fresh bread",
+              expiry_date: "2026-08-12",
+              days_to_expiry: 2,
+              on_hand_quantity: 7,
+              confidence: "high",
+              has_open_exceptions: false,
+              active_offer_id: "offer-1",
+            },
+          ],
+          error: null,
+        }),
+        from: () => {
+          throw new Error("expiry watchlist must not use direct table access");
+        },
+      })
+    );
+
+    const result = await api.listExpiryWatchlistV2("store-1");
+
+    expect(result).toEqual({
+      ok: true,
+      value: [
+        {
+          storeProductId: "product-1",
+          productName: "Fresh bread",
+          expiryDate: "2026-08-12",
+          daysToExpiry: 2,
+          onHandQuantity: 7,
+          confidence: "high",
+          hasOpenExceptions: false,
+          activeOfferId: "offer-1",
+        },
+      ],
+    });
+    expect(calls).toEqual([
+      {
+        name: "list_expiry_watchlist_v2",
+        args: { p_store_id: "store-1" },
+      },
+    ]);
   });
 });
 

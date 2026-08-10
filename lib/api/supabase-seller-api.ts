@@ -17,6 +17,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SellerStoreApiV2 } from "@/lib/api/seller-api";
 import {
   commandErrorFrom,
+  mapExpiryWatchRow,
   mapExceptionRow,
   mapImportBatchRow,
   mapInventoryRow,
@@ -28,6 +29,7 @@ import {
   toStableUuid,
   toStoreEnrichment,
   type ExceptionRow,
+  type ExpiryWatchRow,
   type InventoryRow,
   type ImportBatchRow,
   type ProposalRow,
@@ -40,6 +42,7 @@ import {
 import type {
   ApproveStockAdjustmentV2Input,
   DecideStagedRecordV2Input,
+  ExpiryWatchItemV2,
   FulfillReservationV2Input,
   ImportBatchV2,
   InventorySummaryV2,
@@ -216,6 +219,23 @@ export function makeSupabaseSellerApi(
           return commandErrorFrom(error);
         }
         return ok(((data ?? []) as InventoryRow[]).map(mapInventoryRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async listExpiryWatchlistV2(
+      storeId: string
+    ): Promise<Result<ExpiryWatchItemV2[]>> {
+      try {
+        const { data, error } = await client.rpc("list_expiry_watchlist_v2", {
+          p_store_id: storeId,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        return ok(((data ?? []) as ExpiryWatchRow[]).map(mapExpiryWatchRow));
       } catch (thrown) {
         return commandErrorFrom(thrown);
       }

@@ -19,6 +19,17 @@ export interface InventorySummaryV2 {
   version: number
 }
 
+export interface ExpiryWatchItemV2 {
+  storeProductId: string
+  productName: string
+  expiryDate: IsoDate
+  daysToExpiry: number
+  onHandQuantity: number
+  confidence: StockConfidenceV2
+  hasOpenExceptions: boolean
+  activeOfferId: string | null
+}
+
 export interface RecordInventoryCountV2Input {
   storeId: string
   countSessionId: string

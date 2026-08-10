@@ -105,6 +105,22 @@ export interface SellerTranslations {
     pickupsButton: string;
     importButton: string;
   };
+  expiry: {
+    title: string;
+    itemCount: (n: number) => string;
+    loading: string;
+    emptyTitle: string;
+    emptyHint: string;
+    errorTitle: string;
+    retry: string;
+    expiryLabel: (date: string) => string;
+    daysLabel: (days: number) => string;
+    onHandLabel: (n: number) => string;
+    openException: string;
+    activeOffer: string;
+    recountAction: string;
+    publishAction: string;
+  };
   exceptions: {
     title: string;
     loading: string;
@@ -413,6 +429,27 @@ export const sellerEn: SellerTranslations = {
     offersButton: "View offers",
     pickupsButton: "Pickup queue",
     importButton: "Import CSV",
+  },
+  expiry: {
+    title: "Expiry watchlist",
+    itemCount: (n) => `${n} product${n === 1 ? "" : "s"} need attention`,
+    loading: "Loading expiry watchlist...",
+    emptyTitle: "No products expire within the next 14 days",
+    emptyHint: "Products without an expiry date are not included in this watchlist.",
+    errorTitle: "Unable to load the expiry watchlist",
+    retry: "Retry",
+    expiryLabel: (date) => `Expiry date ${date}`,
+    daysLabel: (days) =>
+      days < 0
+        ? `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`
+        : days === 0
+          ? "Expires today"
+          : `${days} day${days === 1 ? "" : "s"} remaining`,
+    onHandLabel: (n) => `${n} on hand`,
+    openException: "Open exception",
+    activeOffer: "Live or paused offer exists",
+    recountAction: "пересчитать сначала",
+    publishAction: "Open offer flow",
   },
   exceptions: {
     title: "Store exceptions",
@@ -735,6 +772,28 @@ export const sellerRu: SellerTranslations = {
     offersButton: "Смотреть предложения",
     pickupsButton: "Очередь самовывоза",
     importButton: "Импортировать CSV",
+  },
+  expiry: {
+    title: "Контроль сроков годности",
+    itemCount: (n) =>
+      `${n} ${pluralRu(n, "товар требует", "товара требуют", "товаров требуют")} внимания`,
+    loading: "Загружаем товары по сроку годности...",
+    emptyTitle: "Нет товаров со сроком годности в ближайшие 14 дней",
+    emptyHint: "Товары без даты срока годности в этот список не входят.",
+    errorTitle: "Не удалось загрузить контроль сроков",
+    retry: "Повторить",
+    expiryLabel: (date) => `Срок годности: ${date}`,
+    daysLabel: (days) =>
+      days < 0
+        ? `Просрочено на ${Math.abs(days)} ${pluralRu(Math.abs(days), "день", "дня", "дней")}`
+        : days === 0
+          ? "Срок истекает сегодня"
+          : `Осталось ${days} ${pluralRu(days, "день", "дня", "дней")}`,
+    onHandLabel: (n) => `В наличии: ${n}`,
+    openException: "Есть открытое исключение",
+    activeOffer: "Есть активный или приостановленный оффер",
+    recountAction: "пересчитать сначала",
+    publishAction: "Открыть создание оффера",
   },
   exceptions: {
     title: "Исключения магазина",

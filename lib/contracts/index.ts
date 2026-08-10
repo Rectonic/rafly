@@ -21,6 +21,7 @@ export type {
 export type {
   ApproveStockAdjustmentV2Input,
   DecideStagedRecordV2Input,
+  ExpiryWatchItemV2,
   FulfillReservationV2Input,
   ImportBatchV2,
   InventorySummaryV2,

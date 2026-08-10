@@ -92,6 +92,13 @@ export default function SellerTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="expiry-v2"
+        options={{
+          href: null,
+          title: t.sellerV2.expiry.title,
+        }}
+      />
+      <Tabs.Screen
         name="count-session-v2"
         options={{
           href: null,

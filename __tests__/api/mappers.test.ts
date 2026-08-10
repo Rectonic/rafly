@@ -13,6 +13,7 @@ import {
   commandErrorFrom,
   computeDiscountPercent,
   errorCodeFrom,
+  mapExpiryWatchRow,
   mapExceptionRow,
   mapImportBatchRow,
   mapInventoryRow,
@@ -469,6 +470,44 @@ describe("mapInventoryRow", () => {
     expect(mapped.expiryDate).toBeNull();
     expect(mapped.barcode).toBeNull();
     expect(mapped.category).toBeNull();
+  });
+});
+
+describe("mapExpiryWatchRow", () => {
+  it("maps the exact read-only expiry watch DTO without a suggestion", () => {
+    const mapped = mapExpiryWatchRow({
+      store_product_id: "33333333-3333-4333-8333-333333333333",
+      product_name: "Fresh bread loaf",
+      expiry_date: "2026-08-12",
+      days_to_expiry: 2,
+      on_hand_quantity: 10,
+      confidence: "high",
+      has_open_exceptions: false,
+      active_offer_id: "11111111-1111-4111-8111-111111111111",
+    });
+
+    expect(mapped).toEqual({
+      storeProductId: "33333333-3333-4333-8333-333333333333",
+      productName: "Fresh bread loaf",
+      expiryDate: "2026-08-12",
+      daysToExpiry: 2,
+      onHandQuantity: 10,
+      confidence: "high",
+      hasOpenExceptions: false,
+      activeOfferId: "11111111-1111-4111-8111-111111111111",
+    });
+    expect(Object.keys(mapped).sort()).toEqual(
+      [
+        "storeProductId",
+        "productName",
+        "expiryDate",
+        "daysToExpiry",
+        "onHandQuantity",
+        "confidence",
+        "hasOpenExceptions",
+        "activeOfferId",
+      ].sort()
+    );
   });
 });
 
