@@ -1432,6 +1432,36 @@ export function runSellerApiConformance(
         expect(after.maxOfferableQuantity).toBe(during.maxOfferableQuantity);
       });
 
+      it("keeps mismatch encumbrance alive after offer expiry when the lazy sweep runs", async () => {
+        const base = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const context = await publishAndHoldTwo();
+
+        expectOk(
+          await manager.reportStockMismatchV2({
+            storeId: harness.scenario.storeId,
+            offerId: context.offerId,
+            observedQuantity: 0,
+            reason: "shelf was empty",
+            idempotencyKey: "mismatch-key-1",
+          })
+        );
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        expectOk(await harness.buyerApi().listMarketplaceOffersV2());
+
+        const afterExpiry = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        expect(afterExpiry.allocatedQuantity).toBe(2);
+        expect(afterExpiry.maxOfferableQuantity).toBe(base.maxOfferableQuantity - 2);
+      });
+
       it("opens a stock_mismatch exception and flags the product as having open exceptions", async () => {
         const context = await publishAndHoldTwo();
 

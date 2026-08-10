@@ -24,6 +24,7 @@ import {
   pickupCodeKeyV2,
 } from "@/lib/buyer/secure-pickup-code";
 import {
+  resetReserveInFlightForTests,
   useBuyerReservationsV2,
   useReserveOfferV2,
 } from "@/lib/buyer/reservations-v2-store";
@@ -137,6 +138,7 @@ async function publishOffer(
 
 describe("useReserveOfferV2", () => {
   beforeEach(() => {
+    resetReserveInFlightForTests();
     mockAsyncStorage.clear();
     mockSecureStore.clear();
     mockSecureStoreUnavailable = false;
