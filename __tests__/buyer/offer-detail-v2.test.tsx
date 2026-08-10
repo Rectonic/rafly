@@ -515,7 +515,7 @@ describe("OfferDetailV2", () => {
     ).toBeTruthy();
   });
 
-  it("shows a stale version message and refreshed availability when someone else reserves first", async () => {
+  it("shows the sold out message and refreshed availability when someone else takes the last unit", async () => {
     const { core, scenario, seller } = makeWorld();
     const published = await seller.approveAndPublishOfferV2(
       publishInputFor(scenario, {
@@ -532,7 +532,42 @@ describe("OfferDetailV2", () => {
     await waitFor(() => expect(screen.getByText("Bakery rescue box")).toBeTruthy());
 
     // Someone else grabs the only unit after this screen already loaded the
-    // offer, the buyer's own reserve attempt now targets a stale version.
+    // offer. The buyer's version is stale too, but the true and actionable
+    // answer is that there is nothing left, not that the offer moved on.
+    await core.buyerApi().reserveOfferV2({
+      offerId: published.value.id,
+      quantity: 1,
+      clientReservationId: "someone-elses-reservation",
+      installationId: "another-installation",
+      expectedOfferVersion: published.value.version,
+    });
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("offer-detail-v2-reserve-button"));
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("The last unit was just reserved by another buyer.")
+      ).toBeTruthy()
+    );
+    await waitFor(() => expect(screen.getByText("Sold out")).toBeTruthy());
+  });
+
+  it("shows a stale version message and refreshed availability when the offer moved on but still has units", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const published = await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+    if (!published.ok) throw new Error("expected publish to succeed");
+
+    const screen = await renderDetail(published.value.id, core.buyerApi(), core, scenario);
+    await waitFor(() => expect(screen.getByText("3 left")).toBeTruthy());
+
+    // Someone else takes one of three units, so the version this screen holds
+    // is stale while stock remains. That is the case the stale version copy
+    // exists for, refresh and try again really is the way forward.
     await core.buyerApi().reserveOfferV2({
       offerId: published.value.id,
       quantity: 1,
@@ -555,7 +590,7 @@ describe("OfferDetailV2", () => {
         )
       ).toBeTruthy()
     );
-    await waitFor(() => expect(screen.getByText("Sold out")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("2 left")).toBeTruthy());
   });
 
   it("shows a retryable network error and lets the buyer retry the same reservation action", async () => {

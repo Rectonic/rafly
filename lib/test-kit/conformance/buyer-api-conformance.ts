@@ -43,11 +43,15 @@ import type { BuyerMarketplaceApiV2, SellerStoreApiV2 } from "@/lib/api";
 import type {
   CommandError,
   CommandErrorCode,
+  InventorySummaryV2,
   MarketplaceOfferV2,
   PublishOfferV2Input,
   ReserveOfferV2Input,
+  ReserveOfferV2Result,
   Result,
 } from "@/lib/contracts";
+
+type ReserveResult = Result<ReserveOfferV2Result>;
 
 export interface ConformanceScenario {
   now: string;
@@ -156,6 +160,20 @@ export async function publishOffer(
   return expectOk(
     await seller.approveAndPublishOfferV2(buildPublishInput(harness, overrides))
   );
+}
+
+/** The one inventory summary a block is asserting about, or a loud failure. */
+export function findInventory(
+  summaries: InventorySummaryV2[],
+  storeProductId: string
+): InventorySummaryV2 {
+  const summary = summaries.find(
+    (entry) => entry.storeProductId === storeProductId
+  );
+  if (!summary) {
+    throw new Error(`missing inventory summary for ${storeProductId}`);
+  }
+  return summary;
 }
 
 export function buildReserveInput(
@@ -427,7 +445,7 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         );
       });
 
-      it("lets exactly one of two clients win the last unit", async () => {
+      it("lets exactly one of two clients racing for the last unit win it", async () => {
         const offer = await publishOffer(harness, {
           allocation: {
             storeProductId: harness.scenario.highConfidenceProductId,
@@ -436,31 +454,94 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
           },
         });
 
-        const winner = expectOk(
-          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
-        );
-        expectErrorCode(
-          await buyer.reserveOfferV2(
+        // Both calls go out before either has answered, and both carry the
+        // same offer version, which is what two buyers tapping reserve on
+        // the same screen actually looks like. The fake settles them in call
+        // order, a real backend settles them for real, and both have to end
+        // in the same place: one winner, one honest sold_out, one held unit.
+        const settled = await Promise.allSettled([
+          buyer.reserveOfferV2(buildReserveInput(harness, offer)),
+          buyer.reserveOfferV2(
             buildReserveInput(harness, offer, {
               clientReservationId: "client-reservation-2",
               installationId: harness.scenario.installationB,
             })
           ),
-          "version_conflict"
+        ]);
+        const results = settled.map((outcome) => {
+          if (outcome.status !== "fulfilled") {
+            throw new Error(
+              "reserveOfferV2 must resolve a Result rather than reject"
+            );
+          }
+          return outcome.value;
+        });
+
+        const winners = results.filter(
+          (result): result is Extract<ReserveResult, { ok: true }> => result.ok
         );
+        const losers = results.filter(
+          (result): result is Extract<ReserveResult, { ok: false }> => !result.ok
+        );
+        expect(winners).toHaveLength(1);
+        expect(losers).toHaveLength(1);
+        expect(losers[0].error.code).toBe("sold_out");
 
         const after = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
         expect(after.quantityAvailable).toBe(0);
+        expect(after.status).toBe("sold_out");
+
+        const acrossBothInstallations = [
+          ...expectOk(
+            await buyer.getBuyerReservationsV2(harness.scenario.installationA)
+          ),
+          ...expectOk(
+            await buyer.getBuyerReservationsV2(harness.scenario.installationB)
+          ),
+        ];
+        expect(acrossBothInstallations).toHaveLength(1);
+        expect(acrossBothInstallations[0].status).toBe("held");
+        expect(acrossBothInstallations[0].id).toBe(
+          winners[0].value.reservation.id
+        );
+      });
+
+      it("keeps one clientReservationId independent across two installations", async () => {
+        const offer = await publishOffer(harness);
+        const shared = "client-reservation-shared";
+
+        const first = expectOk(
+          await buyer.reserveOfferV2(
+            buildReserveInput(harness, offer, { clientReservationId: shared })
+          )
+        );
+        const second = expectOk(
+          await buyer.reserveOfferV2(
+            buildReserveInput(harness, offer, {
+              clientReservationId: shared,
+              installationId: harness.scenario.installationB,
+              expectedOfferVersion: offer.version + 1,
+            })
+          )
+        );
+
+        // Idempotency is scoped per installation, so the second installation
+        // gets its own reservation rather than a replay of a stranger's. Two
+        // devices that happen to mint the same client id are two buyers.
+        expect(second.reservation.id).not.toBe(first.reservation.id);
+        expect(second.pickupCode).not.toBe(first.pickupCode);
         expect(
           expectOk(
             await buyer.getBuyerReservationsV2(harness.scenario.installationA)
           ).map((reservation) => reservation.id)
-        ).toEqual([winner.reservation.id]);
+        ).toEqual([first.reservation.id]);
         expect(
           expectOk(
             await buyer.getBuyerReservationsV2(harness.scenario.installationB)
-          )
-        ).toEqual([]);
+          ).map((reservation) => reservation.id)
+        ).toEqual([second.reservation.id]);
+        const after = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
+        expect(after.quantityAvailable).toBe(offer.quantityAvailable - 2);
       });
 
       it("appends an audit entry and a reservation_held outbox event", async () => {
@@ -599,6 +680,115 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         expect(outbox.length).toBe(outboxBefore + 1);
         expect(audit[audit.length - 1].command).toBe("cancelReservationV2");
         expect(outbox[outbox.length - 1].name).toBe("reservation_cancelled");
+      });
+    });
+
+    describe("hold expiry", () => {
+      it("flips a held reservation to expired_no_show for both the buyer and the seller", async () => {
+        const offer = await publishOffer(harness);
+        const held = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        const seller = harness.sellerApi({
+          userId: harness.scenario.managerUserId,
+        });
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        const mine = expectOk(
+          await buyer.getBuyerReservationsV2(harness.scenario.installationA)
+        );
+        expect(mine.map((reservation) => reservation.id)).toEqual([
+          held.reservation.id,
+        ]);
+        expect(mine[0].status).toBe("expired_no_show");
+
+        const pickups = expectOk(
+          await seller.listSellerPickupsV2(harness.scenario.storeId)
+        );
+        const pickup = pickups.find(
+          (candidate) => candidate.reservationId === held.reservation.id
+        );
+        expect(pickup?.status).toBe("expired_no_show");
+      });
+
+      it("refuses to fulfil a reservation past its hold expiry and consumes no unit", async () => {
+        const offer = await publishOffer(harness);
+        const held = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        const seller = harness.sellerApi({
+          userId: harness.scenario.managerUserId,
+        });
+        const before = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        const failure = expectErrorCode(
+          await seller.fulfillReservationV2({
+            storeId: harness.scenario.storeId,
+            pickupCode: held.pickupCode,
+            idempotencyKey: "fulfill-after-expiry",
+          }),
+          "invalid_state"
+        );
+        expect(failure.message).toMatch(/expir/i);
+
+        const after = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(after.onHandQuantity).toBe(before.onHandQuantity);
+      });
+
+      it("returns the expired allocation to the product exactly once", async () => {
+        const offer = await publishOffer(harness);
+        expectOk(await buyer.reserveOfferV2(buildReserveInput(harness, offer)));
+        const seller = harness.sellerApi({
+          userId: harness.scenario.managerUserId,
+        });
+        const before = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        // One unit is still on the shelf for the offer and one is held by
+        // the reservation, so the whole allocation is still encumbered.
+        expect(before.allocatedQuantity).toBe(offer.quantityAvailable);
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        const freed = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(freed.onHandQuantity).toBe(before.onHandQuantity);
+        expect(freed.allocatedQuantity).toBe(0);
+        expect(freed.maxOfferableQuantity).toBe(freed.onHandQuantity);
+
+        // The whole shelf is offerable again, and only once. A double
+        // release would let the next offer claim more units than the store
+        // physically holds.
+        const republished = await publishOffer(harness, {
+          idempotencyKey: "publish-after-expiry",
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: freed.onHandQuantity,
+            physicallySetAside: false,
+          },
+          pickupStart: isoPlusMinutes(harness.scenario.pickupEnd, 120),
+          pickupEnd: isoPlusMinutes(harness.scenario.pickupEnd, 240),
+        });
+        expect(republished.quantityAvailable).toBe(freed.onHandQuantity);
+
+        const afterRepublish = findInventory(
+          expectOk(await seller.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(afterRepublish.allocatedQuantity).toBe(freed.onHandQuantity);
+        expect(afterRepublish.maxOfferableQuantity).toBe(0);
       });
     });
 

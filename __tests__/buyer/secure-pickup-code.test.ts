@@ -1,9 +1,13 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   loadPickupCodeV2,
   persistPickupCodeV2,
   pickupCodeFallbackKeyV2,
   pickupCodeKeyV2,
 } from "@/lib/buyer/secure-pickup-code";
+
+const ALLOW_INSECURE_ENV = "EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE";
 
 const mockAsyncStorage = new Map<string, string>();
 const mockSecureStore = new Map<string, string>();
@@ -38,10 +42,16 @@ describe("buyer v2 secure pickup code storage", () => {
     mockAsyncStorage.clear();
     mockSecureStore.clear();
     mockSecureStoreUnavailable = false;
+    delete process.env[ALLOW_INSECURE_ENV];
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    delete process.env[ALLOW_INSECURE_ENV];
   });
 
   it("writes the raw code to SecureStore and reads it back by reservation id", async () => {
-    await persistPickupCodeV2("reservation-1", "LB0001");
+    expect(await persistPickupCodeV2("reservation-1", "LB0001")).toBe("secure");
 
     expect(mockSecureStore.get(pickupCodeKeyV2("reservation-1"))).toBe("LB0001");
     expect(mockAsyncStorage.size).toBe(0);
@@ -61,10 +71,13 @@ describe("buyer v2 secure pickup code storage", () => {
     expect(serializedAsyncStorage).not.toContain("LB0001");
   });
 
-  it("falls back to AsyncStorage when SecureStore is unavailable", async () => {
+  it("falls back to AsyncStorage only when the insecure escape hatch is enabled", async () => {
+    process.env[ALLOW_INSECURE_ENV] = "1";
     mockSecureStoreUnavailable = true;
 
-    await persistPickupCodeV2("reservation-2", "LB0002");
+    expect(await persistPickupCodeV2("reservation-2", "LB0002")).toBe(
+      "insecure-fallback"
+    );
 
     expect(mockSecureStore.size).toBe(0);
     expect(mockAsyncStorage.get(pickupCodeFallbackKeyV2("reservation-2"))).toBe(
@@ -73,6 +86,31 @@ describe("buyer v2 secure pickup code storage", () => {
 
     const loaded = await loadPickupCodeV2("reservation-2");
     expect(loaded).toBe("LB0002");
+  });
+
+  it("fails closed when SecureStore is unavailable and the escape hatch is off", async () => {
+    mockSecureStoreUnavailable = true;
+
+    expect(await persistPickupCodeV2("reservation-2", "LB0002")).toBe("degraded");
+
+    // The raw code never reaches unencrypted storage. A degraded write is
+    // reported honestly instead, the caller can still show the code it holds
+    // in memory for this session and must not promise recovery later.
+    expect(AsyncStorage.setItem).not.toHaveBeenCalled();
+    expect(JSON.stringify([...mockAsyncStorage.entries()])).not.toContain("LB0002");
+    expect(mockSecureStore.size).toBe(0);
+    expect(await loadPickupCodeV2("reservation-2")).toBeNull();
+  });
+
+  it("ignores an insecure copy written by an earlier escape hatch build once the hatch is off", async () => {
+    process.env[ALLOW_INSECURE_ENV] = "1";
+    mockSecureStoreUnavailable = true;
+    await persistPickupCodeV2("reservation-4", "LB0004");
+    expect(await loadPickupCodeV2("reservation-4")).toBe("LB0004");
+
+    delete process.env[ALLOW_INSECURE_ENV];
+
+    expect(await loadPickupCodeV2("reservation-4")).toBeNull();
   });
 
   it("returns null when no code was ever stored for a reservation", async () => {

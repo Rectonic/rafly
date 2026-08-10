@@ -4,6 +4,7 @@ import type {
   BuyerReservationV2,
   CommandError,
   MarketplaceOfferV2,
+  ReservationStatusV2,
   ReserveOfferV2Result,
   Result,
 } from "@/lib/contracts";
@@ -29,6 +30,24 @@ const OFFER_CHANGED_ERROR_CODES: ReadonlySet<string> = new Set([
   "offer_not_live",
 ]);
 
+/**
+ * Every reservation status except held is finished. A reservation in one of
+ * these states can never become active again, so a pending
+ * clientReservationId that replays into one of them is stale rather than
+ * retryable.
+ */
+const TERMINAL_RESERVATION_STATUSES: ReadonlySet<ReservationStatusV2> = new Set([
+  "fulfilled",
+  "cancelled_by_buyer",
+  "cancelled_by_seller",
+  "expired_no_show",
+  "failed_stock_mismatch",
+]);
+
+function isTerminalReservation(reservation: BuyerReservationV2): boolean {
+  return TERMINAL_RESERVATION_STATUSES.has(reservation.status);
+}
+
 export type ReserveActionStatus = "idle" | "in-flight" | "held" | "error";
 
 export interface UseReserveOfferV2Options {
@@ -41,6 +60,12 @@ export interface UseReserveOfferV2Result {
   reservation: BuyerReservationV2 | null;
   pickupCode: string | null;
   error: CommandError | null;
+  /**
+   * True when the raw pickup code could not be stored securely, so the code
+   * in this result lives only in memory for this session. The reservation
+   * itself is real, only its recovery after a restart is unavailable.
+   */
+  storageDegraded: boolean;
   reserve: (offer: MarketplaceOfferV2) => Promise<Result<ReserveOfferV2Result> | null>;
   abandon: (offerId?: string) => void;
 }
@@ -74,6 +99,7 @@ export function useReserveOfferV2(
   const [reservation, setReservation] = useState<BuyerReservationV2 | null>(null);
   const [pickupCode, setPickupCode] = useState<string | null>(null);
   const [error, setError] = useState<CommandError | null>(null);
+  const [storageDegraded, setStorageDegraded] = useState(false);
 
   const clientReservationIdRef = useRef<string | null>(null);
   const inFlightRef = useRef(false);
@@ -85,50 +111,79 @@ export function useReserveOfferV2(
       }
 
       inFlightRef.current = true;
-      if (!clientReservationIdRef.current) {
-        const pending = await loadPendingClientReservationId(offer.id);
-        if (pending) {
-          clientReservationIdRef.current = pending;
-        } else {
-          clientReservationIdRef.current = generateOpaqueId("reserve");
-          await savePendingClientReservationId(offer.id, clientReservationIdRef.current);
+      try {
+        if (!clientReservationIdRef.current) {
+          const pending = await loadPendingClientReservationId(offer.id);
+          if (pending) {
+            clientReservationIdRef.current = pending;
+          } else {
+            clientReservationIdRef.current = generateOpaqueId("reserve");
+            await savePendingClientReservationId(offer.id, clientReservationIdRef.current);
+          }
         }
-      }
-      setStatus("in-flight");
-      setError(null);
-
-      const result = await api.reserveOfferV2({
-        offerId: offer.id,
-        quantity: 1,
-        clientReservationId: clientReservationIdRef.current,
-        installationId,
-        expectedOfferVersion: offer.version,
-      });
-
-      inFlightRef.current = false;
-
-      if (result.ok) {
-        await persistPickupCodeV2(result.value.reservation.id, result.value.pickupCode);
-        setReservation(result.value.reservation);
-        setPickupCode(result.value.pickupCode);
-        setStatus("held");
+        setStatus("in-flight");
         setError(null);
-        // The action succeeded, a future reserve call is a new action and
-        // earns its own clientReservationId.
-        clientReservationIdRef.current = null;
-        await clearPendingClientReservationId(offer.id);
-      } else {
-        setError(result.error);
-        setStatus("error");
-        // clientReservationIdRef and its AsyncStorage backed copy both stay
-        // set here on purpose, a retry of this same action, even after a
-        // remount, must reuse this id rather than mint a new one.
-        if (OFFER_CHANGED_ERROR_CODES.has(result.error.code)) {
-          onOfferChanged?.();
-        }
-      }
+        setStorageDegraded(false);
 
-      return result;
+        const send = (clientReservationId: string) =>
+          api.reserveOfferV2({
+            offerId: offer.id,
+            quantity: 1,
+            clientReservationId,
+            installationId,
+            expectedOfferVersion: offer.version,
+          });
+
+        let result = await send(clientReservationIdRef.current);
+
+        if (result.ok && isTerminalReservation(result.value.reservation)) {
+          // The id we reused belongs to an action that already finished, its
+          // cleanup simply never landed. Replaying it can only ever hand back
+          // that finished reservation, so the id is discarded and the buyer's
+          // actual intent, a new reservation, is sent once with a fresh id.
+          const fresh = generateOpaqueId("reserve");
+          clientReservationIdRef.current = fresh;
+          await savePendingClientReservationId(offer.id, fresh);
+          result = await send(fresh);
+        }
+
+        if (result.ok && !isTerminalReservation(result.value.reservation)) {
+          const outcome = await persistPickupCodeV2(
+            result.value.reservation.id,
+            result.value.pickupCode
+          );
+          setReservation(result.value.reservation);
+          setPickupCode(result.value.pickupCode);
+          setStorageDegraded(outcome === "degraded");
+          setStatus("held");
+          setError(null);
+          // The action succeeded, a future reserve call is a new action and
+          // earns its own clientReservationId.
+          clientReservationIdRef.current = null;
+          await clearPendingClientReservationId(offer.id);
+        } else if (result.ok) {
+          // Still terminal after the one retry. Nothing is held, and no error
+          // code is invented for a response the server called successful.
+          setReservation(null);
+          setPickupCode(null);
+          setStatus("error");
+          clientReservationIdRef.current = null;
+          await clearPendingClientReservationId(offer.id);
+        } else {
+          setError(result.error);
+          setStatus("error");
+          // clientReservationIdRef and its AsyncStorage backed copy both stay
+          // set here on purpose, a retry of this same action, even after a
+          // remount, must reuse this id rather than mint a new one.
+          if (OFFER_CHANGED_ERROR_CODES.has(result.error.code)) {
+            onOfferChanged?.();
+          }
+        }
+
+        return result;
+      } finally {
+        inFlightRef.current = false;
+      }
     },
     [api, installationId, isPilot, onOfferChanged]
   );
@@ -140,12 +195,22 @@ export function useReserveOfferV2(
     setReservation(null);
     setPickupCode(null);
     setError(null);
+    setStorageDegraded(false);
     if (offerId) {
       void clearPendingClientReservationId(offerId);
     }
   }, []);
 
-  return { abandon, error, isPilot, pickupCode, reservation, reserve, status };
+  return {
+    abandon,
+    error,
+    isPilot,
+    pickupCode,
+    reservation,
+    reserve,
+    status,
+    storageDegraded,
+  };
 }
 
 export interface UseBuyerReservationsV2Result {
@@ -173,6 +238,9 @@ export function useBuyerReservationsV2(
 
   const refresh = useCallback(async () => {
     if (!api || !isPilot || !installationId) {
+      // Clearing counts as a new request, so a pilot list already in flight
+      // cannot land afterwards and repopulate what this clear just emptied.
+      requestSequenceRef.current += 1;
       setReservations([]);
       setError(null);
       setIsLoading(false);
@@ -193,6 +261,13 @@ export function useBuyerReservationsV2(
     if (result.ok) {
       setReservations(result.value);
       setError(null);
+      // The server is the authority on what finished. Any offer whose
+      // reservation here is already terminal has no attempt left to retry,
+      // so its pending clientReservationId is dropped rather than left on
+      // disk to replay a finished reservation on the buyer's next tap.
+      for (const finished of result.value.filter(isTerminalReservation)) {
+        void clearPendingClientReservationId(finished.offerId);
+      }
     } else {
       setReservations([]);
       setError(result.error.message);

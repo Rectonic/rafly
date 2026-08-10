@@ -38,6 +38,10 @@ export function useBuyerMarketplaceFeedV2(): BuyerMarketplaceFeedV2State {
 
   const refresh = useCallback(async () => {
     if (!api || !isPilot) {
+      // Clearing counts as a new request. Without this bump a pilot request
+      // already in flight would still match the sequence when it lands and
+      // would put live supply back on a screen that just left pilot mode.
+      requestSequenceRef.current += 1;
       setOffers([]);
       setError(null);
       setIsLoading(false);
@@ -103,6 +107,9 @@ export function useBuyerMarketplaceOfferV2(
 
   const refresh = useCallback(async (): Promise<Result<MarketplaceOfferV2> | null> => {
     if (!api || !isPilot || !offerId) {
+      // Same rule as the feed above, a clear invalidates whatever is still in
+      // flight so a late pilot answer cannot revive the cleared offer.
+      requestSequenceRef.current += 1;
       setOffer(null);
       setError(null);
       setIsLoading(false);

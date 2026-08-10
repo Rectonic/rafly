@@ -326,7 +326,7 @@ export class InMemoryStoreCore {
   // Buyer commands and queries.
 
   private listMarketplaceOffers(): Result<MarketplaceOfferV2[]> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const nowMs = Date.parse(this.now);
     const visible = [...this.offers.values()]
       .filter(
@@ -337,7 +337,7 @@ export class InMemoryStoreCore {
   }
 
   private getMarketplaceOffer(offerId: string): Result<MarketplaceOfferV2> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const offer = this.offers.get(offerId);
     if (!offer) {
       return err("not_found", `offer ${offerId} does not exist`);
@@ -348,7 +348,7 @@ export class InMemoryStoreCore {
   private reserveOffer(
     input: ReserveOfferV2Input
   ): Result<ReserveOfferV2Result> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const fingerprint = JSON.stringify({
       offerId: input.offerId,
@@ -376,13 +376,18 @@ export class InMemoryStoreCore {
     if (offer.status !== "live" && offer.status !== "sold_out") {
       return err("offer_not_live", `offer ${offer.id} is ${offer.status}`);
     }
+    // Availability is checked before the version because two buyers racing for
+    // the last unit both hold the version they read before either won. The
+    // loser of that race has to hear sold_out, the true and actionable answer,
+    // rather than version_conflict, which would send them to refresh an offer
+    // that has nothing left for them.
+    if (offer.quantityAvailable <= 0) {
+      return err("sold_out", `offer ${offer.id} has no units left`);
+    }
     if (offer.version !== input.expectedOfferVersion) {
       return err("version_conflict", `offer ${offer.id} moved on`, {
         currentVersion: offer.version,
       });
-    }
-    if (offer.quantityAvailable <= 0) {
-      return err("sold_out", `offer ${offer.id} has no units left`);
     }
 
     offer.quantityAvailable -= 1;
@@ -437,7 +442,7 @@ export class InMemoryStoreCore {
   private cancelReservation(
     input: CancelReservationV2Input
   ): Result<BuyerReservationV2> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const fingerprint = JSON.stringify({
       reservationId: input.reservationId,
@@ -508,7 +513,7 @@ export class InMemoryStoreCore {
   private getBuyerReservations(
     installationId: string
   ): Result<BuyerReservationV2[]> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const mine = [...this.reservations.values()]
       .filter((reservation) => reservation.installationId === installationId)
       .sort((left, right) => right.sequence - left.sequence);
@@ -546,7 +551,7 @@ export class InMemoryStoreCore {
     userId: string,
     storeId: string
   ): Result<MarketplaceOfferV2[]> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const access = this.requireRole(storeId, userId);
     if (!access.ok) return access;
 
@@ -560,7 +565,7 @@ export class InMemoryStoreCore {
     userId: string,
     storeId: string
   ): Result<InventorySummaryV2[]> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const access = this.requireRole(storeId, userId);
     if (!access.ok) return access;
 
@@ -741,7 +746,7 @@ export class InMemoryStoreCore {
     userId: string,
     input: PublishOfferV2Input
   ): Result<MarketplaceOfferV2> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
     if (!access.ok) return access;
@@ -879,7 +884,7 @@ export class InMemoryStoreCore {
     userId: string,
     input: PauseOfferV2Input
   ): Result<MarketplaceOfferV2> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
     if (!access.ok) return access;
@@ -940,7 +945,7 @@ export class InMemoryStoreCore {
     userId: string,
     storeId: string
   ): Result<SellerPickupV2[]> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
     const access = this.requireRole(storeId, userId);
     if (!access.ok) return access;
 
@@ -958,7 +963,7 @@ export class InMemoryStoreCore {
     userId: string,
     input: FulfillReservationV2Input
   ): Result<SellerPickupV2> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
     if (!access.ok) return access;
@@ -984,6 +989,15 @@ export class InMemoryStoreCore {
     );
     if (!reservation) {
       return err("not_found", "no reservation matches that pickup code");
+    }
+    // Checked against the clock rather than only against the status, so a
+    // pickup code can never consume a unit after its hold expired even if the
+    // lazy sweep above has not reached this row yet.
+    if (Date.parse(reservation.holdExpiresAt) <= Date.parse(this.now)) {
+      return err(
+        "invalid_state",
+        `reservation ${reservation.id} expired at ${reservation.holdExpiresAt}`
+      );
     }
     if (reservation.status !== "held") {
       return err(
@@ -1032,7 +1046,7 @@ export class InMemoryStoreCore {
     userId: string,
     input: ReportStockMismatchV2Input
   ): Result<{ offer: MarketplaceOfferV2; exception: StoreExceptionV2 }> {
-    this.expireStaleOffers();
+    this.applyLazyExpiry();
 
     const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
     if (!access.ok) return access;
@@ -1178,17 +1192,32 @@ export class InMemoryStoreCore {
 
   /**
    * Offers whose pickup window has closed become expired the next time anything
-   * reads them. Expiry is derived from the clock rather than from a command, so
-   * it writes no audit entry, emits no outbox event and does not bump the offer
-   * version. Expired is terminal and never returns to an active status.
+   * reads them, and every reservation past its hold expiry becomes
+   * expired_no_show in the same pass. Expiry is derived from the clock rather
+   * than from a command, so it writes no audit entry, emits no outbox event and
+   * does not bump the offer version. Expired is terminal on both sides and
+   * never returns to an active status.
+   *
+   * The two halves have to move together. An offer that expires while its
+   * reservations stay held would drop those units out of the allocation
+   * accounting (the offer is terminal, so it contributes nothing) while the
+   * pickup codes still looked fulfillable, which is how a buyer could be
+   * handed a unit the store had already offered to somebody else.
    */
-  private expireStaleOffers(): void {
+  private applyLazyExpiry(): void {
     const nowMs = Date.parse(this.now);
     for (const offer of this.offers.values()) {
       if (TERMINAL_OFFER_STATUSES.includes(offer.status)) continue;
       if (Date.parse(offer.pickupEnd) <= nowMs) {
         offer.status = "expired";
       }
+    }
+    for (const reservation of this.reservations.values()) {
+      if (reservation.status !== "held") continue;
+      if (Date.parse(reservation.holdExpiresAt) > nowMs) continue;
+      reservation.status = "expired_no_show";
+      reservation.version += 1;
+      reservation.updatedAt = this.now;
     }
   }
 

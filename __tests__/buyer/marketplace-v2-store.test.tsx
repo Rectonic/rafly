@@ -191,6 +191,72 @@ describe("useBuyerMarketplaceFeedV2", () => {
     expect(result.current.feed.isPilot).toBe(false);
   });
 
+  it("drops a pilot feed response that lands after the mode flipped to demo", async () => {
+    const { core, scenario, seller } = makeWorld();
+    await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+
+    let releaseRequest!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    const slowBuyerApi = {
+      ...core.buyerApi(),
+      listMarketplaceOffersV2: async () => {
+        await inFlight;
+        return core.buyerApi().listMarketplaceOffersV2();
+      },
+    };
+    const source = jest
+      .fn<Promise<FeatureFlagsV2>, []>()
+      .mockResolvedValueOnce({ marketplaceMode: "pilot" });
+
+    function Wrapper({ children }: { children: ReactNode }) {
+      return createElement(
+        FeatureFlagsProvider,
+        { source },
+        createElement(
+          ApiProvider,
+          {
+            buyerApi: slowBuyerApi,
+            sellerApi: core.sellerApi({ userId: scenario.managerUserId }),
+          },
+          children
+        )
+      );
+    }
+
+    function useCombined() {
+      const flags = useFeatureFlags();
+      const feed = useBuyerMarketplaceFeedV2();
+      return { feed, flags };
+    }
+
+    const { result } = renderHook(() => useCombined(), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.feed.isLoading).toBe(true));
+
+    source.mockResolvedValueOnce({ marketplaceMode: "demo" });
+    await act(async () => {
+      result.current.flags.reload();
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(result.current.flags.flags.marketplaceMode).toBe("demo")
+    );
+
+    // The pilot request answers only now, after the buyer left pilot mode.
+    // Demo mode shows seeds, so a late pilot answer landing here would put
+    // live supply back on a screen that is no longer showing live supply.
+    await act(async () => {
+      releaseRequest();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.feed.offers).toEqual([]);
+    expect(result.current.feed.isPilot).toBe(false);
+    expect(result.current.feed.isLoading).toBe(false);
+  });
+
   it("degrades to the legacy path when the coordinator providers are not mounted", () => {
     const { result } = renderHook(() => useBuyerMarketplaceFeedV2());
 

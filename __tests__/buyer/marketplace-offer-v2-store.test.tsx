@@ -3,7 +3,7 @@ import { createElement, type ReactNode } from "react";
 
 import { ApiProvider } from "@/lib/api";
 import type { FeatureFlagsV2, PublishOfferV2Input } from "@/lib/contracts";
-import { FeatureFlagsProvider } from "@/lib/feature-flags";
+import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 import {
   InMemoryStoreCore,
   makeDefaultScenario,
@@ -125,6 +125,71 @@ describe("useBuyerMarketplaceOfferV2", () => {
 
     expect(result.current.offer?.status).toBe("sold_out");
     expect(result.current.offer?.quantityAvailable).toBe(0);
+  });
+
+  it("drops a pilot offer response that lands after the mode flipped to demo", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const published = await seller.approveAndPublishOfferV2(publishInputFor(scenario));
+    if (!published.ok) throw new Error("expected publish to succeed");
+    const offerId = published.value.id;
+
+    let releaseRequest!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    const slowBuyerApi = {
+      ...core.buyerApi(),
+      getMarketplaceOfferV2: async (offerId: string) => {
+        await inFlight;
+        return core.buyerApi().getMarketplaceOfferV2(offerId);
+      },
+    };
+    const source = jest
+      .fn<Promise<FeatureFlagsV2>, []>()
+      .mockResolvedValueOnce({ marketplaceMode: "pilot" });
+
+    function Wrapper({ children }: { children: ReactNode }) {
+      return createElement(
+        FeatureFlagsProvider,
+        { source },
+        createElement(
+          ApiProvider,
+          {
+            buyerApi: slowBuyerApi,
+            sellerApi: core.sellerApi({ userId: scenario.managerUserId }),
+          },
+          children
+        )
+      );
+    }
+
+    function useCombined() {
+      const flags = useFeatureFlags();
+      const detail = useBuyerMarketplaceOfferV2(offerId);
+      return { detail, flags };
+    }
+
+    const { result } = renderHook(() => useCombined(), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.detail.isLoading).toBe(true));
+
+    source.mockResolvedValueOnce({ marketplaceMode: "demo" });
+    await act(async () => {
+      result.current.flags.reload();
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(result.current.flags.flags.marketplaceMode).toBe("demo")
+    );
+
+    await act(async () => {
+      releaseRequest();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.detail.offer).toBeNull();
+    expect(result.current.detail.isPilot).toBe(false);
+    expect(result.current.detail.isLoading).toBe(false);
   });
 
   it("degrades to an empty offer when the coordinator providers are not mounted", () => {

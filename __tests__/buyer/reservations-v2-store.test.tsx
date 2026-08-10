@@ -1,23 +1,39 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createElement, type ReactNode } from "react";
 
 import { ApiProvider, type BuyerMarketplaceApiV2 } from "@/lib/api";
-import type { FeatureFlagsV2, MarketplaceOfferV2, PublishOfferV2Input } from "@/lib/contracts";
-import { FeatureFlagsProvider } from "@/lib/feature-flags";
+import type {
+  BuyerReservationV2,
+  FeatureFlagsV2,
+  MarketplaceOfferV2,
+  PublishOfferV2Input,
+} from "@/lib/contracts";
+import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 import {
   InMemoryStoreCore,
   makeDefaultScenario,
   type DefaultScenario,
 } from "@/lib/test-kit";
 
-import { pickupCodeKeyV2 } from "@/lib/buyer/secure-pickup-code";
+import {
+  loadPendingClientReservationId,
+  savePendingClientReservationId,
+} from "@/lib/buyer/pending-reservation";
+import {
+  pickupCodeFallbackKeyV2,
+  pickupCodeKeyV2,
+} from "@/lib/buyer/secure-pickup-code";
 import {
   useBuyerReservationsV2,
   useReserveOfferV2,
 } from "@/lib/buyer/reservations-v2-store";
 
+const ALLOW_INSECURE_ENV = "EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE";
+
 const mockAsyncStorage = new Map<string, string>();
 const mockSecureStore = new Map<string, string>();
+let mockSecureStoreUnavailable = false;
 
 jest.mock("@react-native-async-storage/async-storage", () => ({
   getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage.get(key) ?? null)),
@@ -32,8 +48,16 @@ jest.mock("@react-native-async-storage/async-storage", () => ({
 }));
 
 jest.mock("expo-secure-store", () => ({
-  getItemAsync: jest.fn((key: string) => Promise.resolve(mockSecureStore.get(key) ?? null)),
+  getItemAsync: jest.fn((key: string) => {
+    if (mockSecureStoreUnavailable) {
+      return Promise.reject(new Error("A required entitlement isn't present."));
+    }
+    return Promise.resolve(mockSecureStore.get(key) ?? null);
+  }),
   setItemAsync: jest.fn((key: string, value: string) => {
+    if (mockSecureStoreUnavailable) {
+      return Promise.reject(new Error("A required entitlement isn't present."));
+    }
     mockSecureStore.set(key, value);
     return Promise.resolve();
   }),
@@ -78,11 +102,16 @@ function pilotSource(): Promise<FeatureFlagsV2> {
   return Promise.resolve({ marketplaceMode: "pilot" });
 }
 
-function makeWrapper(buyerApi: BuyerMarketplaceApiV2, core: InMemoryStoreCore, scenario: DefaultScenario) {
+function makeWrapperWithSource(
+  buyerApi: BuyerMarketplaceApiV2,
+  core: InMemoryStoreCore,
+  scenario: DefaultScenario,
+  source: () => Promise<FeatureFlagsV2>
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return createElement(
       FeatureFlagsProvider,
-      { source: pilotSource },
+      { source },
       createElement(
         ApiProvider,
         { buyerApi, sellerApi: core.sellerApi({ userId: scenario.managerUserId }) },
@@ -90,6 +119,10 @@ function makeWrapper(buyerApi: BuyerMarketplaceApiV2, core: InMemoryStoreCore, s
       )
     );
   };
+}
+
+function makeWrapper(buyerApi: BuyerMarketplaceApiV2, core: InMemoryStoreCore, scenario: DefaultScenario) {
+  return makeWrapperWithSource(buyerApi, core, scenario, pilotSource);
 }
 
 async function publishOffer(
@@ -107,6 +140,13 @@ describe("useReserveOfferV2", () => {
   beforeEach(() => {
     mockAsyncStorage.clear();
     mockSecureStore.clear();
+    mockSecureStoreUnavailable = false;
+    delete process.env[ALLOW_INSECURE_ENV];
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    delete process.env[ALLOW_INSECURE_ENV];
   });
 
   it("reserves the offer, holds the raw code in SecureStore only, and exposes the hint through the reservation", async () => {
@@ -363,12 +403,117 @@ describe("useReserveOfferV2", () => {
     expect(seenClientReservationIds).toHaveLength(2);
     expect(seenClientReservationIds[0]).toBe(seenClientReservationIds[1]);
   });
+
+  it("reports a degraded code store and writes nothing unencrypted when SecureStore fails", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    mockSecureStoreUnavailable = true;
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(core.buyerApi(), core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await result.current.reserve(offer);
+    });
+
+    // The reservation really is held at the server, so the surface keeps the
+    // code it holds in memory for this session. What it must not do is write
+    // that code to unencrypted storage or imply it can be recovered later.
+    expect(result.current.status).toBe("held");
+    expect(result.current.storageDegraded).toBe(true);
+    const code = result.current.pickupCode as string;
+    expect(code).toMatch(/^[A-Z0-9]{6}$/);
+    expect(AsyncStorage.setItem).not.toHaveBeenCalledWith(expect.anything(), code);
+    expect(JSON.stringify([...mockAsyncStorage.entries()])).not.toContain(code);
+    expect(mockSecureStore.size).toBe(0);
+  });
+
+  it("keeps the unencrypted simulator fallback working when the escape hatch is enabled", async () => {
+    process.env[ALLOW_INSECURE_ENV] = "1";
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    mockSecureStoreUnavailable = true;
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(core.buyerApi(), core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await result.current.reserve(offer);
+    });
+
+    expect(result.current.status).toBe("held");
+    expect(result.current.storageDegraded).toBe(false);
+    const reservationId = result.current.reservation?.id as string;
+    expect(mockAsyncStorage.get(pickupCodeFallbackKeyV2(reservationId))).toBe(
+      result.current.pickupCode
+    );
+  });
+
+  it("discards a persisted pending id whose replay is already terminal and retries once with a fresh id", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    const staleClientReservationId = "reserve-stale";
+    await savePendingClientReservationId(offer.id, staleClientReservationId);
+
+    // The reservation this id created was cancelled, and the cleanup that
+    // should have dropped the id never landed. Replaying it hands back a
+    // finished reservation, which must never be shown as a fresh hold.
+    const staleReservation: BuyerReservationV2 = {
+      id: "reservation-stale",
+      version: 2,
+      offerId: offer.id,
+      status: "cancelled_by_buyer",
+      quantity: 1,
+      offerSnapshot: offer,
+      pickupCodeHint: "99",
+      holdExpiresAt: offer.pickupEnd,
+      createdAt: scenario.now,
+      updatedAt: scenario.now,
+    };
+    const seenClientReservationIds: string[] = [];
+    const replayingBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      reserveOfferV2: async (input) => {
+        seenClientReservationIds.push(input.clientReservationId);
+        if (input.clientReservationId === staleClientReservationId) {
+          return { ok: true, value: { pickupCode: "LB9999", reservation: staleReservation } };
+        }
+        return core.buyerApi().reserveOfferV2(input);
+      },
+    };
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(replayingBuyerApi, core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await result.current.reserve(offer);
+    });
+
+    expect(seenClientReservationIds).toHaveLength(2);
+    expect(seenClientReservationIds[0]).toBe(staleClientReservationId);
+    expect(seenClientReservationIds[1]).not.toBe(staleClientReservationId);
+    expect(result.current.status).toBe("held");
+    expect(result.current.reservation?.status).toBe("held");
+    expect(result.current.reservation?.id).not.toBe(staleReservation.id);
+    expect(await loadPendingClientReservationId(offer.id)).toBeNull();
+    expect(JSON.stringify([...mockAsyncStorage.entries()])).not.toContain(
+      staleClientReservationId
+    );
+  });
 });
 
 describe("useBuyerReservationsV2", () => {
   beforeEach(() => {
     mockAsyncStorage.clear();
     mockSecureStore.clear();
+    mockSecureStoreUnavailable = false;
+    jest.clearAllMocks();
   });
 
   it("recovers a held reservation for this installation after a simulated restart", async () => {
@@ -411,5 +556,94 @@ describe("useBuyerReservationsV2", () => {
 
     await waitFor(() => expect(result.current.error).toBe("Network unavailable"));
     expect(result.current.reservations).toEqual([]);
+  });
+
+  it("clears a persisted pending id once the reservation it produced is terminal", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    const held = await core.buyerApi().reserveOfferV2({
+      offerId: offer.id,
+      quantity: 1,
+      clientReservationId: "client-reservation-1",
+      installationId: "installation-a",
+      expectedOfferVersion: offer.version,
+    });
+    if (!held.ok) throw new Error("expected reserve to succeed");
+    await core.buyerApi().cancelReservationV2({
+      reservationId: held.value.reservation.id,
+      installationId: "installation-a",
+      idempotencyKey: "cancel-key-1",
+    });
+    // The cleanup after that cancellation failed, so the finished attempt
+    // still has a pending id on disk waiting to replay itself.
+    await savePendingClientReservationId(offer.id, "client-reservation-1");
+
+    const { result } = renderHook(() => useBuyerReservationsV2("installation-a"), {
+      wrapper: makeWrapper(core.buyerApi(), core, scenario),
+    });
+
+    await waitFor(() => expect(result.current.reservations).toHaveLength(1));
+    expect(result.current.reservations[0].status).toBe("cancelled_by_buyer");
+    await waitFor(async () =>
+      expect(await loadPendingClientReservationId(offer.id)).toBeNull()
+    );
+  });
+
+  it("drops a pilot reservations response that lands after the mode flipped to demo", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+    await core.buyerApi().reserveOfferV2({
+      offerId: offer.id,
+      quantity: 1,
+      clientReservationId: "client-reservation-1",
+      installationId: "installation-a",
+      expectedOfferVersion: offer.version,
+    });
+
+    let releaseRequest!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    const slowBuyerApi: BuyerMarketplaceApiV2 = {
+      ...core.buyerApi(),
+      getBuyerReservationsV2: async (installationId) => {
+        await inFlight;
+        return core.buyerApi().getBuyerReservationsV2(installationId);
+      },
+    };
+    const source = jest
+      .fn<Promise<FeatureFlagsV2>, []>()
+      .mockResolvedValueOnce({ marketplaceMode: "pilot" });
+
+    function useCombined() {
+      const flags = useFeatureFlags();
+      const list = useBuyerReservationsV2("installation-a");
+      return { flags, list };
+    }
+
+    const { result } = renderHook(() => useCombined(), {
+      wrapper: makeWrapperWithSource(slowBuyerApi, core, scenario, source),
+    });
+    await waitFor(() => expect(result.current.list.isLoading).toBe(true));
+
+    source.mockResolvedValueOnce({ marketplaceMode: "demo" });
+    await act(async () => {
+      result.current.flags.reload();
+      await Promise.resolve();
+    });
+    await waitFor(() =>
+      expect(result.current.flags.flags.marketplaceMode).toBe("demo")
+    );
+
+    // The pilot request only answers now, after the buyer already left pilot
+    // mode. A late answer must never repopulate state the mode flip cleared.
+    await act(async () => {
+      releaseRequest();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.list.reservations).toEqual([]);
+    expect(result.current.list.isLoading).toBe(false);
   });
 });
