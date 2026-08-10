@@ -374,7 +374,7 @@ The raw pickup code is stored in SecureStore and never in ordinary logs or metad
 - Public reads expose no private stock, cost, supplier, staff, or exception data.
 - Pilot mode shows no seed offers.
 - Concurrency tests permit no over-reservation.
-- Stock corrections, price approvals, and offer publication are audited.
+- Stock corrections and offer publication are audited. Price approval is not audited separately in the beta, an offer's price is approved by the act of publishing it and is audited as that publication.
 - No fiscal or marked-goods write exists.
 - Expired offers are neither visible nor revived.
 - Retried commands are idempotent.

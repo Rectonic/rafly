@@ -24,6 +24,7 @@ const IMPORT_PATTERNS = [
 interface FileRecord {
   relativePath: string;
   targets: string[];
+  source: string;
 }
 
 function collectSourceFiles(dirAbsolutePath: string, out: string[]): void {
@@ -85,6 +86,7 @@ function loadFileRecords(): FileRecord[] {
       targets: rawSpecifiers.map((specifier) =>
         resolveSpecifier(specifier, absolutePath)
       ),
+      source,
     };
   });
 }
@@ -224,6 +226,75 @@ function checkContractsIsolationRule(files: FileRecord[]): string[] {
   return violations;
 }
 
+// Hard technical invariant 7 in docs/beta/SHARED_CONTEXT.md: no fiscal or
+// marked-goods write exists. Uzbek fiscal integration means an OFD operator, an
+// IKPU product classifier, and marked-goods reporting, all of which carry legal
+// consequences the beta has deliberately not signed up for. The invariant is
+// cheap to state and easy to break by accident, one helper named
+// buildIkpuPayload and the beta is writing into a regulated system.
+//
+// The rule is a token blocklist rather than anything clever. Word boundaries
+// keep it from firing on ordinary identifiers, ofData and listOfDishes do not
+// match \bofd\b. Nothing in the scanned tree matches today, so an allowlist
+// would be protection against a hypothetical, and the first real hit deserves
+// a human decision rather than a quiet entry in a list.
+const FISCAL_TOKEN_RULES: readonly { name: string; pattern: RegExp }[] = [
+  { name: "fiscal", pattern: /\bfiscal\b/gi },
+  { name: "ofd", pattern: /\bofd\b/gi },
+  { name: "ikpu", pattern: /\bikpu\b/gi },
+  { name: "marked goods", pattern: /\bmarked[\s_-]?goods\b/gi },
+];
+
+/**
+ * Splits camelCase and PascalCase so a token buried in an identifier still
+ * gets word boundaries. submitIkpuReceipt becomes submit Ikpu Receipt and is
+ * caught, while ofData becomes of Data and listOfDishes becomes list Of
+ * Dishes, neither of which contains the standalone token ofd.
+ */
+function separateWordBoundaries(source: string): string {
+  return source
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
+}
+
+// Outbound calls at all are worth naming next to a fiscal token, since the way
+// this invariant would actually break is a request to an operator endpoint.
+const OUTBOUND_CALL_PATTERN = /\b(?:fetch|axios)\s*[.(]/g;
+
+function checkFiscalTokenRule(files: FileRecord[]): string[] {
+  const violations: string[] = [];
+
+  for (const file of files) {
+    const scanned = separateWordBoundaries(file.source);
+    let mentionsFiscal = false;
+
+    for (const rule of FISCAL_TOKEN_RULES) {
+      rule.pattern.lastIndex = 0;
+      const matches = scanned.match(rule.pattern);
+      if (!matches) continue;
+
+      mentionsFiscal = true;
+      violations.push(
+        `[invariant 7, no fiscal or marked-goods write] ${file.relativePath} contains the forbidden token '${rule.name}' as ${[
+          ...new Set(matches),
+        ].join(", ")}`
+      );
+    }
+
+    OUTBOUND_CALL_PATTERN.lastIndex = 0;
+    const outbound = OUTBOUND_CALL_PATTERN.test(file.source);
+    if (!outbound) continue;
+
+    if (mentionsFiscal) {
+      violations.push(
+        `[invariant 7, no fiscal or marked-goods write] ${file.relativePath} makes an outbound call in a file that also names a fiscal system`
+      );
+    }
+  }
+
+  return violations;
+}
+
 function reportAndAssertEmpty(violations: string[]): void {
   if (violations.length > 0) {
     console.log(violations.join("\n"));
@@ -248,5 +319,47 @@ describe("architecture boundaries", () => {
 
   it("keeps lib/contracts free of imports from outside lib/contracts", () => {
     reportAndAssertEmpty(checkContractsIsolationRule(files));
+  });
+
+  it("keeps fiscal and marked-goods tokens out of the scanned source", () => {
+    reportAndAssertEmpty(checkFiscalTokenRule(files));
+  });
+
+  it("catches a fiscal token and a fiscal outbound call when one appears", () => {
+    // A blocklist that has never fired is indistinguishable from a blocklist
+    // that cannot fire, so the rule is run against a file that breaks it.
+    const planted: FileRecord[] = [
+      {
+        relativePath: "lib/seller/ofd-client.ts",
+        targets: [],
+        source: [
+          "export async function submitIkpuReceipt(payload: MarkedGoods) {",
+          "  return fetch('https://ofd.example/v1/receipts', { method: 'POST' });",
+          "}",
+        ].join("\n"),
+      },
+    ];
+
+    const violations = checkFiscalTokenRule(planted);
+
+    expect(violations.join("\n")).toContain("'ikpu'");
+    expect(violations.join("\n")).toContain("'ofd'");
+    expect(violations.join("\n")).toContain("outbound call");
+  });
+
+  it("does not fire on ordinary identifiers that merely contain the letters", () => {
+    const innocent: FileRecord[] = [
+      {
+        relativePath: "lib/buyer/formatting.ts",
+        targets: [],
+        source: [
+          "const listOfDishes = ofData.map((entry) => entry.name);",
+          "const outOfDate = ofDefault ?? 'none';",
+          "await fetch('https://example.test/offers');",
+        ].join("\n"),
+      },
+    ];
+
+    expect(checkFiscalTokenRule(innocent)).toEqual([]);
   });
 });
