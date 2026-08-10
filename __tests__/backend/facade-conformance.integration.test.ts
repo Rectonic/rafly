@@ -111,6 +111,16 @@ const SKIPPED_BLOCKS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
+ * Every SKIPPED_BLOCKS name that registerWithSkips actually saw and skipped,
+ * filled in during registration below. A name that never matches a real
+ * block, because a conformance module renamed or removed it, would otherwise
+ * sit in SKIPPED_BLOCKS forever looking like protection while skipping
+ * nothing. The harness coverage block at the bottom of this file checks this
+ * set against SKIPPED_BLOCKS once registration has run.
+ */
+const matchedSkipNames = new Set<string>();
+
+/**
  * Registers a conformance suite with the named blocks skipped.
  *
  * The global it is swapped for the duration of the registration call only.
@@ -132,6 +142,7 @@ function registerWithSkips(register: () => void): void {
     timeout?: number
   ) => {
     if (typeof name === "string" && SKIPPED_BLOCKS.has(name)) {
+      matchedSkipNames.add(name);
       return realIt.skip(name, fn, timeout);
     }
     return realIt(name, fn, timeout);
@@ -447,7 +458,7 @@ d("Supabase facades against the local stack", () => {
           .order("created_at", { ascending: true }),
         service
           .from("outbox_events")
-          .select("id, event_type, payload")
+          .select("id, event_type, payload, created_at")
           .gt("id", outboxWatermark)
           .order("id", { ascending: true }),
       ]);
@@ -475,6 +486,7 @@ d("Supabase facades against the local stack", () => {
         (outbox.data ?? []) as {
           event_type: string;
           payload: { storeId?: string } | null;
+          created_at: string;
         }[]
       )
         .filter(
@@ -485,7 +497,11 @@ d("Supabase facades against the local stack", () => {
         .map((row) => ({
           name: row.event_type,
           storeId: String(row.payload?.storeId),
-          at: now,
+          // The row's own timestamp, not the scenario clock. The two skipped
+          // blocks that assert at equals scenario.now stay skipped, a real
+          // clock cannot satisfy that, but every other consumer of this list
+          // now reads the timestamp the database actually stored.
+          at: new Date(row.created_at).toISOString(),
         }));
     }
 
@@ -528,6 +544,17 @@ d("Supabase facades against the local stack", () => {
         expect(name.length).toBeGreaterThan(0);
         expect(reason.length).toBeGreaterThan(20);
       }
+    });
+
+    it("skips exactly the blocks it declares, no stale or silently unmatched names", () => {
+      // Registration above already ran by the time this body executes, it
+      // happens synchronously while the describe callbacks are collected.
+      // Every name in SKIPPED_BLOCKS has to have matched a real it call in
+      // one of the two conformance modules, or the skip is not doing
+      // anything and the block is quietly running unskipped, or gone.
+      expect([...matchedSkipNames].sort()).toEqual(
+        [...SKIPPED_BLOCKS.keys()].sort()
+      );
     });
   });
 });

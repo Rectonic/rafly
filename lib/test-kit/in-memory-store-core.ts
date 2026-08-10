@@ -1486,5 +1486,7 @@ export function computeDiscountPercent(
   if (typeof referencePriceUzs !== "number" || referencePriceUzs <= 0) {
     return null;
   }
-  return Math.round((1 - offerPriceUzs / referencePriceUzs) * 100);
+  return Math.round(
+    ((referencePriceUzs - offerPriceUzs) * 100) / referencePriceUzs
+  );
 }

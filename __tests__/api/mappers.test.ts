@@ -11,6 +11,7 @@
 import {
   PUBLIC_OFFER_TIMEZONE,
   commandErrorFrom,
+  computeDiscountPercent,
   errorCodeFrom,
   mapExceptionRow,
   mapInventoryRow,
@@ -164,6 +165,22 @@ describe("toStableUuid", () => {
     expect(toStableUuid("count-session-1")).not.toBe(
       toStableUuid("count-session-2")
     );
+  });
+});
+
+describe("computeDiscountPercent", () => {
+  it("pins the 1700 against 4000 boundary to 58, the exact numeric answer the SQL view also produces", () => {
+    // Subtracting the price ratio from one before multiplying by 100 loses
+    // precision in doubles right at this pair, landing on 57. Multiplying
+    // the difference by 100 before dividing once keeps the boundary exact.
+    expect(computeDiscountPercent(1700, 4000)).toBe(58);
+  });
+
+  it("still matches the plain cases the mappers already exercise", () => {
+    expect(computeDiscountPercent(20000, 50000)).toBe(60);
+    expect(computeDiscountPercent(20000, 30000)).toBe(33);
+    expect(computeDiscountPercent(20000, null)).toBeNull();
+    expect(computeDiscountPercent(20000, 0)).toBeNull();
   });
 });
 
@@ -562,6 +579,26 @@ describe("errorCodeFrom", () => {
       "not_found"
     );
   });
+
+  const pgCodeTable: [string, string, string][] = [
+    [
+      "22P02",
+      "forbidden: a message no caller actually writes for this code",
+      "not_found",
+    ],
+    [
+      "42501",
+      "permission denied for function list_store_offers_v2",
+      "forbidden",
+    ],
+  ];
+
+  it.each(pgCodeTable)(
+    "lets the postgres code %s win over the message, mapping to %s",
+    (code, message, expected) => {
+      expect(errorCodeFrom({ code, message })).toBe(expected);
+    }
+  );
 
   it("maps an unknown prefix to unknown", () => {
     expect(errorCodeFrom({ message: "boom: something exploded" })).toBe(

@@ -17,9 +17,9 @@
 --   which reads as "this store has nothing" rather than "this is not your
 --   store". The facade contract distinguishes the two.
 --
--- Every function here is read only. None of them writes a row, and the lazy
--- expiry sweep the offer list calls is the same one every other list RPC
--- already calls.
+-- No function here writes the model it reports, two of them call the shared
+-- lazy sweep, which can expire offers and release holds before the read
+-- runs. That sweep is the same one every other list RPC already calls.
 
 -- All offers of one store in every status, newest first.
 --

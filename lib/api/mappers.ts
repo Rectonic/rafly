@@ -102,6 +102,12 @@ function toNumber(value: number | string | null | undefined): number {
  * The public discount rule, kept identical to the expression in
  * marketplace_offers_v2_public and to computeDiscountPercent in the fake. A
  * discount only exists when a positive reference price was published.
+ *
+ * The subtraction happens before the division on purpose. Computing
+ * offerPriceUzs / referencePriceUzs first and subtracting that fraction from
+ * one loses precision in doubles right at the boundary Math.round decides on,
+ * for example 1700 against 4000 rounds to 57 that way while the exact integer
+ * form below and the numeric SQL view both land on 58.
  */
 export function computeDiscountPercent(
   offerPriceUzs: number,
@@ -110,7 +116,9 @@ export function computeDiscountPercent(
   if (typeof referencePriceUzs !== "number" || referencePriceUzs <= 0) {
     return null;
   }
-  return Math.round((1 - offerPriceUzs / referencePriceUzs) * 100);
+  return Math.round(
+    ((referencePriceUzs - offerPriceUzs) * 100) / referencePriceUzs
+  );
 }
 
 export interface PublicOfferRow {
@@ -478,6 +486,15 @@ const NETWORK_PATTERN =
 // as an unexplained failure.
 const INVALID_TEXT_REPRESENTATION = "22P02";
 
+// Postgres reports a missing grant, such as anon calling an RPC that is only
+// granted to authenticated, as 42501 with a message that also carries no
+// contract prefix, for example "permission denied for function
+// list_store_offers_v2". That failure means the caller may never do this, not
+// that something went wrong, so it reads as forbidden and not retryable
+// rather than falling through to unknown, which the caller would be entitled
+// to retry.
+const INSUFFICIENT_PRIVILEGE = "42501";
+
 function readMessage(error: unknown): string {
   if (typeof error === "string") {
     return error;
@@ -516,6 +533,9 @@ export function errorCodeFrom(error: unknown): CommandErrorCode {
     /invalid input syntax for type uuid/i.test(message)
   ) {
     return "not_found";
+  }
+  if (code === INSUFFICIENT_PRIVILEGE) {
+    return "forbidden";
   }
 
   const colonAt = message.indexOf(":");

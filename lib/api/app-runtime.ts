@@ -25,7 +25,16 @@ import { makeSupabaseBuyerApi } from "@/lib/api/supabase-buyer-api";
 import { makeSupabaseSellerApi } from "@/lib/api/supabase-seller-api";
 import type { FeatureFlagsV2 } from "@/lib/contracts";
 import { supabase } from "@/lib/supabase";
-import { InMemoryStoreCore, makeDefaultScenario } from "@/lib/test-kit";
+// Type only. The value import is required lazily inside makeDemoRuntime
+// below, so a pilot build where supabase is configured, and therefore never
+// calls that function, never evaluates lib/test-kit at all. import type is
+// erased entirely at compile time and carries no runtime module edge, real
+// require() calls are what a bundler's dependency graph sees.
+import type {
+  DefaultScenario,
+  InMemoryStoreCore,
+  makeDefaultScenario,
+} from "@/lib/test-kit";
 
 export interface AppRuntimeV2 {
   buyerApi: BuyerMarketplaceApiV2;
@@ -36,8 +45,18 @@ export interface AppRuntimeV2 {
 }
 
 function makeDemoRuntime(): AppRuntimeV2 {
-  const core = new InMemoryStoreCore();
-  const scenario = makeDefaultScenario(core);
+  // Lazy required, not imported at module scope. InMemoryStoreCore is about
+  // 45KB of test scaffolding that only a build with no supabase env has any
+  // use for, and this is the one call site that fake ever gets constructed
+  // from. Requiring it here instead of at the top of the file keeps that
+  // cost off a pilot launch that never reaches this function.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- lazy on purpose, see above
+  const testKit = require("@/lib/test-kit") as {
+    InMemoryStoreCore: new () => InMemoryStoreCore;
+    makeDefaultScenario: typeof makeDefaultScenario;
+  };
+  const core = new testKit.InMemoryStoreCore();
+  const scenario: DefaultScenario = testKit.makeDefaultScenario(core);
 
   return {
     buyerApi: core.buyerApi(),
