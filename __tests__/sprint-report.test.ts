@@ -1,7 +1,6 @@
-/* eslint-env jest */
-const { join } = require("node:path");
-const { pathToFileURL } = require("node:url");
-const { spawnSync } = require("node:child_process");
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
 
 describe("formatSprintReport", () => {
   it("compares catalog snapshots and reports sprint activity deltas", () => {
