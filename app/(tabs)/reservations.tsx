@@ -10,6 +10,8 @@ import type {
   BuyerReservation,
   BuyerReservationStatus,
 } from "@/types/reservation";
+import { ReservationsListV2 } from "@/components/buyer/ReservationsListV2";
+import { useIsPilotMode } from "@/lib/buyer/optional-context";
 
 const STATUS_FILTERS: BuyerReservationStatus[] = [
   "active",
@@ -66,6 +68,10 @@ export default function ReservationsScreen() {
   } = useReservationHistory();
   const [activeStatus, setActiveStatus] =
     useState<BuyerReservationStatus>("active");
+  // Called unconditionally alongside every v1 hook above so the hook count
+  // this component calls never changes across the fail closed to pilot
+  // transition, only the returned JSX branches on isPilot.
+  const isPilot = useIsPilotMode();
 
   const visibleReservations = useMemo(
     () =>
@@ -74,6 +80,10 @@ export default function ReservationsScreen() {
       ),
     [activeStatus, reservations]
   );
+
+  if (isPilot) {
+    return <ReservationsListV2 />;
+  }
 
   return (
     <ScreenScrollView

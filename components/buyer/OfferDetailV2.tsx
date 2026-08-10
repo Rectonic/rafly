@@ -1,15 +1,27 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { useT } from "@/i18n";
 import { useFavorites, useToggleFavorite } from "@/lib/favorites-store";
 import { useLocale } from "@/lib/locale-store";
-import type { MarketplaceOfferV2 } from "@/lib/contracts";
+import type { CommandErrorCode, MarketplaceOfferV2 } from "@/lib/contracts";
 
-import { formatFullPickupWindow, formatFullTimestamp, formatUzs } from "@/lib/buyer/formatting";
+import { useInstallationId } from "@/lib/buyer/installation-id";
+import {
+  formatFullPickupWindow,
+  formatFullTimestamp,
+  formatUzs,
+} from "@/lib/buyer/formatting";
 import { useBuyerMarketplaceOfferV2 } from "@/lib/buyer/marketplace-v2-store";
+import {
+  useBuyerReservationsV2,
+  useCancelReservationV2,
+  useReserveOfferV2,
+} from "@/lib/buyer/reservations-v2-store";
+import { loadPickupCodeV2 } from "@/lib/buyer/secure-pickup-code";
 
 type OfferDetailV2Props = {
   offerId: string | undefined;
@@ -17,11 +29,11 @@ type OfferDetailV2Props = {
 
 /**
  * Pilot mode offer detail. Reads only the public MarketplaceOfferV2 contract
- * through useBuyerMarketplaceOfferV2, no seed data and no v1 stores are
- * touched here. Reservation submission is added in a later slice, this
- * component already renders the correct enabled, sold out, expired, paused,
- * and withdrawn button states so the buyer never sees a reservable looking
- * button for an offer that cannot actually be reserved.
+ * and the buyer's own reservations, no seed data and no v1 stores are
+ * touched here. Every hook below runs on every render regardless of what
+ * the offer fetch has returned so far, only the JSX branches, an offer
+ * arriving after a loading render must never change how many hooks this
+ * component calls.
  */
 export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
   const t = useT();
@@ -29,7 +41,18 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
   const router = useRouter();
   const favorites = useFavorites();
   const toggleFavorite = useToggleFavorite();
+  const installationId = useInstallationId();
   const { offer, isLoading, error, refresh } = useBuyerMarketplaceOfferV2(offerId);
+  const {
+    reservations,
+    refresh: refreshReservations,
+  } = useBuyerReservationsV2(installationId);
+  const reserveHook = useReserveOfferV2(installationId, {
+    onOfferChanged: () => void refresh(),
+  });
+  const cancelHook = useCancelReservationV2(installationId);
+  const [revealedCode, setRevealedCode] = useState<string | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
 
   if (!offer && isLoading) {
     return (
@@ -80,6 +103,57 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
   const isFavorite = favorites.includes(offer.id);
   const availability = describeAvailability(offer, t.buyerV2.offerDetail);
   const canReserve = offer.status === "live" && offer.quantityAvailable > 0;
+
+  const existingReservation =
+    reservations.find((candidate) => candidate.offerId === offer.id) ?? null;
+  const displayReservation = reserveHook.reservation ?? existingReservation;
+  const displayPickupCode = reserveHook.pickupCode ?? revealedCode;
+  const reserveErrorMessage = reserveHook.error
+    ? describeReserveError(reserveHook.error.code, t.buyerV2.reservation)
+    : null;
+  const isCancelling =
+    displayReservation != null &&
+    cancelHook.statusFor(displayReservation.id) === "in-flight";
+
+  const handleReveal = async () => {
+    if (!displayReservation || isRevealing) {
+      return;
+    }
+    setIsRevealing(true);
+    const code = await loadPickupCodeV2(displayReservation.id);
+    setRevealedCode(code);
+    setIsRevealing(false);
+  };
+
+  const handleCancelPress = () => {
+    if (!displayReservation) {
+      return;
+    }
+    const reservationId = displayReservation.id;
+    Alert.alert(
+      t.buyerV2.reservation.cancelConfirmTitle,
+      t.buyerV2.reservation.cancelConfirmMessage,
+      [
+        { style: "cancel", text: t.buyerV2.reservation.cancelConfirmDismiss },
+        {
+          onPress: () => {
+            // The reservations list is a point in time snapshot from the
+            // last fetch, cancelHook only tracks the action's own status,
+            // so the terminal status the buyer sees still needs a refetch
+            // after a successful cancel to stop showing the stale held
+            // reservation from that snapshot.
+            void cancelHook.cancel(reservationId).then((result) => {
+              if (result?.ok) {
+                void refreshReservations();
+              }
+            });
+          },
+          style: "destructive",
+          text: t.buyerV2.reservation.cancelConfirmConfirm,
+        },
+      ]
+    );
+  };
 
   return (
     <ScreenScrollView
@@ -187,13 +261,99 @@ export function OfferDetailV2({ offerId }: OfferDetailV2Props) {
         </Text>
       </Pressable>
 
-      <Pressable
-        disabled={!canReserve}
-        style={[styles.primaryButton, !canReserve ? styles.disabledButton : null]}
-        testID="offer-detail-v2-reserve-button"
-      >
-        <Text style={styles.primaryText}>{t.buyerV2.offerDetail.reserveNow}</Text>
-      </Pressable>
+      {displayReservation ? (
+        <View style={styles.reservationPanel} testID="offer-detail-v2-reservation-panel">
+          <Text
+            style={styles.reservationStatusLabel}
+            testID="offer-detail-v2-reservation-status"
+          >
+            {t.buyerV2.reservation.statusLabel[displayReservation.status]}
+          </Text>
+          <Text style={styles.meta}>
+            {t.buyerV2.reservation.statusDescription[displayReservation.status]}
+          </Text>
+
+          <Text style={styles.reservationLabel}>{t.buyerV2.reservation.pickupCode}</Text>
+          {displayPickupCode ? (
+            <Text
+              style={styles.pickupCode}
+              testID="offer-detail-v2-pickup-code"
+            >
+              {displayPickupCode}
+            </Text>
+          ) : (
+            <Text
+              style={styles.pickupCodeHint}
+              testID="offer-detail-v2-pickup-code-hint"
+            >
+              {t.buyerV2.reservation.pickupCodeHint(displayReservation.pickupCodeHint)}
+            </Text>
+          )}
+          {!displayPickupCode ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={isRevealing}
+              onPress={() => void handleReveal()}
+              style={styles.secondaryButton}
+              testID="offer-detail-v2-reveal-code-button"
+            >
+              <Text style={styles.secondaryText}>
+                {t.buyerV2.reservation.showPickupCode}
+              </Text>
+            </Pressable>
+          ) : null}
+          <Text style={styles.metaSubtle}>{t.buyerV2.reservation.secureRecoveryNote}</Text>
+
+          {displayReservation.status === "held" ? (
+            <>
+              <Text style={styles.meta} testID="offer-detail-v2-hold-expires">
+                {t.buyerV2.reservation.holdExpiresAt(
+                  formatFullTimestamp(displayReservation.holdExpiresAt, locale, offer.timezone)
+                )}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                disabled={isCancelling}
+                onPress={handleCancelPress}
+                style={[styles.secondaryButton, isCancelling ? styles.disabledButton : null]}
+                testID="offer-detail-v2-cancel-button"
+              >
+                <Text style={styles.secondaryText}>
+                  {isCancelling
+                    ? t.buyerV2.reservation.cancelling
+                    : t.buyerV2.reservation.cancel}
+                </Text>
+              </Pressable>
+            </>
+          ) : null}
+        </View>
+      ) : (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!canReserve || reserveHook.status === "in-flight"}
+            onPress={() => void reserveHook.reserve(offer)}
+            style={[
+              styles.primaryButton,
+              !canReserve || reserveHook.status === "in-flight"
+                ? styles.disabledButton
+                : null,
+            ]}
+            testID="offer-detail-v2-reserve-button"
+          >
+            <Text style={styles.primaryText}>
+              {reserveHook.status === "in-flight"
+                ? t.buyerV2.offerDetail.reserving
+                : t.buyerV2.offerDetail.reserveNow}
+            </Text>
+          </Pressable>
+          {reserveErrorMessage ? (
+            <Text style={styles.errorText} testID="offer-detail-v2-reserve-error">
+              {reserveErrorMessage}
+            </Text>
+          ) : null}
+        </>
+      )}
     </ScreenScrollView>
   );
 }
@@ -219,6 +379,30 @@ function describeAvailability(
       return { label: copy.withdrawn, tone: "warning" };
     default:
       return { label: copy.quantityAvailable(offer.quantityAvailable), tone: "default" };
+  }
+}
+
+function describeReserveError(
+  code: CommandErrorCode,
+  copy: {
+    soldOutMessage: string;
+    offerNotLiveMessage: string;
+    staleVersionMessage: string;
+    networkErrorMessage: string;
+    genericErrorMessage: string;
+  }
+): string {
+  switch (code) {
+    case "sold_out":
+      return copy.soldOutMessage;
+    case "offer_not_live":
+      return copy.offerNotLiveMessage;
+    case "version_conflict":
+      return copy.staleVersionMessage;
+    case "network_error":
+      return copy.networkErrorMessage;
+    default:
+      return copy.genericErrorMessage;
   }
 }
 
@@ -378,6 +562,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textDecorationLine: "line-through",
   },
+  pickupCode: {
+    color: "#111827",
+    fontSize: 22,
+    fontWeight: "800",
+  },
+  pickupCodeHint: {
+    color: "#4B5563",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   price: {
     color: "#16C79A",
     fontSize: 20,
@@ -398,6 +592,27 @@ const styles = StyleSheet.create({
   primaryText: {
     color: "#FFFFFF",
     fontWeight: "700",
+  },
+  reservationLabel: {
+    color: "#6B7280",
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
+  reservationPanel: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+    marginTop: 12,
+    padding: 16,
+  },
+  reservationStatusLabel: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "800",
   },
   restaurant: {
     color: "#6B7280",

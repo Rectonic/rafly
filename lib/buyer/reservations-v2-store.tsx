@@ -181,3 +181,83 @@ export function useBuyerReservationsV2(
 
   return { error, isLoading, refresh, reservations };
 }
+
+export type CancelActionStatus = "idle" | "in-flight" | "cancelled" | "error";
+
+export interface UseCancelReservationV2Result {
+  isPilot: boolean;
+  cancel: (reservationId: string) => Promise<Result<BuyerReservationV2> | null>;
+  statusFor: (reservationId: string) => CancelActionStatus;
+  errorFor: (reservationId: string) => CommandError | null;
+}
+
+/**
+ * Buyer cancellation, keyed per reservation id so one hook instance can
+ * safely back a reservations list where several reservations might be
+ * cancellable independently, as well as the single reservation an offer
+ * detail screen shows. Cancelling is idempotent at the server, one
+ * idempotencyKey per reservation is generated on the first attempt and
+ * reused across retries until it succeeds, a duplicate tap on the same
+ * reservation while a cancel is already in flight is dropped. Cancelling an
+ * already terminal reservation is rejected by the server with invalid_state
+ * rather than silently replaying a fabricated success, that rejection is
+ * itself the safe behavior, repeating the action never corrupts state.
+ */
+export function useCancelReservationV2(
+  installationId: string | null
+): UseCancelReservationV2Result {
+  const api = useOptionalBuyerApi();
+  const isPilot = useIsPilotMode();
+
+  const idempotencyKeysRef = useRef(new Map<string, string>());
+  const inFlightRef = useRef(new Set<string>());
+  const [statusMap, setStatusMap] = useState<Record<string, CancelActionStatus>>({});
+  const [errorMap, setErrorMap] = useState<Record<string, CommandError | null>>({});
+
+  const cancel = useCallback(
+    async (reservationId: string): Promise<Result<BuyerReservationV2> | null> => {
+      if (!api || !isPilot || !installationId || inFlightRef.current.has(reservationId)) {
+        return null;
+      }
+
+      inFlightRef.current.add(reservationId);
+      let idempotencyKey = idempotencyKeysRef.current.get(reservationId);
+      if (!idempotencyKey) {
+        idempotencyKey = generateOpaqueId("cancel");
+        idempotencyKeysRef.current.set(reservationId, idempotencyKey);
+      }
+      setStatusMap((current) => ({ ...current, [reservationId]: "in-flight" }));
+      setErrorMap((current) => ({ ...current, [reservationId]: null }));
+
+      const result = await api.cancelReservationV2({
+        idempotencyKey,
+        installationId,
+        reservationId,
+      });
+
+      inFlightRef.current.delete(reservationId);
+
+      if (result.ok) {
+        setStatusMap((current) => ({ ...current, [reservationId]: "cancelled" }));
+        idempotencyKeysRef.current.delete(reservationId);
+      } else {
+        setStatusMap((current) => ({ ...current, [reservationId]: "error" }));
+        setErrorMap((current) => ({ ...current, [reservationId]: result.error }));
+      }
+
+      return result;
+    },
+    [api, installationId, isPilot]
+  );
+
+  const statusFor = useCallback(
+    (reservationId: string) => statusMap[reservationId] ?? "idle",
+    [statusMap]
+  );
+  const errorFor = useCallback(
+    (reservationId: string) => errorMap[reservationId] ?? null,
+    [errorMap]
+  );
+
+  return { cancel, errorFor, isPilot, statusFor };
+}

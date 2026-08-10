@@ -67,6 +67,22 @@ jest.mock("@/lib/reservations-store", () => ({
   useRetryReservationSync: () => mockRetryReservationSync,
 }));
 
+// app/offer/[id].tsx imports components/buyer/OfferDetailV2 for the pilot
+// mode branch, whose module graph reaches lib/buyer/installation-id.ts and
+// lib/buyer/secure-pickup-code.ts. Neither ApiProvider nor
+// FeatureFlagsProvider is mounted in this suite, so isPilot stays false and
+// none of that code ever runs, these two native modules only need to
+// resolve at import time rather than crash the test environment.
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock("expo-secure-store", () => ({
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+  setItemAsync: jest.fn(() => Promise.resolve()),
+}));
+
 describe("OfferDetailScreen", () => {
   const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(jest.fn());
 

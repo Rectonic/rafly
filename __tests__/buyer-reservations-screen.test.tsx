@@ -40,6 +40,27 @@ jest.mock("@/lib/reservations-store", () => ({
   useReservationHistory: () => mockReservationsState,
 }));
 
+// app/(tabs)/reservations.tsx now imports components/buyer/ReservationsListV2
+// for the pilot mode branch. Neither ApiProvider nor FeatureFlagsProvider is
+// mounted in this suite, so isPilot stays false and that component never
+// renders, but its module graph (expo-router, AsyncStorage, SecureStore)
+// still has to resolve at import time.
+jest.mock("expo-router", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+  }),
+}));
+
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock("expo-secure-store", () => ({
+  getItemAsync: jest.fn(() => Promise.resolve(null)),
+  setItemAsync: jest.fn(() => Promise.resolve()),
+}));
+
 const activeReservation: BuyerReservation = {
   codeHint: "3456",
   createdAt: "2026-05-28T12:00:00.000Z",

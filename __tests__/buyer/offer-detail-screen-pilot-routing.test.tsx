@@ -63,6 +63,25 @@ jest.mock("@/lib/reservations-store", () => ({
   useRetryReservationSync: () => jest.fn(),
 }));
 
+const mockAsyncStorage = new Map<string, string>();
+const mockSecureStore = new Map<string, string>();
+
+jest.mock("@react-native-async-storage/async-storage", () => ({
+  getItem: jest.fn((key: string) => Promise.resolve(mockAsyncStorage.get(key) ?? null)),
+  setItem: jest.fn((key: string, value: string) => {
+    mockAsyncStorage.set(key, value);
+    return Promise.resolve();
+  }),
+}));
+
+jest.mock("expo-secure-store", () => ({
+  getItemAsync: jest.fn((key: string) => Promise.resolve(mockSecureStore.get(key) ?? null)),
+  setItemAsync: jest.fn((key: string, value: string) => {
+    mockSecureStore.set(key, value);
+    return Promise.resolve();
+  }),
+}));
+
 function publishInputFor(scenario: DefaultScenario): PublishOfferV2Input {
   return {
     storeId: scenario.storeId,
