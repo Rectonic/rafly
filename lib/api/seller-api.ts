@@ -16,6 +16,7 @@ import type {
 
 export interface SellerStoreApiV2 {
   getMyStoreMembershipsV2(): Promise<Result<StoreMembershipV2[]>>
+  listStoreOffersV2(storeId: string): Promise<Result<MarketplaceOfferV2[]>>
   listStoreInventoryV2(storeId: string): Promise<Result<InventorySummaryV2[]>>
   recordInventoryCountV2(input: RecordInventoryCountV2Input): Promise<Result<StockAdjustmentProposalV2[]>>
   approveStockAdjustmentV2(input: ApproveStockAdjustmentV2Input): Promise<Result<StockAdjustmentProposalV2>>

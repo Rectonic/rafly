@@ -718,6 +718,73 @@ export function runSellerApiConformance(
       });
     });
 
+    describe("listStoreOffersV2", () => {
+      it("lists a member's offers in every status, newest first, including paused", async () => {
+        const first = await publishOffer(harness);
+        const second = await publishOffer(harness, {
+          idempotencyKey: "publish-key-2",
+          title: "Second rescue box",
+        });
+        expectOk(
+          await manager.pauseOfferV2({
+            storeId: harness.scenario.storeId,
+            offerId: second.id,
+            idempotencyKey: "pause-key-1",
+            expectedVersion: second.version,
+          })
+        );
+
+        const offers = expectOk(
+          await staff.listStoreOffersV2(harness.scenario.storeId)
+        );
+
+        expect(offers.map((offer) => offer.id)).toEqual([second.id, first.id]);
+        expect(offers[0].status).toBe("paused");
+        expect(offers[1].status).toBe("live");
+      });
+
+      it("refuses a non member with forbidden", async () => {
+        await publishOffer(harness);
+
+        expectErrorCode(
+          await stranger.listStoreOffersV2(harness.scenario.storeId),
+          "forbidden"
+        );
+      });
+
+      it("never returns offers of another store to a member of that other store", async () => {
+        await publishOffer(harness);
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+
+        expectErrorCode(
+          await otherOwner.listStoreOffersV2(harness.scenario.storeId),
+          "forbidden"
+        );
+        expectErrorCode(
+          await manager.listStoreOffersV2(harness.scenario.otherStoreId),
+          "forbidden"
+        );
+      });
+
+      it("expires a past pickup end offer in the seller list while the buyer marketplace list omits it", async () => {
+        const offer = await publishOffer(harness);
+
+        harness.setNow(isoPlusMinutes(harness.scenario.pickupEnd, 60));
+
+        const sellerOffers = expectOk(
+          await manager.listStoreOffersV2(harness.scenario.storeId)
+        );
+        expect(sellerOffers).toEqual([
+          expect.objectContaining({ id: offer.id, status: "expired" }),
+        ]);
+
+        const buyer = harness.buyerApi();
+        expect(expectOk(await buyer.listMarketplaceOffersV2())).toEqual([]);
+      });
+    });
+
     describe("listSellerPickupsV2", () => {
       it("lists the store pickups newest first with only the code hint", async () => {
         const offer = await publishOffer(harness);

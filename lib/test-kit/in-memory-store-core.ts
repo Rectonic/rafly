@@ -301,6 +301,8 @@ export class InMemoryStoreCore {
     return {
       getMyStoreMembershipsV2: async () =>
         this.guard(() => this.getMyStoreMemberships(userId)),
+      listStoreOffersV2: async (storeId) =>
+        this.guard(() => this.listStoreOffers(userId, storeId)),
       listStoreInventoryV2: async (storeId) =>
         this.guard(() => this.listStoreInventory(userId, storeId)),
       recordInventoryCountV2: async (input) =>
@@ -532,6 +534,26 @@ export class InMemoryStoreCore {
       });
     }
     return ok(mine);
+  }
+
+  /**
+   * Every offer the store has ever published, in every status, newest first.
+   * Membership alone is enough, any role may read this list. This is the read
+   * a seller needs before they can pause a live offer, since pauseOfferV2
+   * takes an offerId the seller has to find first.
+   */
+  private listStoreOffers(
+    userId: string,
+    storeId: string
+  ): Result<MarketplaceOfferV2[]> {
+    this.expireStaleOffers();
+    const access = this.requireRole(storeId, userId);
+    if (!access.ok) return access;
+
+    const mine = [...this.offers.values()]
+      .filter((offer) => offer.storeId === storeId)
+      .reverse();
+    return ok(mine.map((offer) => this.projectOffer(offer)));
   }
 
   private listStoreInventory(
