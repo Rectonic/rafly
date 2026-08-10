@@ -6,6 +6,15 @@
  * screen has confirmed Shop Seller beta access through
  * useStoreMembershipV2.
  */
+function pluralRu(n: number, one: string, few: string, many: string) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 14) return many;
+  if (mod10 === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4) return few;
+  return many;
+}
+
 export interface SellerTranslations {
   access: {
     loading: string;
@@ -25,6 +34,29 @@ export interface SellerTranslations {
     manager: string;
     owner: string;
     operator: string;
+  };
+  inventory: {
+    title: string;
+    itemCount: (n: number) => string;
+    loadingItems: string;
+    emptyTitle: string;
+    emptyHint: string;
+    errorTitle: string;
+    retry: string;
+    confidenceHigh: string;
+    confidenceMedium: string;
+    confidenceLow: string;
+    lastVerified: (timestamp: string) => string;
+    neverVerified: string;
+    barcodeLabel: (code: string) => string;
+    expiryLabel: (date: string) => string;
+    onHandLabel: (n: number) => string;
+    maxOfferableLabel: (n: number) => string;
+    exceptionsSummary: (n: number) => string;
+    noExceptions: string;
+    exceptionActionButton: string;
+    recordCountButton: string;
+    publishButton: string;
   };
 }
 
@@ -49,6 +81,32 @@ export const sellerEn: SellerTranslations = {
     owner: "Owner",
     operator: "Operator",
   },
+  inventory: {
+    title: "Shop Seller beta inventory",
+    itemCount: (n) => `${n} product${n === 1 ? "" : "s"} tracked`,
+    loadingItems: "Loading inventory...",
+    emptyTitle: "No tracked products yet",
+    emptyHint: "Products appear here after a canonical import or manual entry.",
+    errorTitle: "Unable to load inventory",
+    retry: "Retry",
+    confidenceHigh: "High confidence",
+    confidenceMedium: "Medium confidence",
+    confidenceLow: "Low confidence",
+    lastVerified: (timestamp) => `Verified ${timestamp}`,
+    neverVerified: "Never verified",
+    barcodeLabel: (code) => `Barcode ${code}`,
+    expiryLabel: (date) => `Expires ${date}`,
+    onHandLabel: (n) => `${n} on hand`,
+    maxOfferableLabel: (n) => `Up to ${n} offerable`,
+    exceptionsSummary: (n) =>
+      n === 0
+        ? "No open exceptions"
+        : `${n} item${n === 1 ? "" : "s"} need${n === 1 ? "s" : ""} attention`,
+    noExceptions: "No open exceptions",
+    exceptionActionButton: "Recount",
+    recordCountButton: "Record a count",
+    publishButton: "New offer",
+  },
 };
 
 export const sellerRu: SellerTranslations = {
@@ -71,5 +129,31 @@ export const sellerRu: SellerTranslations = {
     manager: "Менеджер",
     owner: "Владелец",
     operator: "Оператор",
+  },
+  inventory: {
+    title: "Инвентарь бета-версии для магазинов",
+    itemCount: (n) => `${n} ${pluralRu(n, "товар", "товара", "товаров")} на учёте`,
+    loadingItems: "Загрузка инвентаря...",
+    emptyTitle: "Товары ещё не добавлены",
+    emptyHint: "Товары появятся здесь после импорта или ручного ввода.",
+    errorTitle: "Не удалось загрузить инвентарь",
+    retry: "Повторить",
+    confidenceHigh: "Высокая уверенность",
+    confidenceMedium: "Средняя уверенность",
+    confidenceLow: "Низкая уверенность",
+    lastVerified: (timestamp) => `Проверено ${timestamp}`,
+    neverVerified: "Ещё не проверено",
+    barcodeLabel: (code) => `Штрих-код ${code}`,
+    expiryLabel: (date) => `Истекает ${date}`,
+    onHandLabel: (n) => `${n} в наличии`,
+    maxOfferableLabel: (n) => `Доступно к продаже: ${n}`,
+    exceptionsSummary: (n) =>
+      n === 0
+        ? "Нет открытых расхождений"
+        : `${n} ${pluralRu(n, "товар требует", "товара требуют", "товаров требуют")} внимания`,
+    noExceptions: "Нет открытых расхождений",
+    exceptionActionButton: "Пересчитать",
+    recordCountButton: "Записать пересчёт",
+    publishButton: "Новое предложение",
   },
 };

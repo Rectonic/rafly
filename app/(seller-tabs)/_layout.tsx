@@ -85,6 +85,13 @@ export default function SellerTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="inventory-v2"
+        options={{
+          href: null,
+          title: t.sellerV2.inventory.title,
+        }}
+      />
+      <Tabs.Screen
         name="orders"
         options={{
           tabBarButtonTestID: "seller-tab-orders",
