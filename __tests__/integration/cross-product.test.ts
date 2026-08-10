@@ -665,7 +665,12 @@ describe("Cross product integration (fake backed)", () => {
     expect(feed.queryByText("Should never leak into demo")).toBeNull();
     feed.unmount();
 
+    // A real seed id favorited in demo mode must actually render its seed
+    // content, not merely fail to show the live offer, proving demo mode
+    // still serves seed supply rather than an empty pilot-style feed.
+    mockFavorites = ["1"];
     const favorites = await renderScreen(FavoritesScreen, buyerApi, manager, demoSource);
+    await waitFor(() => expect(favorites.getByText("Surprise Bakery Bag")).toBeTruthy());
     expect(favorites.queryByText("Should never leak into demo")).toBeNull();
     favorites.unmount();
   });
