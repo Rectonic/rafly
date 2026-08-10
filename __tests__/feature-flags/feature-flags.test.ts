@@ -81,7 +81,7 @@ describe("useFeatureFlags", () => {
         resolveSource = resolve;
       });
 
-    const { unmount } = renderHook(() => useFeatureFlags(), {
+    const { result, unmount } = renderHook(() => useFeatureFlags(), {
       wrapper: createWrapper(source),
     });
 
@@ -93,6 +93,25 @@ describe("useFeatureFlags", () => {
       await Promise.resolve();
     });
 
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(result.current.status).toBe("loading");
+    expect(result.current.flags).toEqual(FAIL_CLOSED_FLAGS);
+
+    errorSpy.mockRestore();
+  });
+
+  it("contains a source that throws synchronously and still fails closed", async () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const source: FlagSourceV2 = () => {
+      throw new Error("synchronous boom");
+    };
+
+    const { result } = renderHook(() => useFeatureFlags(), {
+      wrapper: createWrapper(source),
+    });
+
+    await waitFor(() => expect(result.current.status).toBe("failed"));
+    expect(result.current.flags).toEqual(FAIL_CLOSED_FLAGS);
     expect(errorSpy).not.toHaveBeenCalled();
 
     errorSpy.mockRestore();

@@ -42,7 +42,8 @@ export function FeatureFlagsProvider({
     setStatus("loading");
     setFlags(FAIL_CLOSED_FLAGS);
 
-    source()
+    Promise.resolve()
+      .then(() => source())
       .then((resolvedFlags) => {
         if (!isMounted) {
           return;
