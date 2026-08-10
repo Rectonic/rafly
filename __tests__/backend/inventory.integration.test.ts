@@ -923,6 +923,77 @@ d("inventory ledger, counts, adjustments, movements, allocations", () => {
     expect(movements).toHaveLength(1);
   });
 
+  it("stays deadlock free when approvals race a cascading delete of the product they touch", async () => {
+    // approve_stock_adjustment_v2 locks two rows, the product and the
+    // proposal. Deleting a store_product locks the same pair in the order
+    // parent then child, because stock_adjustment_proposals cascades from
+    // it. While approve took those two the other way round, the two paths
+    // could each end up holding what the other was waiting for, and Postgres
+    // resolves that by killing one of them with a raw deadlock error no
+    // caller has a contract for. Both paths now take the product first, so
+    // the cycle cannot form at all.
+    const contractedPrefix =
+      /^(validation_failed|forbidden|not_found|version_conflict|invalid_state|idempotency_conflict|sold_out|offer_not_live|allocation_exceeded):/;
+    const messages: string[] = [];
+
+    // Several rounds, because whether two callers actually interleave on a
+    // fast local socket is a matter of timing. One round proves little, a
+    // handful gives the old ordering real chances to be caught.
+    for (let round = 0; round < 4; round += 1) {
+      const product = await createProduct({ onHandQuantity: 10 });
+      const proposals = await Promise.all([
+        createPendingProposal({
+          storeProductId: product.id,
+          currentQuantity: 10,
+          proposedQuantity: 11,
+        }),
+        createPendingProposal({
+          storeProductId: product.id,
+          currentQuantity: 10,
+          proposedQuantity: 12,
+        }),
+        createPendingProposal({
+          storeProductId: product.id,
+          currentQuantity: 10,
+          proposedQuantity: 13,
+        }),
+      ]);
+
+      const settled = await Promise.allSettled([
+        ...proposals.map((proposal) =>
+          managerClient.rpc("approve_stock_adjustment_v2", {
+            p_store_id: storeId,
+            p_proposal_id: proposal.id,
+            p_decision: "approve",
+            p_idempotency_key: randomUUID(),
+            p_expected_version: proposal.version,
+          })
+        ),
+        serviceClient.from("store_products").delete().eq("id", product.id),
+      ]);
+
+      for (const outcome of settled) {
+        // Nothing may reject outright either, every caller has to come back
+        // with a Result shaped answer.
+        expect(outcome.status).toBe("fulfilled");
+        if (outcome.status !== "fulfilled") continue;
+        const message = outcome.value.error?.message ?? "";
+        if (message.length > 0) {
+          messages.push(message);
+        }
+      }
+    }
+
+    for (const message of messages) {
+      expect(message).not.toMatch(/deadlock/i);
+      expect(message).not.toMatch(RAW_DUPLICATE_KEY_PATTERN);
+      // Losing a race here is normal, the proposal or the product may really
+      // be gone by the time a caller gets its locks. What is not normal is
+      // hearing about it in raw Postgres terms.
+      expect(message).toMatch(contractedPrefix);
+    }
+  });
+
   it("rejects any attempt to update or delete a stock movement row, even from the service role", async () => {
     const product = await createProduct({ onHandQuantity: 6 });
     const proposal = await createPendingProposal({

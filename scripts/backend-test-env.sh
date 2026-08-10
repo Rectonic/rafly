@@ -29,6 +29,19 @@ fi
 # This harness signs in an admin client and writes real rows, so it must
 # never point at anything but a local stack, no matter what
 # 'supabase status -o env' happened to report.
+#
+# The '@' check runs first and on its own. A URL may carry userinfo before
+# the host, so 'https://localhost:5432@evil.example/' starts with a string
+# the anchored pattern below is happy with while every request it makes goes
+# to evil.example. No local Supabase URL ever contains an '@', so rejecting
+# the character outright is both safe and simple.
+case "$SUPABASE_API_URL" in
+  *@*)
+    echo "backend-test-env: refusing API_URL '$SUPABASE_API_URL', a userinfo '@' can point a localhost looking URL at a remote host" >&2
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
+
 if ! printf '%s' "$SUPABASE_API_URL" | grep -Eq '^https?://(127\.0\.0\.1|localhost)(:|/|$)'; then
   echo "backend-test-env: refusing non-local API_URL '$SUPABASE_API_URL', this harness only targets a local Supabase stack" >&2
   return 1 2>/dev/null || exit 1

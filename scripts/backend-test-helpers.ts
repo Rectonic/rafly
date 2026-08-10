@@ -31,10 +31,28 @@ const ENV_SERVICE_ROLE_KEY = "LASTBITE_TEST_SUPABASE_SERVICE_ROLE_KEY";
 // Mirrors the guard in scripts/backend-test-env.sh. This suite signs in an
 // admin client and writes real rows, so a non-local URL must never pass,
 // even if someone hand sets the env var and skips that script entirely.
-const LOCAL_URL_PATTERN = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/;
+//
+// The check parses rather than pattern matches on purpose. A string test
+// against the start of the URL is fooled by userinfo:
+// 'https://localhost:5432@evil.example/' begins with a perfectly local
+// looking prefix while every request it makes goes to evil.example. Handing
+// that URL to the URL parser gives hostname 'evil.example', which fails the
+// exact match below. Anything the parser rejects outright is treated as non
+// local too, since a value this harness cannot understand is a value it must
+// not point a service role key at.
+const LOCAL_HOSTNAMES: ReadonlySet<string> = new Set(["127.0.0.1", "localhost"]);
 
-function isLocalUrl(url: string): boolean {
-  return LOCAL_URL_PATTERN.test(url);
+export function isLocalUrl(url: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+  return LOCAL_HOSTNAMES.has(parsed.hostname);
 }
 
 // Fixed on purpose, every test user is created or reused with this same

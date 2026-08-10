@@ -406,13 +406,13 @@ grant execute on function public.record_inventory_count_v2(uuid, uuid, jsonb) to
 --    version_conflict, not invalid_state, since the caller's real problem
 --    is that they were looking at an old version, the status is beside the
 --    point in that case. A fresh, correct expected_version against an
---    already decided proposal still reports invalid_state, both proposal
---    reads below are locked with for update, closing the found bug where
---    two concurrent approvals on the very same proposal under different
---    idempotency keys could both pass their status and version checks
---    before either committed, then both apply, double counting the delta.
---    That specific race was not named in the review findings, it shares
---    the same root cause as the on hand race below, checking a value
+--    already decided proposal still reports invalid_state. Every check runs
+--    against a proposal row read with for update, closing the found bug
+--    where two concurrent approvals on the very same proposal under
+--    different idempotency keys could both pass their status and version
+--    checks before either committed, then both apply, double counting the
+--    delta. That specific race was not named in the review findings, it
+--    shares the same root cause as the on hand race below, checking a value
 --    before locking the row that value lives on, so it is closed here as
 --    part of the same fix rather than left half done.
 -- 4. Before applying an approved delta, the product row is locked with for
@@ -425,6 +425,9 @@ grant execute on function public.record_inventory_count_v2(uuid, uuid, jsonb) to
 --    validation_failed shape. The lock makes the second approval wait for
 --    the first to finish and read the true current value instead of a
 --    stale one, so the check is accurate rather than racy.
+-- 5. A later round reordered those two locks so the product is taken before
+--    the proposal, and bounded the claim step's wait. See the comments at
+--    each site for why.
 create or replace function public.approve_stock_adjustment_v2(
   p_store_id uuid,
   p_proposal_id uuid,
@@ -465,10 +468,29 @@ begin
   -- (store_id, command, key), on conflict do nothing means a raced
   -- concurrent duplicate never sees a raw unique violation, it falls into
   -- the losing branch below instead.
-  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
-  values (p_store_id, 'approve_stock_adjustment_v2', p_idempotency_key, v_fingerprint, null)
-  on conflict (store_id, command, key) do nothing
-  returning key into v_claimed_key;
+  --
+  -- The wait is bounded. on conflict do nothing does not return straight
+  -- away when the conflicting row was inserted by a transaction that has
+  -- not committed yet, it blocks on that transaction id until it commits or
+  -- aborts. A rival that stalls therefore used to pin this caller for as
+  -- long as the stall lasted, with no timeout of its own. lock_timeout
+  -- turns that unbounded wait into a four second one and the handler turns
+  -- the resulting 55P03 into the contracted idempotency_conflict shape, so
+  -- a stalled duplicate costs the caller a bounded wait and an honest error
+  -- instead of a hung connection. It is reset immediately afterwards so the
+  -- row locks taken further down keep their normal blocking behaviour.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+    values (p_store_id, 'approve_stock_adjustment_v2', p_idempotency_key, v_fingerprint, null)
+    on conflict (store_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
 
   if v_claimed_key is null then
     select fingerprint
@@ -504,6 +526,44 @@ begin
     return v_result;
   end if;
 
+  -- Lock order: PRODUCT first, then the proposal.
+  --
+  -- Both rows get locked on the approve path, so the order they are taken in
+  -- has to agree with every other writer that touches the same pair.
+  -- store_products is the parent of stock_adjustment_proposals through an on
+  -- delete cascade, and a cascading delete locks the parent product row
+  -- first and the child proposal rows after it. Taking the proposal first
+  -- here meant the two paths walked the same two rows in opposite orders,
+  -- which is the textbook shape of a deadlock: each holds what the other is
+  -- waiting for and Postgres has to kill one of them with a raw 40P01 the
+  -- caller has no contract for.
+  --
+  -- Reading the proposal without a lock first is only to learn which product
+  -- it belongs to. Nothing is decided on that read. Once the product row is
+  -- held, the proposal is read again with a lock and every check is made
+  -- against that locked copy, so a proposal that was decided or deleted
+  -- while this call waited for the product is caught rather than acted on.
+  select *
+    into v_proposal
+    from public.stock_adjustment_proposals
+    where id = p_proposal_id
+      and store_id = p_store_id;
+
+  if not found then
+    raise exception 'not_found: proposal % not found', p_proposal_id;
+  end if;
+
+  perform 1
+    from public.store_products
+    where id = v_proposal.store_product_id
+      and store_id = p_store_id
+    for update;
+
+  if not found then
+    raise exception 'not_found: product % is not in store %',
+      v_proposal.store_product_id, p_store_id;
+  end if;
+
   select *
     into v_proposal
     from public.stock_adjustment_proposals
@@ -525,11 +585,12 @@ begin
   end if;
 
   if p_decision = 'approve' then
+    -- The product row is already locked above, this read only fetches the
+    -- true current value behind that lock.
     select on_hand_quantity
       into v_current_on_hand
       from public.store_products
-      where id = v_proposal.store_product_id
-      for update;
+      where id = v_proposal.store_product_id;
 
     if v_current_on_hand + v_proposal.delta < 0 then
       raise exception 'validation_failed: adjustment would make stock negative';

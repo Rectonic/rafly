@@ -190,10 +190,17 @@ d("stores, memberships, roles, and app flags", () => {
       nonMemberClient.rpc("fn_current_store_role", { p_store_id: storeId }),
     ]);
 
+    // Every call asserts its own error is null before its data is read. A
+    // failed rpc also returns null data, so a data only assertion passes
+    // just as happily when the function is broken or unreachable as when it
+    // correctly reports no role.
     expect(owner.error).toBeNull();
     expect(owner.data).toBe("owner");
+    expect(manager.error).toBeNull();
     expect(manager.data).toBe("manager");
+    expect(staff.error).toBeNull();
     expect(staff.data).toBe("staff");
+    expect(nonMember.error).toBeNull();
     expect(nonMember.data).toBeNull();
   });
 
@@ -202,6 +209,9 @@ d("stores, memberships, roles, and app flags", () => {
       p_store_id: storeId,
     });
 
+    // Null data on its own would also be what a rejected call looks like.
+    // The point of this block is that anon reaches the function and is told
+    // "no role", not that the call failed in some unexamined way.
     expect(error).toBeNull();
     expect(data).toBeNull();
   });

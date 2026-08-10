@@ -239,10 +239,28 @@ begin
 
   v_fingerprint := encode(extensions.digest(p_input::text, 'sha256'), 'hex');
 
-  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
-  values (p_store_id, 'publish_offer_v2', p_idempotency_key, v_fingerprint, null)
-  on conflict (store_id, command, key) do nothing
-  returning key into v_claimed_key;
+  -- Bounded claim step. on conflict do nothing does not return straight away
+  -- when the conflicting row belongs to a transaction that has not committed
+  -- yet, it blocks on that transaction id until it commits or aborts. A rival
+  -- that stalls used to pin this caller for as long as the stall lasted, with
+  -- no timeout of its own. lock_timeout caps that wait at four seconds and the
+  -- handler turns the resulting 55P03 into the contracted idempotency_conflict
+  -- shape, so a stalled duplicate costs a bounded wait and an honest error
+  -- rather than a hung connection. The timeout is reset immediately afterwards
+  -- so the row locks taken further down keep their normal blocking behaviour.
+  -- Every claim step in this file follows this same pattern.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+    values (p_store_id, 'publish_offer_v2', p_idempotency_key, v_fingerprint, null)
+    on conflict (store_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
 
   if v_claimed_key is null then
     select fingerprint, outcome
@@ -626,13 +644,22 @@ begin
   end if;
 
   v_fingerprint := p_reservation_id::text;
-  insert into public.buyer_idempotency_keys (
-    installation_id, command, key, fingerprint, outcome
-  ) values (
-    p_installation_id, 'cancel_reservation_v2', p_idempotency_key, v_fingerprint, null
-  )
-  on conflict (installation_id, command, key) do nothing
-  returning key into v_claimed_key;
+  -- Bounded claim step, see publish_offer_v2 for why the wait is capped.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.buyer_idempotency_keys (
+      installation_id, command, key, fingerprint, outcome
+    ) values (
+      p_installation_id, 'cancel_reservation_v2', p_idempotency_key, v_fingerprint, null
+    )
+    on conflict (installation_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
 
   if v_claimed_key is null then
     select fingerprint, outcome
@@ -793,10 +820,19 @@ begin
   end if;
 
   v_fingerprint := p_offer_id::text;
-  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
-  values (p_store_id, 'pause_offer_v2', p_idempotency_key, v_fingerprint, null)
-  on conflict (store_id, command, key) do nothing
-  returning key into v_claimed_key;
+  -- Bounded claim step, see publish_offer_v2 for why the wait is capped.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+    values (p_store_id, 'pause_offer_v2', p_idempotency_key, v_fingerprint, null)
+    on conflict (store_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
 
   if v_claimed_key is null then
     select fingerprint, outcome
@@ -878,10 +914,19 @@ begin
 
   v_hash := encode(extensions.digest(p_pickup_code, 'sha256'), 'hex');
   v_fingerprint := v_hash;
-  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
-  values (p_store_id, 'fulfill_reservation_v2', p_idempotency_key, v_fingerprint, null)
-  on conflict (store_id, command, key) do nothing
-  returning key into v_claimed_key;
+  -- Bounded claim step, see publish_offer_v2 for why the wait is capped.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+    values (p_store_id, 'fulfill_reservation_v2', p_idempotency_key, v_fingerprint, null)
+    on conflict (store_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
 
   if v_claimed_key is null then
     select fingerprint, outcome into v_existing_fingerprint, v_outcome
@@ -1005,10 +1050,20 @@ begin
   end if;
 
   v_fingerprint := p_offer_id::text || chr(58) || chr(58) || p_observed_quantity::text || chr(58) || chr(58) || p_reason;
-  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
-  values (p_store_id, 'report_stock_mismatch_v2', p_idempotency_key, v_fingerprint, null)
-  on conflict (store_id, command, key) do nothing
-  returning key into v_claimed_key;
+  -- Bounded claim step, see publish_offer_v2 for why the wait is capped.
+  begin
+    set local lock_timeout = '4s';
+
+    insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+    values (p_store_id, 'report_stock_mismatch_v2', p_idempotency_key, v_fingerprint, null)
+    on conflict (store_id, command, key) do nothing
+    returning key into v_claimed_key;
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
+
   if v_claimed_key is null then
     select fingerprint, outcome into v_existing_fingerprint, v_outcome
       from public.idempotency_keys

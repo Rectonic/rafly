@@ -488,6 +488,61 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     expect(reloaded).toEqual({ quantity_available: 1, status: "live" });
   });
 
+  it("replays a reserve as the current reservation row, so a cancelled hold replays cancelled", async () => {
+    const product = await createProduct();
+    const offer = await publish(owner, product.id, {
+      allocation: { storeProductId: product.id, quantity: 2, physicallySetAside: false },
+    });
+    const installation = `installation-${randomUUID()}`;
+    const clientReservationId = randomUUID();
+    const code = `LB-${randomUUID().slice(0, 8)}`;
+    const held = await reserve(
+      offer.id,
+      offer.version,
+      installation,
+      clientReservationId,
+      code
+    );
+    expect(held.reservation.status).toBe("held");
+
+    await anon.rpc("cancel_reservation_v2", {
+      p_reservation_id: held.reservation.id,
+      p_installation_id: installation,
+      p_idempotency_key: randomUUID(),
+    });
+
+    const replay = await reserve(
+      offer.id,
+      offer.version,
+      installation,
+      clientReservationId,
+      code
+    );
+
+    // A replay reports the row as it stands now, not the snapshot taken when
+    // the reservation was created. A client that never cleaned up its pending
+    // clientReservationId has to be able to see that the attempt behind it is
+    // finished, otherwise it shows a cancelled reservation as a live hold.
+    expect(replay.replayed).toBe(true);
+    expect(replay.reservation.id).toBe(held.reservation.id);
+    expect(replay.reservation.status).toBe("cancelled_by_buyer");
+    expect(replay.reservation.version).toBeGreaterThan(held.reservation.version);
+    // The raw code is issued exactly once, and never again.
+    expect(replay.pickup_code).toBeNull();
+    expect(JSON.stringify(replay)).not.toContain(code);
+
+    // Replaying is a read. It must not take a second unit off the offer.
+    const reloaded = requireRow<{ quantity_available: number }>(
+      await service
+        .from("offers_v2")
+        .select("quantity_available")
+        .eq("id", offer.id)
+        .single(),
+      "reload offer after replay"
+    );
+    expect(reloaded.quantity_available).toBe(2);
+  });
+
   it("checks pause version before status and fingerprints idempotency keys", async () => {
     const product = await createProduct();
     const offer = await publish(manager, product.id);
