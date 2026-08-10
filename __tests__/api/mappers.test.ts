@@ -14,6 +14,7 @@ import {
   computeDiscountPercent,
   errorCodeFrom,
   mapExceptionRow,
+  mapImportBatchRow,
   mapInventoryRow,
   mapMembershipRow,
   mapProposalRow,
@@ -21,6 +22,7 @@ import {
   mapReservationRow,
   mapSellerOfferRow,
   mapSellerPickupRow,
+  mapStagedSourceRecordRow,
   toIsoDateTime,
   toStableUuid,
   type PublicOfferRow,
@@ -467,6 +469,98 @@ describe("mapInventoryRow", () => {
     expect(mapped.expiryDate).toBeNull();
     expect(mapped.barcode).toBeNull();
     expect(mapped.category).toBeNull();
+  });
+});
+
+describe("mapImportBatchRow", () => {
+  it("maps the exact import batch DTO and redacts internal columns", () => {
+    const mapped = mapImportBatchRow({
+      id: "88888888-8888-4888-8888-888888888888",
+      store_id: publicOfferRow.store_id,
+      filename: "inventory.csv",
+      status: "needs_review",
+      total_records: 3,
+      pending_records: 2,
+      created_at: "2026-08-11T08:00:00+00:00",
+      created_by: "99999999-9999-4999-8999-999999999999",
+      import_fingerprint: "private-fingerprint",
+    });
+
+    expect(mapped).toEqual({
+      id: "88888888-8888-4888-8888-888888888888",
+      storeId: publicOfferRow.store_id,
+      filename: "inventory.csv",
+      status: "needs_review",
+      totalRecords: 3,
+      pendingRecords: 2,
+      createdAt: "2026-08-11T08:00:00.000Z",
+    });
+    expect(Object.keys(mapped)).toHaveLength(7);
+  });
+});
+
+describe("mapStagedSourceRecordRow", () => {
+  it("maps candidates and drops decision bookkeeping", () => {
+    const mapped = mapStagedSourceRecordRow({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      batch_id: "88888888-8888-4888-8888-888888888888",
+      store_id: publicOfferRow.store_id,
+      raw_name: "Fresh Bread",
+      raw_barcode: "4780000000011",
+      raw_quantity: 7,
+      raw_price: 12500,
+      match_status: "ambiguous",
+      matched_store_product_id: null,
+      candidates: [
+        {
+          storeProductId: "33333333-3333-4333-8333-333333333333",
+          productName: "Fresh bread loaf",
+          reason: "barcode",
+        },
+      ],
+      created_at: "2026-08-11T08:01:00+00:00",
+      decided_by: "99999999-9999-4999-8999-999999999999",
+      decided_at: "2026-08-11T08:02:00+00:00",
+    });
+
+    expect(mapped).toEqual({
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      batchId: "88888888-8888-4888-8888-888888888888",
+      storeId: publicOfferRow.store_id,
+      rawName: "Fresh Bread",
+      rawBarcode: "4780000000011",
+      rawQuantity: 7,
+      rawPrice: 12500,
+      matchStatus: "ambiguous",
+      matchedStoreProductId: null,
+      candidates: [
+        {
+          storeProductId: "33333333-3333-4333-8333-333333333333",
+          productName: "Fresh bread loaf",
+          reason: "barcode",
+        },
+      ],
+      createdAt: "2026-08-11T08:01:00.000Z",
+    });
+    expect(Object.keys(mapped)).toHaveLength(11);
+  });
+
+  it("rejects malformed candidate data instead of returning a misleading DTO", () => {
+    expect(() =>
+      mapStagedSourceRecordRow({
+        id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        batch_id: "88888888-8888-4888-8888-888888888888",
+        store_id: publicOfferRow.store_id,
+        raw_name: "Fresh Bread",
+        raw_barcode: null,
+        raw_quantity: null,
+        raw_price: null,
+        match_status: "unmatched",
+        matched_store_product_id: null,
+        candidates: { private: true },
+        created_at: "2026-08-11T08:01:00+00:00",
+      })
+    ).toThrow("staged record candidates must be an array");
   });
 });
 

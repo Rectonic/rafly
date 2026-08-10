@@ -20,7 +20,9 @@ export type {
 
 export type {
   ApproveStockAdjustmentV2Input,
+  DecideStagedRecordV2Input,
   FulfillReservationV2Input,
+  ImportBatchV2,
   InventorySummaryV2,
   PauseOfferV2Input,
   PublishOfferV2Input,
@@ -28,10 +30,12 @@ export type {
   ReportStockMismatchV2Input,
   ResolveStoreExceptionV2Input,
   SellerPickupV2,
+  StagedSourceRecordV2,
   StockAdjustmentProposalV2,
   StockConfidenceV2,
   StoreExceptionV2,
   StoreMembershipV2,
+  UploadImportBatchV2Input,
 } from "./seller";
 
 export type { FeatureFlagsV2, MarketplaceModeV2 } from "./flags";

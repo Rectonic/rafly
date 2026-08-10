@@ -35,6 +35,50 @@ export interface SellerTranslations {
     owner: string;
     operator: string;
   };
+  imports: {
+    title: string;
+    filenameLabel: string;
+    csvLabel: string;
+    parseButton: string;
+    rowCount: (n: number) => string;
+    previewCap: (visible: number, total: number) => string;
+    parseMissingName: string;
+    parseMissingNameCell: (row: number) => string;
+    parseMalformed: string;
+    parseInvalidNumber: (row: number, column: string) => string;
+    parseNumericColumn: Record<"quantity" | "price", string>;
+    uploadButton: string;
+    uploading: string;
+    uploadSuccess: string;
+    batchesTitle: string;
+    batchesLoading: string;
+    batchesEmpty: string;
+    retry: string;
+    batchPending: (n: number) => string;
+    batchTotal: (n: number) => string;
+    batchStatus: Record<"uploaded" | "needs_review" | "completed", string>;
+    recordsTitle: string;
+    recordsLoading: string;
+    recordsEmpty: string;
+    rawBarcode: (value: string) => string;
+    rawQuantity: (value: number) => string;
+    rawPrice: (value: number) => string;
+    rawQuantityLabelMissing: string;
+    rawPriceLabelMissing: string;
+    missingValue: string;
+    matchStatus: Record<"auto_matched" | "ambiguous" | "unmatched" | "approved" | "rejected", string>;
+    candidatesTitle: string;
+    candidateReason: Record<"barcode" | "alias" | "product_name", string>;
+    selectedCandidate: string;
+    selectCandidate: string;
+    approveSelected: string;
+    approveNew: string;
+    reject: string;
+    deciding: string;
+    decisionSuccess: string;
+    staffReviewNote: string;
+    uploadForbidden: string;
+  };
   inventory: {
     title: string;
     itemCount: (n: number) => string;
@@ -59,6 +103,7 @@ export interface SellerTranslations {
     publishButton: string;
     offersButton: string;
     pickupsButton: string;
+    importButton: string;
   };
   exceptions: {
     title: string;
@@ -278,6 +323,68 @@ export const sellerEn: SellerTranslations = {
     owner: "Owner",
     operator: "Operator",
   },
+  imports: {
+    title: "CSV import",
+    filenameLabel: "Filename",
+    csvLabel: "CSV content",
+    parseButton: "Parse CSV",
+    rowCount: (n) => `${n} row${n === 1 ? "" : "s"} found`,
+    previewCap: (visible, total) => `Showing the first ${visible} of ${total} rows`,
+    parseMissingName: "A name header is required",
+    parseMissingNameCell: (row) => `Row ${row}: enter a product name`,
+    parseMalformed: "The CSV contains an unclosed or misplaced quote",
+    parseInvalidNumber: (row, column) =>
+      `Row ${row}, column ${column}: the numeric value is invalid`,
+    parseNumericColumn: {
+      quantity: "Quantity",
+      price: "Price",
+    },
+    uploadButton: "Upload batch",
+    uploading: "Uploading...",
+    uploadSuccess: "The store service confirmed the batch",
+    batchesTitle: "Import batches",
+    batchesLoading: "Loading import batches...",
+    batchesEmpty: "No import batches yet",
+    retry: "Retry",
+    batchPending: (n) => `Awaiting review: ${n}`,
+    batchTotal: (n) => `Total rows: ${n}`,
+    batchStatus: {
+      uploaded: "Uploaded",
+      needs_review: "Needs review",
+      completed: "Completed",
+    },
+    recordsTitle: "Staged records",
+    recordsLoading: "Loading staged records...",
+    recordsEmpty: "This batch has no staged records",
+    rawBarcode: (value) => `Barcode: ${value}`,
+    rawQuantity: (value) => `Quantity: ${value}`,
+    rawPrice: (value) => `Price: ${value}`,
+    rawQuantityLabelMissing: "Quantity: not supplied",
+    rawPriceLabelMissing: "Price: not supplied",
+    missingValue: "Not supplied",
+    matchStatus: {
+      auto_matched: "Automatic match",
+      ambiguous: "Ambiguous match",
+      unmatched: "No match",
+      approved: "Approved",
+      rejected: "Rejected",
+    },
+    candidatesTitle: "Candidates",
+    candidateReason: {
+      barcode: "Barcode match",
+      alias: "Alias match",
+      product_name: "Name match",
+    },
+    selectedCandidate: "Selected",
+    selectCandidate: "Select",
+    approveSelected: "Approve selected",
+    approveNew: "Approve as new product",
+    reject: "Reject",
+    deciding: "Saving decision...",
+    decisionSuccess: "The store service confirmed the decision",
+    staffReviewNote: "Staff can review rows. A manager or owner makes the decision",
+    uploadForbidden: "Your role can review imports but cannot upload a CSV batch",
+  },
   inventory: {
     title: "Shop Seller beta inventory",
     itemCount: (n) => `${n} product${n === 1 ? "" : "s"} tracked`,
@@ -305,6 +412,7 @@ export const sellerEn: SellerTranslations = {
     publishButton: "New offer",
     offersButton: "View offers",
     pickupsButton: "Pickup queue",
+    importButton: "Import CSV",
   },
   exceptions: {
     title: "Store exceptions",
@@ -537,6 +645,68 @@ export const sellerRu: SellerTranslations = {
     owner: "Владелец",
     operator: "Оператор",
   },
+  imports: {
+    title: "Импорт CSV",
+    filenameLabel: "Имя файла",
+    csvLabel: "Содержимое CSV",
+    parseButton: "Проверить CSV",
+    rowCount: (n) => `Найдено строк: ${n}`,
+    previewCap: (visible, total) => `Показаны первые ${visible} из ${total} строк`,
+    parseMissingName: "Нужен столбец с названием товара",
+    parseMissingNameCell: (row) => `Строка ${row}: укажите название товара`,
+    parseMalformed: "В CSV есть незакрытая или неверно расположенная кавычка",
+    parseInvalidNumber: (row, column) =>
+      `Строка ${row}, столбец ${column}: недопустимое числовое значение`,
+    parseNumericColumn: {
+      quantity: "Количество",
+      price: "Цена",
+    },
+    uploadButton: "Загрузить пакет",
+    uploading: "Загружаем...",
+    uploadSuccess: "Пакет подтверждён сервисом магазина",
+    batchesTitle: "Пакеты импорта",
+    batchesLoading: "Загружаем пакеты импорта...",
+    batchesEmpty: "Пакетов импорта пока нет",
+    retry: "Повторить",
+    batchPending: (n) => `Ожидают проверки: ${n}`,
+    batchTotal: (n) => `Всего строк: ${n}`,
+    batchStatus: {
+      uploaded: "Загружен",
+      needs_review: "Требует проверки",
+      completed: "Завершён",
+    },
+    recordsTitle: "Строки на проверке",
+    recordsLoading: "Загружаем строки на проверке...",
+    recordsEmpty: "В этом пакете нет строк",
+    rawBarcode: (value) => `Штрих-код: ${value}`,
+    rawQuantity: (value) => `Количество: ${value}`,
+    rawPrice: (value) => `Цена: ${value}`,
+    rawQuantityLabelMissing: "Количество: не указано",
+    rawPriceLabelMissing: "Цена: не указана",
+    missingValue: "Не указано",
+    matchStatus: {
+      auto_matched: "Автоматическое совпадение",
+      ambiguous: "Неоднозначное совпадение",
+      unmatched: "Совпадений нет",
+      approved: "Одобрено",
+      rejected: "Отклонено",
+    },
+    candidatesTitle: "Варианты совпадения",
+    candidateReason: {
+      barcode: "Совпадение по штрих-коду",
+      alias: "Совпадение по псевдониму",
+      product_name: "Совпадение по названию",
+    },
+    selectedCandidate: "Выбрано",
+    selectCandidate: "Выбрать",
+    approveSelected: "Одобрить выбранный товар",
+    approveNew: "Одобрить как новый товар",
+    reject: "Отклонить",
+    deciding: "Сохраняем решение...",
+    decisionSuccess: "Решение подтверждено сервисом магазина",
+    staffReviewNote: "Сотрудники могут проверять строки, решение принимает менеджер или владелец",
+    uploadForbidden: "Ваша роль позволяет проверять импорт, но не загружать пакет CSV",
+  },
   inventory: {
     title: "Инвентарь бета-версии для магазинов",
     itemCount: (n) => `${n} ${pluralRu(n, "товар", "товара", "товаров")} на учёте`,
@@ -564,6 +734,7 @@ export const sellerRu: SellerTranslations = {
     publishButton: "Новое предложение",
     offersButton: "Смотреть предложения",
     pickupsButton: "Очередь самовывоза",
+    importButton: "Импортировать CSV",
   },
   exceptions: {
     title: "Исключения магазина",

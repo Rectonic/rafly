@@ -18,24 +18,30 @@ import type { SellerStoreApiV2 } from "@/lib/api/seller-api";
 import {
   commandErrorFrom,
   mapExceptionRow,
+  mapImportBatchRow,
   mapInventoryRow,
   mapMembershipRow,
   mapProposalRow,
   mapSellerOfferRow,
   mapSellerPickupRow,
+  mapStagedSourceRecordRow,
   toStableUuid,
   toStoreEnrichment,
   type ExceptionRow,
   type InventoryRow,
+  type ImportBatchRow,
   type ProposalRow,
   type RawOfferRow,
   type SellerPickupRow,
+  type StagedSourceRecordRow,
   type StoreEnrichment,
   type StoreRow,
 } from "@/lib/api/mappers";
 import type {
   ApproveStockAdjustmentV2Input,
+  DecideStagedRecordV2Input,
   FulfillReservationV2Input,
+  ImportBatchV2,
   InventorySummaryV2,
   MarketplaceOfferV2,
   PauseOfferV2Input,
@@ -45,9 +51,11 @@ import type {
   ResolveStoreExceptionV2Input,
   Result,
   SellerPickupV2,
+  StagedSourceRecordV2,
   StockAdjustmentProposalV2,
   StoreExceptionV2,
   StoreMembershipV2,
+  UploadImportBatchV2Input,
 } from "@/lib/contracts";
 import { err, ok } from "@/lib/contracts";
 
@@ -474,6 +482,93 @@ export function makeSupabaseSellerApi(
           return err("unknown", "exception resolution returned no result");
         }
         return ok(mapExceptionRow(data as ExceptionRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async uploadImportBatchV2(
+      input: UploadImportBatchV2Input
+    ): Promise<Result<ImportBatchV2>> {
+      try {
+        const { data, error } = await client.rpc("upload_import_batch_v2", {
+          p_store_id: input.storeId,
+          p_filename: input.filename,
+          p_records: input.records,
+          p_idempotency_key: input.idempotencyKey,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        if (!data) {
+          return err("unknown", "import upload returned no batch");
+        }
+        return ok(mapImportBatchRow(data as ImportBatchRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async listImportBatchesV2(
+      storeId: string
+    ): Promise<Result<ImportBatchV2[]>> {
+      try {
+        const { data, error } = await client.rpc("list_import_batches_v2", {
+          p_store_id: storeId,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        return ok(((data ?? []) as ImportBatchRow[]).map(mapImportBatchRow));
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async listStagedRecordsV2(
+      storeId: string,
+      batchId: string
+    ): Promise<Result<StagedSourceRecordV2[]>> {
+      try {
+        const { data, error } = await client.rpc("list_staged_records_v2", {
+          p_store_id: storeId,
+          p_batch_id: batchId,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        return ok(
+          ((data ?? []) as StagedSourceRecordRow[]).map(
+            mapStagedSourceRecordRow
+          )
+        );
+      } catch (thrown) {
+        return commandErrorFrom(thrown);
+      }
+    },
+
+    async decideStagedRecordV2(
+      input: DecideStagedRecordV2Input
+    ): Promise<Result<StagedSourceRecordV2>> {
+      try {
+        const { data, error } = await client.rpc("decide_staged_record_v2", {
+          p_store_id: input.storeId,
+          p_record_id: input.recordId,
+          p_decision: input.decision,
+          p_target_store_product_id: input.targetStoreProductId,
+          p_idempotency_key: input.idempotencyKey,
+        });
+
+        if (error) {
+          return commandErrorFrom(error);
+        }
+        if (!data) {
+          return err("unknown", "staged record decision returned no record");
+        }
+        return ok(mapStagedSourceRecordRow(data as StagedSourceRecordRow));
       } catch (thrown) {
         return commandErrorFrom(thrown);
       }

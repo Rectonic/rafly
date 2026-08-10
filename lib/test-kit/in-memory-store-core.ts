@@ -26,7 +26,9 @@ import {
   type ApproveStockAdjustmentV2Input,
   type BuyerReservationV2,
   type CancelReservationV2Input,
+  type DecideStagedRecordV2Input,
   type FulfillReservationV2Input,
+  type ImportBatchV2,
   type InventorySummaryV2,
   type MarketplaceOfferStatusV2,
   type MarketplaceOfferV2,
@@ -40,11 +42,13 @@ import {
   type ReserveOfferV2Result,
   type Result,
   type SellerPickupV2,
+  type StagedSourceRecordV2,
   type StockAdjustmentProposalV2,
   type StockConfidenceV2,
   type StoreExceptionV2,
   type StoreMembershipV2,
   type StoreRole,
+  type UploadImportBatchV2Input,
 } from "@/lib/contracts";
 
 import { installationAuditActor } from "./audit-actor";
@@ -195,6 +199,32 @@ interface IdempotencyRecord {
   result: Result<unknown>;
 }
 
+interface ImportBatchRecord extends ImportBatchV2 {
+  sequence: number;
+}
+
+interface StagedSourceRecord extends StagedSourceRecordV2 {
+  sequence: number;
+}
+
+interface ProductAliasRecord {
+  id: string;
+  storeId: string;
+  storeProductId: string;
+  alias: string;
+  approved: boolean;
+}
+
+interface InventoryObservationRecord {
+  id: string;
+  storeId: string;
+  storeProductId: string;
+  stagedSourceRecordId: string;
+  observedQuantity: number;
+  confidence: "low";
+  createdAt: string;
+}
+
 function padSequence(value: number, width: number): string {
   return String(value).padStart(width, "0");
 }
@@ -218,6 +248,13 @@ export class InMemoryStoreCore {
   private readonly reservations = new Map<string, ReservationRecord>();
   private readonly proposals = new Map<string, StockAdjustmentProposalV2>();
   private readonly exceptions = new Map<string, StoreExceptionV2>();
+  private readonly importBatches = new Map<string, ImportBatchRecord>();
+  private readonly stagedRecords = new Map<string, StagedSourceRecord>();
+  private readonly productAliases = new Map<string, ProductAliasRecord>();
+  private readonly inventoryObservations = new Map<
+    string,
+    InventoryObservationRecord
+  >();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
   /** Which store first claimed each client supplied count session id. */
   private readonly countSessionStores = new Map<string, string>();
@@ -292,6 +329,37 @@ export class InMemoryStoreCore {
     return this.movements.map((movement) => ({ ...movement }));
   }
 
+  listImportEffects() {
+    return {
+      aliases: [...this.productAliases.values()].map((alias) => ({
+        storeId: alias.storeId,
+        storeProductId: alias.storeProductId,
+        alias: alias.alias,
+        approved: alias.approved,
+      })),
+      observations: [...this.inventoryObservations.values()].map(
+        (observation) => ({
+          storeId: observation.storeId,
+          storeProductId: observation.storeProductId,
+          stagedSourceRecordId: observation.stagedSourceRecordId,
+          observedQuantity: observation.observedQuantity,
+          confidence: observation.confidence,
+          createdAt: observation.createdAt,
+        })
+      ),
+      proposals: [...this.proposals.values()].map((proposal) => ({
+        storeId: proposal.storeId,
+        storeProductId: proposal.storeProductId,
+        currentQuantity: proposal.currentQuantity,
+        proposedQuantity: proposal.proposedQuantity,
+        delta: proposal.delta,
+        reason: proposal.reason,
+        status: proposal.status,
+        createdByRole: proposal.createdByRole,
+      })),
+    };
+  }
+
   // Facades.
 
   buyerApi(): BuyerMarketplaceApiV2 {
@@ -334,6 +402,14 @@ export class InMemoryStoreCore {
         this.guard(() => this.resolveStoreException(userId, input)),
       listStoreExceptionsV2: async (storeId) =>
         this.guard(() => this.listStoreExceptions(userId, storeId)),
+      uploadImportBatchV2: async (input) =>
+        this.guard(() => this.uploadImportBatch(userId, input)),
+      listImportBatchesV2: async (storeId) =>
+        this.guard(() => this.listImportBatches(userId, storeId)),
+      listStagedRecordsV2: async (storeId, batchId) =>
+        this.guard(() => this.listStagedRecords(userId, storeId, batchId)),
+      decideStagedRecordV2: async (input) =>
+        this.guard(() => this.decideStagedRecord(userId, input)),
     };
   }
 
@@ -1341,6 +1417,346 @@ export class InMemoryStoreCore {
     return ok(found);
   }
 
+  private uploadImportBatch(
+    userId: string,
+    input: UploadImportBatchV2Input
+  ): Result<ImportBatchV2> {
+    const access = this.requireRole(input.storeId, userId, COUNT_ROLES);
+    if (!access.ok) return access;
+
+    if (input.filename.trim().length === 0) {
+      return err("validation_failed", "filename is required");
+    }
+    if (input.idempotencyKey.length === 0) {
+      return err("validation_failed", "idempotency key is required");
+    }
+    if (!Array.isArray(input.records) || input.records.length === 0) {
+      return err("validation_failed", "at least one record is required");
+    }
+
+    for (const record of input.records) {
+      if (!record || typeof record !== "object") {
+        return err("validation_failed", "every record must be an object");
+      }
+      if (typeof record.rawName !== "string" || record.rawName.trim().length === 0) {
+        return err("validation_failed", "every record needs a raw name");
+      }
+      if (
+        record.rawQuantity !== undefined &&
+        (!Number.isInteger(record.rawQuantity) ||
+          record.rawQuantity < 0 ||
+          record.rawQuantity > 2147483647)
+      ) {
+        return err(
+          "validation_failed",
+          "raw quantity must be a nonnegative integer"
+        );
+      }
+      if (
+        record.rawPrice !== undefined &&
+        (typeof record.rawPrice !== "number" ||
+          !Number.isFinite(record.rawPrice) ||
+          record.rawPrice < 0)
+      ) {
+        return err("validation_failed", "raw price must be nonnegative");
+      }
+    }
+
+    const normalizedRecords = input.records.map((record) => ({
+      rawName: record.rawName,
+      ...(record.rawBarcode === undefined
+        ? {}
+        : { rawBarcode: record.rawBarcode }),
+      ...(record.rawQuantity === undefined
+        ? {}
+        : { rawQuantity: record.rawQuantity }),
+      ...(record.rawPrice === undefined ? {} : { rawPrice: record.rawPrice }),
+    }));
+    const fingerprint = JSON.stringify({
+      filename: input.filename,
+      records: normalizedRecords,
+    });
+    const replay = this.readIdempotent<ImportBatchV2>(
+      "uploadImportBatchV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint
+    );
+    if (replay) return replay;
+
+    const sequence = this.nextSequence("importBatch");
+    const batch: ImportBatchRecord = {
+      id: `import-batch-${sequence}`,
+      sequence,
+      storeId: input.storeId,
+      filename: input.filename,
+      status: "needs_review",
+      totalRecords: input.records.length,
+      pendingRecords: input.records.length,
+      createdAt: this.now,
+    };
+    this.importBatches.set(batch.id, batch);
+
+    for (const source of input.records) {
+      const rawBarcode = source.rawBarcode || null;
+      const candidates = this.matchImportCandidates(
+        input.storeId,
+        source.rawName,
+        rawBarcode
+      );
+      const stagedSequence = this.nextSequence("stagedRecord");
+      const staged: StagedSourceRecord = {
+        id: `staged-record-${stagedSequence}`,
+        sequence: stagedSequence,
+        batchId: batch.id,
+        storeId: input.storeId,
+        rawName: source.rawName,
+        rawBarcode,
+        rawQuantity: source.rawQuantity ?? null,
+        rawPrice: source.rawPrice ?? null,
+        matchStatus:
+          candidates.length === 1
+            ? "auto_matched"
+            : candidates.length > 1
+              ? "ambiguous"
+              : "unmatched",
+        matchedStoreProductId:
+          candidates.length === 1 ? candidates[0].storeProductId : null,
+        candidates,
+        createdAt: this.now,
+      };
+      this.stagedRecords.set(staged.id, staged);
+    }
+
+    const result = ok(this.projectImportBatch(batch));
+    this.writeIdempotent(
+      "uploadImportBatchV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint,
+      result
+    );
+    return result;
+  }
+
+  private listImportBatches(
+    userId: string,
+    storeId: string
+  ): Result<ImportBatchV2[]> {
+    const access = this.requireRole(storeId, userId);
+    if (!access.ok) return access;
+
+    return ok(
+      [...this.importBatches.values()]
+        .filter((batch) => batch.storeId === storeId)
+        .sort((left, right) => right.sequence - left.sequence)
+        .map((batch) => this.projectImportBatch(batch))
+    );
+  }
+
+  private listStagedRecords(
+    userId: string,
+    storeId: string,
+    batchId: string
+  ): Result<StagedSourceRecordV2[]> {
+    const access = this.requireRole(storeId, userId);
+    if (!access.ok) return access;
+    const batch = this.importBatches.get(batchId);
+    if (!batch || batch.storeId !== storeId) {
+      return err(
+        "not_found",
+        `import batch ${batchId} is not in store ${storeId}`
+      );
+    }
+
+    return ok(
+      [...this.stagedRecords.values()]
+        .filter(
+          (record) => record.storeId === storeId && record.batchId === batchId
+        )
+        .sort((left, right) => left.sequence - right.sequence)
+        .map((record) => this.projectStagedRecord(record))
+    );
+  }
+
+  private decideStagedRecord(
+    userId: string,
+    input: DecideStagedRecordV2Input
+  ): Result<StagedSourceRecordV2> {
+    const access = this.requireRole(input.storeId, userId, MANAGER_ROLES);
+    if (!access.ok) return access;
+
+    if (input.decision !== "approve" && input.decision !== "reject") {
+      return err(
+        "validation_failed",
+        "decision must be approve or reject"
+      );
+    }
+    if (input.decision === "reject" && input.targetStoreProductId !== null) {
+      return err(
+        "validation_failed",
+        "a rejected record cannot have a target product"
+      );
+    }
+    if (input.idempotencyKey.length === 0) {
+      return err("validation_failed", "idempotency key is required");
+    }
+
+    const fingerprint = JSON.stringify({
+      recordId: input.recordId,
+      decision: input.decision,
+      targetStoreProductId: input.targetStoreProductId,
+    });
+    const replay = this.readIdempotent<StagedSourceRecordV2>(
+      "decideStagedRecordV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint
+    );
+    if (replay) return replay;
+
+    const staged = this.stagedRecords.get(input.recordId);
+    if (!staged || staged.storeId !== input.storeId) {
+      return err(
+        "not_found",
+        `staged record ${input.recordId} is not in store ${input.storeId}`
+      );
+    }
+
+    let targetProduct: ProductRecord | null = null;
+    if (input.decision === "approve" && input.targetStoreProductId !== null) {
+      targetProduct = this.products.get(input.targetStoreProductId) ?? null;
+      if (!targetProduct || targetProduct.storeId !== input.storeId) {
+        return err(
+          "not_found",
+          `target product ${input.targetStoreProductId} is not in store ${input.storeId}`
+        );
+      }
+    }
+
+    const batch = this.importBatches.get(staged.batchId);
+    if (!batch || batch.storeId !== input.storeId) {
+      return err(
+        "not_found",
+        `import batch for staged record ${input.recordId} is missing`
+      );
+    }
+    if (staged.matchStatus === "approved" || staged.matchStatus === "rejected") {
+      return err(
+        "invalid_state",
+        `staged record ${input.recordId} is already ${staged.matchStatus}`
+      );
+    }
+    if (batch.pendingRecords <= 0) {
+      return err(
+        "invalid_state",
+        `import batch ${batch.id} has no pending records`
+      );
+    }
+
+    if (input.decision === "approve" && targetProduct === null) {
+      const duplicateAlias = [...this.productAliases.values()].some(
+        (alias) =>
+          alias.storeId === input.storeId &&
+          alias.alias.toLowerCase() === staged.rawName.toLowerCase()
+      );
+      if (duplicateAlias) {
+        return err(
+          "validation_failed",
+          "raw name is already an alias in this store"
+        );
+      }
+
+      const productId = this.addProduct({
+        storeId: input.storeId,
+        productName: staged.rawName,
+        barcode: staged.rawBarcode,
+        onHandQuantity: 0,
+        confidence: "low",
+      });
+      targetProduct = this.products.get(productId) as ProductRecord;
+      const alias: ProductAliasRecord = {
+        id: `product-alias-${this.nextSequence("productAlias")}`,
+        storeId: input.storeId,
+        storeProductId: productId,
+        alias: staged.rawName,
+        approved: true,
+      };
+      this.productAliases.set(alias.id, alias);
+    }
+
+    if (input.decision === "approve" && targetProduct) {
+      if (staged.rawQuantity !== null) {
+        const observation: InventoryObservationRecord = {
+          id: `inventory-observation-${this.nextSequence(
+            "inventoryObservation"
+          )}`,
+          storeId: input.storeId,
+          storeProductId: targetProduct.id,
+          stagedSourceRecordId: staged.id,
+          observedQuantity: staged.rawQuantity,
+          confidence: "low",
+          createdAt: this.now,
+        };
+        this.inventoryObservations.set(observation.id, observation);
+
+        targetProduct.confidence = "low";
+        targetProduct.lastVerifiedAt = this.now;
+        targetProduct.version += 1;
+
+        if (staged.rawQuantity !== targetProduct.onHandQuantity) {
+          const proposal: StockAdjustmentProposalV2 = {
+            id: `proposal-${this.nextSequence("proposal")}`,
+            storeId: input.storeId,
+            storeProductId: targetProduct.id,
+            productName: targetProduct.productName,
+            currentQuantity: targetProduct.onHandQuantity,
+            proposedQuantity: staged.rawQuantity,
+            delta: staged.rawQuantity - targetProduct.onHandQuantity,
+            reason: "count",
+            status: "pending",
+            createdByRole: access.value.role,
+            createdAt: this.now,
+            version: 1,
+          };
+          this.proposals.set(proposal.id, proposal);
+        }
+      }
+
+      staged.matchStatus = "approved";
+      staged.matchedStoreProductId = targetProduct.id;
+    } else {
+      staged.matchStatus = "rejected";
+      staged.matchedStoreProductId = null;
+    }
+
+    batch.pendingRecords -= 1;
+    batch.status = batch.pendingRecords === 0 ? "completed" : "needs_review";
+
+    this.appendAudit({
+      storeId: input.storeId,
+      command: "decideStagedRecordV2",
+      actorUserId: userId,
+      installationRef: null,
+    });
+    this.appendOutbox("staged_record_decided", input.storeId, {
+      batchId: batch.id,
+      recordId: staged.id,
+      decision: input.decision,
+      targetStoreProductId: staged.matchedStoreProductId,
+    });
+
+    const result = ok(this.projectStagedRecord(staged));
+    this.writeIdempotent(
+      "decideStagedRecordV2",
+      input.storeId,
+      input.idempotencyKey,
+      fingerprint,
+      result
+    );
+    return result;
+  }
+
   // Internals.
 
   private guard<T>(run: () => Result<T>): Result<T> {
@@ -1547,6 +1963,57 @@ export class InMemoryStoreCore {
     return false;
   }
 
+  private matchImportCandidates(
+    storeId: string,
+    rawName: string,
+    rawBarcode: string | null
+  ): StagedSourceRecordV2["candidates"] {
+    const products = [...this.products.values()].filter(
+      (product) => product.storeId === storeId
+    );
+    const barcodeMatches = rawBarcode
+      ? products.filter((product) => product.barcode === rawBarcode)
+      : [];
+    const aliasMatches =
+      barcodeMatches.length === 0
+        ? [...this.productAliases.values()]
+            .filter(
+              (alias) =>
+                alias.storeId === storeId &&
+                alias.approved &&
+                alias.alias.toLowerCase() === rawName.toLowerCase()
+            )
+            .map((alias) => this.products.get(alias.storeProductId))
+            .filter((product): product is ProductRecord => Boolean(product))
+        : [];
+    const nameMatches =
+      barcodeMatches.length === 0 && aliasMatches.length === 0
+        ? products.filter(
+            (product) =>
+              product.productName.toLowerCase() === rawName.toLowerCase()
+          )
+        : [];
+    const matches =
+      barcodeMatches.length > 0
+        ? barcodeMatches
+        : aliasMatches.length > 0
+          ? aliasMatches
+          : nameMatches;
+    const reason =
+      barcodeMatches.length > 0
+        ? "barcode"
+        : aliasMatches.length > 0
+          ? "alias"
+          : "product_name";
+    return matches
+      .sort((left, right) => left.id.localeCompare(right.id))
+      .map((product) => ({
+        storeProductId: product.id,
+        productName: product.productName,
+        reason,
+      }));
+  }
+
   /**
    * Idempotency keys are scoped to the principal that owns them, a store for
    * seller commands and an installation for buyer commands, so one caller can
@@ -1718,6 +2185,36 @@ export class InMemoryStoreCore {
       expiryDate: product.expiryDate,
       hasOpenExceptions: this.hasOpenExceptionFor(product.id),
       version: product.version,
+    };
+  }
+
+  private projectImportBatch(batch: ImportBatchRecord): ImportBatchV2 {
+    return {
+      id: batch.id,
+      storeId: batch.storeId,
+      filename: batch.filename,
+      status: batch.status,
+      totalRecords: batch.totalRecords,
+      pendingRecords: batch.pendingRecords,
+      createdAt: batch.createdAt,
+    };
+  }
+
+  private projectStagedRecord(
+    record: StagedSourceRecord
+  ): StagedSourceRecordV2 {
+    return {
+      id: record.id,
+      batchId: record.batchId,
+      storeId: record.storeId,
+      rawName: record.rawName,
+      rawBarcode: record.rawBarcode,
+      rawQuantity: record.rawQuantity,
+      rawPrice: record.rawPrice,
+      matchStatus: record.matchStatus,
+      matchedStoreProductId: record.matchedStoreProductId,
+      candidates: record.candidates.map((candidate) => ({ ...candidate })),
+      createdAt: record.createdAt,
     };
   }
 }

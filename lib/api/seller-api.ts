@@ -2,7 +2,9 @@ import type { Result } from '@/lib/contracts/common'
 import type { MarketplaceOfferV2 } from '@/lib/contracts/marketplace'
 import type {
   ApproveStockAdjustmentV2Input,
+  DecideStagedRecordV2Input,
   FulfillReservationV2Input,
+  ImportBatchV2,
   InventorySummaryV2,
   PauseOfferV2Input,
   PublishOfferV2Input,
@@ -10,9 +12,11 @@ import type {
   ReportStockMismatchV2Input,
   ResolveStoreExceptionV2Input,
   SellerPickupV2,
+  StagedSourceRecordV2,
   StockAdjustmentProposalV2,
   StoreExceptionV2,
   StoreMembershipV2,
+  UploadImportBatchV2Input,
 } from '@/lib/contracts/seller'
 
 export interface SellerStoreApiV2 {
@@ -28,4 +32,8 @@ export interface SellerStoreApiV2 {
   reportStockMismatchV2(input: ReportStockMismatchV2Input): Promise<Result<{ offer: MarketplaceOfferV2, exception: StoreExceptionV2 }>>
   resolveStoreExceptionV2(input: ResolveStoreExceptionV2Input): Promise<Result<StoreExceptionV2>>
   listStoreExceptionsV2(storeId: string): Promise<Result<StoreExceptionV2[]>>
+  uploadImportBatchV2(input: UploadImportBatchV2Input): Promise<Result<ImportBatchV2>>
+  listImportBatchesV2(storeId: string): Promise<Result<ImportBatchV2[]>>
+  listStagedRecordsV2(storeId: string, batchId: string): Promise<Result<StagedSourceRecordV2[]>>
+  decideStagedRecordV2(input: DecideStagedRecordV2Input): Promise<Result<StagedSourceRecordV2>>
 }

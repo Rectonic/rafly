@@ -13,7 +13,10 @@
  */
 
 import type { SellerStoreApiV2 } from "@/lib/api";
-import type { InventorySummaryV2 } from "@/lib/contracts";
+import type {
+  InventorySummaryV2,
+  StagedSourceRecordV2,
+} from "@/lib/contracts";
 
 import {
   buildPublishInput,
@@ -38,6 +41,17 @@ function findSummary(
     throw new Error(`missing inventory summary for ${storeProductId}`);
   }
   return summary;
+}
+
+function findStagedRecord(
+  records: StagedSourceRecordV2[],
+  rawName: string
+): StagedSourceRecordV2 {
+  const record = records.find((candidate) => candidate.rawName === rawName);
+  if (!record) {
+    throw new Error(`missing staged record for ${rawName}`);
+  }
+  return record;
 }
 
 export function runSellerApiConformance(
@@ -1734,6 +1748,602 @@ export function runSellerApiConformance(
           }),
           "validation_failed"
         );
+      });
+    });
+
+    describe("canonical CSV import upload and matching", () => {
+      const matchingRecords = [
+        {
+          rawName: "Fresh bread loaf",
+          rawBarcode: "4780000000011",
+          rawQuantity: 10,
+        },
+        { rawName: "FRESH BREAD LOAF" },
+        {
+          rawName: "Duplicate barcode source",
+          rawBarcode: "CSV-DUPLICATE-BARCODE",
+        },
+        { rawName: "No catalog match" },
+      ];
+
+      it("lets staff, manager, and owner upload records and read their batches", async () => {
+        const uploaders = [staff, manager, owner];
+
+        for (const [index, uploader] of uploaders.entries()) {
+          const batch = expectOk(
+            await uploader.uploadImportBatchV2({
+              storeId: harness.scenario.storeId,
+              filename: `role-${index + 1}.csv`,
+              records: [matchingRecords[0]],
+              idempotencyKey: `role-upload-${index + 1}`,
+            })
+          );
+          expect(batch).toMatchObject({
+            storeId: harness.scenario.storeId,
+            filename: `role-${index + 1}.csv`,
+            status: "needs_review",
+            totalRecords: 1,
+            pendingRecords: 1,
+            createdAt: expect.any(String),
+          });
+        }
+
+        const batches = expectOk(
+          await staff.listImportBatchesV2(harness.scenario.storeId)
+        );
+        expect(batches.map((batch) => batch.filename)).toEqual([
+          "role-3.csv",
+          "role-2.csv",
+          "role-1.csv",
+        ]);
+      });
+
+      it("uses the first populated matching tier and never auto approves ambiguity", async () => {
+        const batch = expectOk(
+          await staff.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "matching.csv",
+            records: matchingRecords,
+            idempotencyKey: "matching-upload",
+          })
+        );
+
+        const records = expectOk(
+          await staff.listStagedRecordsV2(harness.scenario.storeId, batch.id)
+        );
+        const barcode = findStagedRecord(records, "Fresh bread loaf");
+        const productName = findStagedRecord(records, "FRESH BREAD LOAF");
+        const ambiguous = findStagedRecord(
+          records,
+          "Duplicate barcode source"
+        );
+        const unmatched = findStagedRecord(records, "No catalog match");
+        expect(records).toHaveLength(4);
+        expect(barcode).toMatchObject({
+          rawName: "Fresh bread loaf",
+          rawBarcode: "4780000000011",
+          rawQuantity: 10,
+          rawPrice: null,
+          matchStatus: "auto_matched",
+          matchedStoreProductId: harness.scenario.highConfidenceProductId,
+          candidates: [
+            {
+              storeProductId: harness.scenario.highConfidenceProductId,
+              productName: "Fresh bread loaf",
+              reason: "barcode",
+            },
+          ],
+        });
+        expect(productName).toMatchObject({
+          matchStatus: "auto_matched",
+          matchedStoreProductId: harness.scenario.highConfidenceProductId,
+          candidates: [
+            {
+              storeProductId: harness.scenario.highConfidenceProductId,
+              reason: "product_name",
+            },
+          ],
+        });
+        expect(ambiguous.matchStatus).toBe("ambiguous");
+        expect(ambiguous.matchedStoreProductId).toBeNull();
+        expect(ambiguous.candidates).toHaveLength(2);
+        expect(ambiguous.candidates.map((candidate) => candidate.reason)).toEqual([
+          "barcode",
+          "barcode",
+        ]);
+        expect(unmatched).toMatchObject({
+          matchStatus: "unmatched",
+          matchedStoreProductId: null,
+          candidates: [],
+        });
+      });
+
+      it("replays an upload by key and rejects a changed upload fingerprint", async () => {
+        const input = {
+          storeId: harness.scenario.storeId,
+          filename: "replay.csv",
+          records: matchingRecords,
+          idempotencyKey: "upload-replay-key",
+        };
+        const first = expectOk(await manager.uploadImportBatchV2(input));
+        const replay = expectOk(await manager.uploadImportBatchV2(input));
+
+        expect(replay).toEqual(first);
+        expect(
+          expectOk(await manager.listImportBatchesV2(harness.scenario.storeId))
+        ).toHaveLength(1);
+        expect(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              first.id
+            )
+          )
+        ).toHaveLength(matchingRecords.length);
+
+        expectErrorCode(
+          await manager.uploadImportBatchV2({
+            ...input,
+            filename: "changed.csv",
+          }),
+          "idempotency_conflict"
+        );
+        expectErrorCode(
+          await manager.uploadImportBatchV2({
+            ...input,
+            records: [...matchingRecords, { rawName: "Changed records" }],
+          }),
+          "idempotency_conflict"
+        );
+
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+        expectErrorCode(await otherOwner.uploadImportBatchV2(input), "forbidden");
+      });
+
+      it("denies staff decisions and all cross store import access", async () => {
+        const batch = expectOk(
+          await staff.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "authorization.csv",
+            records: [{ rawName: "Rejected source row" }],
+            idempotencyKey: "authorization-upload",
+          })
+        );
+        const records = expectOk(
+          await staff.listStagedRecordsV2(harness.scenario.storeId, batch.id)
+        );
+        const record = findStagedRecord(records, "Rejected source row");
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+
+        expectErrorCode(
+          await staff.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: record.id,
+            decision: "reject",
+            targetStoreProductId: null,
+            idempotencyKey: "staff-decision",
+          }),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "cross-store.csv",
+            records: [{ rawName: "Cross store upload" }],
+            idempotencyKey: "cross-store-upload",
+          }),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: record.id,
+            decision: "reject",
+            targetStoreProductId: null,
+            idempotencyKey: "cross-store-decision",
+          }),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.listImportBatchesV2(harness.scenario.storeId),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.listStagedRecordsV2(
+            harness.scenario.storeId,
+            batch.id
+          ),
+          "forbidden"
+        );
+        expectErrorCode(
+          await otherOwner.listStagedRecordsV2(
+            harness.scenario.otherStoreId,
+            batch.id
+          ),
+          "not_found"
+        );
+      });
+
+      it("approves a new product with an alias and applies barcode before alias before name", async () => {
+        const sourceBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "new-product.csv",
+            records: [
+              {
+                rawName: "Day old pastry batch",
+                rawBarcode: "CSV-NEW-BARCODE",
+                rawQuantity: 3,
+              },
+            ],
+            idempotencyKey: "new-product-upload",
+          })
+        );
+        const sourceRecords = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            sourceBatch.id
+          )
+        );
+        const source = findStagedRecord(
+          sourceRecords,
+          "Day old pastry batch"
+        );
+        const decided = expectOk(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: source.id,
+            decision: "approve",
+            targetStoreProductId: null,
+            idempotencyKey: "approve-new-product",
+          })
+        );
+
+        expect(decided.matchStatus).toBe("approved");
+        expect(decided.matchedStoreProductId).not.toBeNull();
+        const inventory = expectOk(
+          await manager.listStoreInventoryV2(harness.scenario.storeId)
+        );
+        expect(
+          findSummary(inventory, decided.matchedStoreProductId as string)
+        ).toMatchObject({
+          productName: "Day old pastry batch",
+          barcode: "CSV-NEW-BARCODE",
+          onHandQuantity: 0,
+          confidence: "low",
+          lastVerifiedAt: expect.any(String),
+        });
+        const effects = harness.listImportEffects();
+        expect(effects.aliases).toContainEqual({
+          storeId: harness.scenario.storeId,
+          storeProductId: decided.matchedStoreProductId,
+          alias: "Day old pastry batch",
+          approved: true,
+        });
+        expect(effects.observations).toContainEqual(
+          expect.objectContaining({
+            storeId: harness.scenario.storeId,
+            storeProductId: decided.matchedStoreProductId,
+            stagedSourceRecordId: source.id,
+            observedQuantity: 3,
+            confidence: "low",
+            createdAt: expect.any(String),
+          })
+        );
+        expect(effects.proposals).toContainEqual(
+          expect.objectContaining({
+            storeId: harness.scenario.storeId,
+            storeProductId: decided.matchedStoreProductId,
+            currentQuantity: 0,
+            proposedQuantity: 3,
+            delta: 3,
+            status: "pending",
+            createdByRole: "manager",
+          })
+        );
+
+        const precedenceBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "tier-precedence.csv",
+            records: [
+              {
+                rawName: "Day old pastry batch",
+                rawBarcode: "4780000000011",
+              },
+              { rawName: "DAY OLD PASTRY BATCH" },
+            ],
+            idempotencyKey: "tier-precedence-upload",
+          })
+        );
+        const precedence = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            precedenceBatch.id
+          )
+        );
+        const barcodePrecedence = findStagedRecord(
+          precedence,
+          "Day old pastry batch"
+        );
+        const aliasPrecedence = findStagedRecord(
+          precedence,
+          "DAY OLD PASTRY BATCH"
+        );
+        expect(barcodePrecedence).toMatchObject({
+          matchedStoreProductId: harness.scenario.highConfidenceProductId,
+          candidates: [
+            {
+              storeProductId: harness.scenario.highConfidenceProductId,
+              reason: "barcode",
+            },
+          ],
+        });
+        expect(aliasPrecedence).toMatchObject({
+          matchedStoreProductId: decided.matchedStoreProductId,
+          candidates: [
+            {
+              storeProductId: decided.matchedStoreProductId,
+              reason: "alias",
+            },
+          ],
+        });
+      });
+
+      it("records low confidence quantity evidence and proposes differences without writing on hand", async () => {
+        const before = findSummary(
+          expectOk(
+            await manager.listStoreInventoryV2(harness.scenario.storeId)
+          ),
+          harness.scenario.highConfidenceProductId
+        );
+        const batch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "quantity-evidence.csv",
+            records: [
+              { rawName: "Matching count", rawQuantity: before.onHandQuantity },
+              { rawName: "Differing count", rawQuantity: before.onHandQuantity - 3 },
+            ],
+            idempotencyKey: "quantity-evidence-upload",
+          })
+        );
+        const records = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            batch.id
+          )
+        );
+        const matchingCount = findStagedRecord(records, "Matching count");
+        const differingCount = findStagedRecord(records, "Differing count");
+        expectOk(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: matchingCount.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.highConfidenceProductId,
+            idempotencyKey: "quantity-decision-matching",
+          })
+        );
+        const differingDecision = expectOk(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: differingCount.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.highConfidenceProductId,
+            idempotencyKey: "quantity-decision-differing",
+          })
+        );
+        expect(differingDecision).toMatchObject({
+          id: differingCount.id,
+          matchStatus: "approved",
+          matchedStoreProductId: harness.scenario.highConfidenceProductId,
+        });
+
+        const after = findSummary(
+          expectOk(
+            await manager.listStoreInventoryV2(harness.scenario.storeId)
+          ),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(after.onHandQuantity).toBe(before.onHandQuantity);
+        expect(after.confidence).toBe("low");
+        expect(after.lastVerifiedAt).toEqual(expect.any(String));
+        const effects = harness.listImportEffects();
+        expect(effects.observations).toHaveLength(2);
+        expect(effects.observations.map((entry) => entry.confidence)).toEqual([
+          "low",
+          "low",
+        ]);
+        expect(effects.proposals).toHaveLength(1);
+        expect(effects.proposals[0]).toMatchObject({
+          storeProductId: harness.scenario.highConfidenceProductId,
+          currentQuantity: before.onHandQuantity,
+          proposedQuantity: before.onHandQuantity - 3,
+          delta: -3,
+          reason: "count",
+          status: "pending",
+          createdByRole: "manager",
+        });
+      });
+
+      it("rejects a record and completes its batch after the final first decision", async () => {
+        const batch = expectOk(
+          await owner.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "completion.csv",
+            records: [
+              { rawName: "Reject this source" },
+              { rawName: "Approve this source" },
+            ],
+            idempotencyKey: "completion-upload",
+          })
+        );
+        const records = expectOk(
+          await owner.listStagedRecordsV2(harness.scenario.storeId, batch.id)
+        );
+        const rejectSource = findStagedRecord(records, "Reject this source");
+        const approveSource = findStagedRecord(records, "Approve this source");
+
+        const rejected = expectOk(
+          await owner.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: rejectSource.id,
+            decision: "reject",
+            targetStoreProductId: null,
+            idempotencyKey: "completion-reject",
+          })
+        );
+        expect(rejected).toMatchObject({
+          matchStatus: "rejected",
+          matchedStoreProductId: null,
+        });
+        expect(
+          expectOk(await owner.listImportBatchesV2(harness.scenario.storeId))[0]
+        ).toMatchObject({ status: "needs_review", pendingRecords: 1 });
+
+        expectOk(
+          await owner.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: approveSource.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
+            idempotencyKey: "completion-approve",
+          })
+        );
+        expect(
+          expectOk(await owner.listImportBatchesV2(harness.scenario.storeId))[0]
+        ).toMatchObject({ status: "completed", pendingRecords: 0 });
+      });
+
+      it("replays one decision without repeating effects and conflicts on every fingerprint field", async () => {
+        const batch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "decision-replay.csv",
+            records: [
+              { rawName: "Replay source one" },
+              { rawName: "Replay source two" },
+            ],
+            idempotencyKey: "decision-replay-upload",
+          })
+        );
+        const records = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            batch.id
+          )
+        );
+        const replaySourceOne = findStagedRecord(
+          records,
+          "Replay source one"
+        );
+        const replaySourceTwo = findStagedRecord(
+          records,
+          "Replay source two"
+        );
+        const input = {
+          storeId: harness.scenario.storeId,
+          recordId: replaySourceOne.id,
+          decision: "approve" as const,
+          targetStoreProductId: harness.scenario.highConfidenceProductId,
+          idempotencyKey: "decision-replay-key",
+        };
+        const auditBefore = harness.listAuditEntries().length;
+        const outboxBefore = harness.listOutboxEvents().length;
+        const first = expectOk(await manager.decideStagedRecordV2(input));
+        const replay = expectOk(await manager.decideStagedRecordV2(input));
+
+        expect(replay).toEqual(first);
+        expect(
+          expectOk(await manager.listImportBatchesV2(harness.scenario.storeId))[0]
+            .pendingRecords
+        ).toBe(1);
+        expect(harness.listAuditEntries()).toHaveLength(auditBefore + 1);
+        expect(harness.listAuditEntries()[auditBefore]).toMatchObject({
+          storeId: harness.scenario.storeId,
+          command: "decideStagedRecordV2",
+          actorUserId: harness.scenario.managerUserId,
+        });
+        expect(harness.listOutboxEvents()).toHaveLength(outboxBefore + 1);
+        expect(harness.listOutboxEvents()[outboxBefore]).toMatchObject({
+          storeId: harness.scenario.storeId,
+          name: "staged_record_decided",
+        });
+
+        expectErrorCode(
+          await manager.decideStagedRecordV2({
+            ...input,
+            recordId: replaySourceTwo.id,
+          }),
+          "idempotency_conflict"
+        );
+        expectErrorCode(
+          await manager.decideStagedRecordV2({
+            ...input,
+            decision: "reject",
+            targetStoreProductId: null,
+          }),
+          "idempotency_conflict"
+        );
+        expectErrorCode(
+          await manager.decideStagedRecordV2({
+            ...input,
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
+          }),
+          "idempotency_conflict"
+        );
+
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+        expectErrorCode(
+          await otherOwner.decideStagedRecordV2(input),
+          "forbidden"
+        );
+      });
+
+      it("validates the selected target before mutating the staged record", async () => {
+        const batch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "target-validation.csv",
+            records: [{ rawName: "Target validation source" }],
+            idempotencyKey: "target-validation-upload",
+          })
+        );
+        const records = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            batch.id
+          )
+        );
+        const record = findStagedRecord(records, "Target validation source");
+
+        expectErrorCode(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: record.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.otherStoreProductId,
+            idempotencyKey: "target-validation-decision",
+          }),
+          "not_found"
+        );
+        const afterFailedDecision = expectOk(
+          await manager.listStagedRecordsV2(
+            harness.scenario.storeId,
+            batch.id
+          )
+        );
+        expect(
+          findStagedRecord(afterFailedDecision, "Target validation source")
+            .matchStatus
+        ).toBe("unmatched");
       });
     });
   });

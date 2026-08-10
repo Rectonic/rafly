@@ -21,6 +21,7 @@
 
 import type {
   CommandErrorCode,
+  ImportBatchV2,
   InventorySummaryV2,
   MarketplaceOfferStatusV2,
   MarketplaceOfferV2,
@@ -28,6 +29,7 @@ import type {
   ReservationStatusV2,
   Result,
   SellerPickupV2,
+  StagedSourceRecordV2,
   StockAdjustmentProposalV2,
   StockConfidenceV2,
   StoreExceptionV2,
@@ -378,6 +380,95 @@ export function mapInventoryRow(row: InventoryRow): InventorySummaryV2 {
     expiryDate: row.expiry_date,
     hasOpenExceptions: row.has_open_exceptions,
     version: row.version,
+  };
+}
+
+export interface ImportBatchRow {
+  id: string;
+  store_id: string;
+  filename: string;
+  status: ImportBatchV2["status"];
+  total_records: number;
+  pending_records: number;
+  created_at: string;
+  created_by?: string;
+  import_fingerprint?: string;
+}
+
+export function mapImportBatchRow(row: ImportBatchRow): ImportBatchV2 {
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    filename: row.filename,
+    status: row.status,
+    totalRecords: row.total_records,
+    pendingRecords: row.pending_records,
+    createdAt: toIsoDateTime(row.created_at),
+  };
+}
+
+interface StagedCandidateRow {
+  storeProductId: string;
+  productName: string;
+  reason: string;
+}
+
+function toStagedCandidates(value: unknown): StagedCandidateRow[] {
+  if (!Array.isArray(value)) {
+    throw new Error("staged record candidates must be an array");
+  }
+
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") {
+      throw new Error("staged record candidate must be an object");
+    }
+    const candidate = entry as Record<string, unknown>;
+    if (
+      typeof candidate.storeProductId !== "string" ||
+      typeof candidate.productName !== "string" ||
+      typeof candidate.reason !== "string"
+    ) {
+      throw new Error("staged record candidate fields must be strings");
+    }
+    return {
+      storeProductId: candidate.storeProductId,
+      productName: candidate.productName,
+      reason: candidate.reason,
+    };
+  });
+}
+
+export interface StagedSourceRecordRow {
+  id: string;
+  batch_id: string;
+  store_id: string;
+  raw_name: string;
+  raw_barcode: string | null;
+  raw_quantity: number | null;
+  raw_price: number | null;
+  match_status: StagedSourceRecordV2["matchStatus"];
+  matched_store_product_id: string | null;
+  candidates: unknown;
+  created_at: string;
+  decided_by?: string | null;
+  decided_at?: string | null;
+}
+
+export function mapStagedSourceRecordRow(
+  row: StagedSourceRecordRow
+): StagedSourceRecordV2 {
+  return {
+    id: row.id,
+    batchId: row.batch_id,
+    storeId: row.store_id,
+    rawName: row.raw_name,
+    rawBarcode: row.raw_barcode,
+    rawQuantity: row.raw_quantity,
+    rawPrice: row.raw_price,
+    matchStatus: row.match_status,
+    matchedStoreProductId: row.matched_store_product_id,
+    candidates: toStagedCandidates(row.candidates),
+    createdAt: toIsoDateTime(row.created_at),
   };
 }
 

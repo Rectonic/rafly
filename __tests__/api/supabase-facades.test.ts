@@ -27,7 +27,11 @@ import {
 import type { BuyerMarketplaceApiV2, SellerStoreApiV2 } from "@/lib/api";
 import { makeSupabaseBuyerApi } from "@/lib/api/supabase-buyer-api";
 import { makeSupabaseSellerApi } from "@/lib/api/supabase-seller-api";
-import type { PublishOfferV2Input, Result } from "@/lib/contracts";
+import type {
+  PublishOfferV2Input,
+  Result,
+  UploadImportBatchV2Input,
+} from "@/lib/contracts";
 
 interface RpcCall {
   name: string;
@@ -170,6 +174,44 @@ const publishInput: PublishOfferV2Input = {
   cancellationPolicy: null,
 };
 
+const uploadInput: UploadImportBatchV2Input = {
+  storeId: "store-1",
+  filename: "inventory.csv",
+  records: [
+    {
+      rawName: "Fresh bread",
+      rawBarcode: "4780000000011",
+      rawQuantity: 7,
+      rawPrice: 12500,
+    },
+  ],
+  idempotencyKey: "import-key-1",
+};
+
+const importBatchRow = {
+  id: "88888888-8888-4888-8888-888888888888",
+  store_id: "store-1",
+  filename: "inventory.csv",
+  status: "needs_review" as const,
+  total_records: 1,
+  pending_records: 1,
+  created_at: "2026-08-11T08:00:00+00:00",
+};
+
+const stagedRecordRow = {
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  batch_id: importBatchRow.id,
+  store_id: "store-1",
+  raw_name: "Fresh bread",
+  raw_barcode: "4780000000011",
+  raw_quantity: 7,
+  raw_price: 12500,
+  match_status: "unmatched" as const,
+  matched_store_product_id: null,
+  candidates: [],
+  created_at: "2026-08-11T08:01:00+00:00",
+};
+
 describe("never throws", () => {
   const buyerApi = makeSupabaseBuyerApi(makeThrowingClient());
   const sellerApi = makeSupabaseSellerApi(makeThrowingClient());
@@ -267,6 +309,23 @@ describe("never throws", () => {
         }),
     ],
     ["listStoreExceptionsV2", () => sellerApi.listStoreExceptionsV2("store-1")],
+    ["uploadImportBatchV2", () => sellerApi.uploadImportBatchV2(uploadInput)],
+    ["listImportBatchesV2", () => sellerApi.listImportBatchesV2("store-1")],
+    [
+      "listStagedRecordsV2",
+      () => sellerApi.listStagedRecordsV2("store-1", "batch-1"),
+    ],
+    [
+      "decideStagedRecordV2",
+      () =>
+        sellerApi.decideStagedRecordV2({
+          storeId: "store-1",
+          recordId: "record-1",
+          decision: "approve",
+          targetStoreProductId: null,
+          idempotencyKey: "decision-key-1",
+        }),
+    ],
   ];
 
   it.each(buyerCalls)(
@@ -302,6 +361,189 @@ describe("never throws", () => {
     expect(sellerCalls.map(([name]) => name).sort()).toEqual(
       Object.keys(sellerApiForKeys).sort()
     );
+  });
+});
+
+describe("CSV import facade wiring", () => {
+  it("uploads canonical records and maps the returned batch", async () => {
+    const calls: RpcCall[] = [];
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpcCalls: calls,
+        rpc: () => ({ data: importBatchRow, error: null }),
+      })
+    );
+
+    const result = await api.uploadImportBatchV2(uploadInput);
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        id: importBatchRow.id,
+        storeId: "store-1",
+        filename: "inventory.csv",
+        status: "needs_review",
+        totalRecords: 1,
+        pendingRecords: 1,
+        createdAt: "2026-08-11T08:00:00.000Z",
+      },
+    });
+    expect(calls).toEqual([
+      {
+        name: "upload_import_batch_v2",
+        args: {
+          p_store_id: "store-1",
+          p_filename: "inventory.csv",
+          p_records: uploadInput.records,
+          p_idempotency_key: "import-key-1",
+        },
+      },
+    ]);
+  });
+
+  it("lists batches and staged records through authorization checking RPCs", async () => {
+    const calls: RpcCall[] = [];
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpcCalls: calls,
+        rpc: (name) => ({
+          data: name === "list_import_batches_v2" ? [importBatchRow] : [stagedRecordRow],
+          error: null,
+        }),
+        from: () => {
+          throw new Error("CSV import reads must not use direct table access");
+        },
+      })
+    );
+
+    const batches = await api.listImportBatchesV2("store-1");
+    const records = await api.listStagedRecordsV2("store-1", importBatchRow.id);
+
+    expect(batches.ok && batches.value[0]).toEqual({
+      id: importBatchRow.id,
+      storeId: "store-1",
+      filename: "inventory.csv",
+      status: "needs_review",
+      totalRecords: 1,
+      pendingRecords: 1,
+      createdAt: "2026-08-11T08:00:00.000Z",
+    });
+    expect(records.ok && records.value[0]).toEqual({
+      id: stagedRecordRow.id,
+      batchId: importBatchRow.id,
+      storeId: "store-1",
+      rawName: "Fresh bread",
+      rawBarcode: "4780000000011",
+      rawQuantity: 7,
+      rawPrice: 12500,
+      matchStatus: "unmatched",
+      matchedStoreProductId: null,
+      candidates: [],
+      createdAt: "2026-08-11T08:01:00.000Z",
+    });
+    expect(calls).toEqual([
+      {
+        name: "list_import_batches_v2",
+        args: { p_store_id: "store-1" },
+      },
+      {
+        name: "list_staged_records_v2",
+        args: {
+          p_store_id: "store-1",
+          p_batch_id: importBatchRow.id,
+        },
+      },
+    ]);
+  });
+
+  it("decides a staged record with the exact RPC parameters", async () => {
+    const calls: RpcCall[] = [];
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpcCalls: calls,
+        rpc: () => ({
+          data: {
+            ...stagedRecordRow,
+            match_status: "approved",
+            matched_store_product_id: "product-1",
+          },
+          error: null,
+        }),
+      })
+    );
+
+    const result = await api.decideStagedRecordV2({
+      storeId: "store-1",
+      recordId: stagedRecordRow.id,
+      decision: "approve",
+      targetStoreProductId: "product-1",
+      idempotencyKey: "decision-key-1",
+    });
+
+    expect(result.ok && result.value.matchStatus).toBe("approved");
+    expect(calls).toEqual([
+      {
+        name: "decide_staged_record_v2",
+        args: {
+          p_store_id: "store-1",
+          p_record_id: stagedRecordRow.id,
+          p_decision: "approve",
+          p_target_store_product_id: "product-1",
+          p_idempotency_key: "decision-key-1",
+        },
+      },
+    ]);
+  });
+
+  it("returns mapped errors when an import RPC returns no data or a PostgREST error", async () => {
+    const noDataApi = makeSupabaseSellerApi(
+      makeStubClient({ rpc: () => ({ data: null, error: null }) })
+    );
+    const errorApi = makeSupabaseSellerApi(
+      makeStubClient({
+        rpc: () => ({
+          data: null,
+          error: {
+            message: "forbidden: role staff may not decide staged records",
+            code: "P0001",
+          },
+        }),
+      })
+    );
+
+    const noData = await noDataApi.uploadImportBatchV2(uploadInput);
+    const denied = await errorApi.decideStagedRecordV2({
+      storeId: "store-1",
+      recordId: stagedRecordRow.id,
+      decision: "reject",
+      targetStoreProductId: null,
+      idempotencyKey: "decision-key-2",
+    });
+
+    expect(noData.ok).toBe(false);
+    expect(denied.ok).toBe(false);
+    if (!denied.ok) {
+      expect(denied.error.code).toBe("forbidden");
+    }
+  });
+
+  it("maps a thrown staged candidate validation failure into an error Result", async () => {
+    const api = makeSupabaseSellerApi(
+      makeStubClient({
+        rpc: () => ({
+          data: [{ ...stagedRecordRow, candidates: { malformed: true } }],
+          error: null,
+        }),
+      })
+    );
+
+    const result = await api.listStagedRecordsV2("store-1", importBatchRow.id);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("unknown");
+      expect(result.error.message).toContain("candidates must be an array");
+    }
   });
 });
 

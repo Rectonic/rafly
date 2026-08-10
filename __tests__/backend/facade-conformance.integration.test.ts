@@ -42,6 +42,7 @@ import {
   runBuyerApiConformance,
   type ConformanceAuditEntry,
   type ConformanceHarness,
+  type ConformanceImportEffects,
   type ConformanceOutboxEvent,
   type ConformanceScenario,
 } from "@/lib/test-kit/conformance/buyer-api-conformance";
@@ -185,6 +186,7 @@ const MUTATIONS: ReadonlySet<string> = new Set([
   "fulfillReservationV2",
   "reportStockMismatchV2",
   "resolveStoreExceptionV2",
+  "decideStagedRecordV2",
 ]);
 
 /** The facade method name behind each audited SQL command. */
@@ -198,6 +200,7 @@ const COMMAND_NAMES: Readonly<Record<string, string>> = {
   fulfill_reservation_v2: "fulfillReservationV2",
   report_stock_mismatch_v2: "reportStockMismatchV2",
   resolve_store_exception_v2: "resolveStoreExceptionV2",
+  decide_staged_record_v2: "decideStagedRecordV2",
 };
 
 function isoPlus(base: string, minutes: number): string {
@@ -280,6 +283,7 @@ d("Supabase facades against the local stack", () => {
     const highConfidenceProductId = randomUUID();
     const lowConfidenceProductId = randomUUID();
     const expiredProductId = randomUUID();
+    const otherStoreProductId = randomUUID();
     const pickupStart = isoPlus(now, 60);
     const pickupEnd = isoPlus(now, 240);
 
@@ -296,6 +300,7 @@ d("Supabase facades against the local stack", () => {
       highConfidenceProductId,
       lowConfidenceProductId,
       expiredProductId,
+      otherStoreProductId,
       pickupStart,
       pickupEnd,
       timezone: "Asia/Tashkent",
@@ -308,6 +313,11 @@ d("Supabase facades against the local stack", () => {
 
     let auditEntries: ConformanceAuditEntry[] = [];
     let outboxEvents: ConformanceOutboxEvent[] = [];
+    let importEffects: ConformanceImportEffects = {
+      aliases: [],
+      observations: [],
+      proposals: [],
+    };
     let outboxWatermark = 0;
 
     function fail(context: string, error: { message: string } | null): void {
@@ -436,6 +446,30 @@ d("Supabase facades against the local stack", () => {
               last_verified_at: now,
               expiry_date: utcDay(now, -1),
             },
+            {
+              id: otherStoreProductId,
+              store_id: otherStoreId,
+              product_name: "Other store product",
+              barcode: "CSV-OTHER-STORE-BARCODE",
+              on_hand_quantity: 2,
+              confidence: "high",
+            },
+            {
+              id: randomUUID(),
+              store_id: storeId,
+              product_name: "Duplicate barcode one",
+              barcode: "CSV-DUPLICATE-BARCODE",
+              on_hand_quantity: 1,
+              confidence: "low",
+            },
+            {
+              id: randomUUID(),
+              store_id: storeId,
+              product_name: "Duplicate barcode two",
+              barcode: "CSV-DUPLICATE-BARCODE",
+              on_hand_quantity: 1,
+              confidence: "low",
+            },
           ])
         ).error
       );
@@ -456,7 +490,7 @@ d("Supabase facades against the local stack", () => {
     ready.catch(() => undefined);
 
     async function refreshLedgers(): Promise<void> {
-      const [audit, outbox] = await Promise.all([
+      const [audit, outbox, aliases, observations, proposals] = await Promise.all([
         service
           .from("audit_entries")
           .select("store_id, actor, command, created_at")
@@ -467,9 +501,31 @@ d("Supabase facades against the local stack", () => {
           .select("id, event_type, payload, created_at")
           .gt("id", outboxWatermark)
           .order("id", { ascending: true }),
+        service
+          .from("product_aliases")
+          .select("store_id, store_product_id, alias, approved")
+          .eq("store_id", storeId)
+          .order("created_at", { ascending: true }),
+        service
+          .from("inventory_observations")
+          .select(
+            "store_id, store_product_id, staged_source_record_id, observed_quantity, confidence, created_at"
+          )
+          .eq("store_id", storeId)
+          .order("created_at", { ascending: true }),
+        service
+          .from("stock_adjustment_proposals")
+          .select(
+            "store_id, store_product_id, current_quantity, proposed_quantity, delta, reason, status, created_by_role"
+          )
+          .eq("store_id", storeId)
+          .order("created_at", { ascending: true }),
       ]);
       fail("reading the audit trail", audit.error);
       fail("reading the outbox", outbox.error);
+      fail("reading product aliases", aliases.error);
+      fail("reading inventory observations", observations.error);
+      fail("reading adjustment proposals", proposals.error);
 
       auditEntries = (
         (audit.data ?? []) as {
@@ -510,6 +566,60 @@ d("Supabase facades against the local stack", () => {
           // now reads the timestamp the database actually stored.
           at: new Date(row.created_at).toISOString(),
         }));
+
+      importEffects = {
+        aliases: (
+          (aliases.data ?? []) as {
+            store_id: string;
+            store_product_id: string;
+            alias: string;
+            approved: boolean;
+          }[]
+        ).map((row) => ({
+          storeId: row.store_id,
+          storeProductId: row.store_product_id,
+          alias: row.alias,
+          approved: row.approved,
+        })),
+        observations: (
+          (observations.data ?? []) as {
+            store_id: string;
+            store_product_id: string;
+            staged_source_record_id: string;
+            observed_quantity: number;
+            confidence: "low";
+            created_at: string;
+          }[]
+        ).map((row) => ({
+          storeId: row.store_id,
+          storeProductId: row.store_product_id,
+          stagedSourceRecordId: row.staged_source_record_id,
+          observedQuantity: row.observed_quantity,
+          confidence: row.confidence,
+          createdAt: new Date(row.created_at).toISOString(),
+        })),
+        proposals: (
+          (proposals.data ?? []) as {
+            store_id: string;
+            store_product_id: string;
+            current_quantity: number;
+            proposed_quantity: number;
+            delta: number;
+            reason: "count";
+            status: string;
+            created_by_role: string;
+          }[]
+        ).map((row) => ({
+          storeId: row.store_id,
+          storeProductId: row.store_product_id,
+          currentQuantity: row.current_quantity,
+          proposedQuantity: row.proposed_quantity,
+          delta: row.delta,
+          reason: row.reason,
+          status: row.status,
+          createdByRole: row.created_by_role,
+        })),
+      };
     }
 
     return {
@@ -538,6 +648,11 @@ d("Supabase facades against the local stack", () => {
       },
       listAuditEntries: () => auditEntries.map((entry) => ({ ...entry })),
       listOutboxEvents: () => outboxEvents.map((event) => ({ ...event })),
+      listImportEffects: () => ({
+        aliases: importEffects.aliases.map((entry) => ({ ...entry })),
+        observations: importEffects.observations.map((entry) => ({ ...entry })),
+        proposals: importEffects.proposals.map((entry) => ({ ...entry })),
+      }),
     };
   }
 

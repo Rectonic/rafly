@@ -37,6 +37,10 @@ export default function InventoryV2Screen() {
     router.push("/(seller-tabs)/orders");
   };
 
+  const goToImport = () => {
+    router.push("/(seller-tabs)/import-v2");
+  };
+
   return (
     <AccessGateV2 access={access} screenTestId="inventory-v2">
       <ScreenScrollView contentContainerStyle={styles.container} testID="inventory-v2-screen">
@@ -77,6 +81,15 @@ export default function InventoryV2Screen() {
             testID="inventory-v2-offers-button"
           >
             <Text style={styles.secondaryButtonText}>{t.sellerV2.inventory.offersButton}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel={t.sellerV2.inventory.importButton}
+            accessibilityRole="button"
+            onPress={goToImport}
+            style={styles.secondaryButton}
+            testID="inventory-v2-import-button"
+          >
+            <Text style={styles.secondaryButtonText}>{t.sellerV2.inventory.importButton}</Text>
           </Pressable>
           <Pressable
             accessibilityLabel={t.sellerV2.inventory.pickupsButton}

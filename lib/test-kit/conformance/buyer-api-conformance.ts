@@ -68,6 +68,7 @@ export interface ConformanceScenario {
   highConfidenceProductId: string;
   lowConfidenceProductId: string;
   expiredProductId: string;
+  otherStoreProductId: string;
   pickupStart: string;
   pickupEnd: string;
   timezone: MarketplaceOfferV2["timezone"];
@@ -95,6 +96,33 @@ export interface ConformanceOutboxEvent {
   at: string;
 }
 
+export interface ConformanceImportEffects {
+  aliases: {
+    storeId: string;
+    storeProductId: string;
+    alias: string;
+    approved: boolean;
+  }[];
+  observations: {
+    storeId: string;
+    storeProductId: string;
+    stagedSourceRecordId: string;
+    observedQuantity: number;
+    confidence: "low";
+    createdAt: string;
+  }[];
+  proposals: {
+    storeId: string;
+    storeProductId: string;
+    currentQuantity: number;
+    proposedQuantity: number;
+    delta: number;
+    reason: "count";
+    status: string;
+    createdByRole: string;
+  }[];
+}
+
 export interface ConformanceHarness {
   scenario: ConformanceScenario;
   buyerApi(): BuyerMarketplaceApiV2;
@@ -102,6 +130,7 @@ export interface ConformanceHarness {
   setNow(iso: string): void;
   listAuditEntries(): ConformanceAuditEntry[];
   listOutboxEvents(): ConformanceOutboxEvent[];
+  listImportEffects(): ConformanceImportEffects;
 }
 
 export type MakeConformanceHarness = () => ConformanceHarness;

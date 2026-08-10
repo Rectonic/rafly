@@ -111,6 +111,54 @@ export interface ResolveStoreExceptionV2Input {
   idempotencyKey: string;
 }
 
+export interface ImportBatchV2 {
+  id: string
+  storeId: string
+  filename: string
+  status: 'uploaded' | 'needs_review' | 'completed'
+  totalRecords: number
+  pendingRecords: number
+  createdAt: IsoDateTime
+}
+
+export interface StagedSourceRecordV2 {
+  id: string
+  batchId: string
+  storeId: string
+  rawName: string
+  rawBarcode: string | null
+  rawQuantity: number | null
+  rawPrice: number | null
+  matchStatus: 'auto_matched' | 'ambiguous' | 'unmatched' | 'approved' | 'rejected'
+  matchedStoreProductId: string | null
+  candidates: {
+    storeProductId: string
+    productName: string
+    reason: string
+  }[]
+  createdAt: IsoDateTime
+}
+
+export interface UploadImportBatchV2Input {
+  storeId: string
+  filename: string
+  records: {
+    rawName: string
+    rawBarcode?: string
+    rawQuantity?: number
+    rawPrice?: number
+  }[]
+  idempotencyKey: string
+}
+
+export interface DecideStagedRecordV2Input {
+  storeId: string
+  recordId: string
+  decision: 'approve' | 'reject'
+  targetStoreProductId: string | null
+  idempotencyKey: string
+}
+
 export interface StoreExceptionV2 {
   id: string
   storeId: string
