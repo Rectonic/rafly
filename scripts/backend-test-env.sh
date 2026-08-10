@@ -26,6 +26,14 @@ if [ -z "$SUPABASE_API_URL" ] || [ -z "$SUPABASE_ANON_KEY_VALUE" ] || [ -z "$SUP
   return 1 2>/dev/null || exit 1
 fi
 
+# This harness signs in an admin client and writes real rows, so it must
+# never point at anything but a local stack, no matter what
+# 'supabase status -o env' happened to report.
+if ! printf '%s' "$SUPABASE_API_URL" | grep -Eq '^https?://(127\.0\.0\.1|localhost)(:|/|$)'; then
+  echo "backend-test-env: refusing non-local API_URL '$SUPABASE_API_URL', this harness only targets a local Supabase stack" >&2
+  return 1 2>/dev/null || exit 1
+fi
+
 export LASTBITE_TEST_SUPABASE_URL="$SUPABASE_API_URL"
 export LASTBITE_TEST_SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY_VALUE"
 export LASTBITE_TEST_SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY_VALUE"

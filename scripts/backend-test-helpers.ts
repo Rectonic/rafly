@@ -28,6 +28,15 @@ const ENV_URL = "LASTBITE_TEST_SUPABASE_URL";
 const ENV_ANON_KEY = "LASTBITE_TEST_SUPABASE_ANON_KEY";
 const ENV_SERVICE_ROLE_KEY = "LASTBITE_TEST_SUPABASE_SERVICE_ROLE_KEY";
 
+// Mirrors the guard in scripts/backend-test-env.sh. This suite signs in an
+// admin client and writes real rows, so a non-local URL must never pass,
+// even if someone hand sets the env var and skips that script entirely.
+const LOCAL_URL_PATTERN = /^https?:\/\/(127\.0\.0\.1|localhost)(:|\/|$)/;
+
+function isLocalUrl(url: string): boolean {
+  return LOCAL_URL_PATTERN.test(url);
+}
+
 // Fixed on purpose, every test user is created or reused with this same
 // password so signInTestUser stays idempotent across reruns.
 const TEST_USER_PASSWORD = "lastbite-backend-test-000!";
@@ -46,7 +55,22 @@ function requireEnv(name: string): string {
 }
 
 export function backendEnvPresent(): boolean {
-  return Boolean(readEnv(ENV_URL) && readEnv(ENV_ANON_KEY) && readEnv(ENV_SERVICE_ROLE_KEY));
+  const url = readEnv(ENV_URL);
+  const anonKey = readEnv(ENV_ANON_KEY);
+  const serviceRoleKey = readEnv(ENV_SERVICE_ROLE_KEY);
+
+  if (!url || !anonKey || !serviceRoleKey) {
+    return false;
+  }
+
+  if (!isLocalUrl(url)) {
+    console.warn(
+      `backendEnvPresent: refusing non-local ${ENV_URL} '${url}', this harness only targets a local Supabase stack, treating the backend env as absent`
+    );
+    return false;
+  }
+
+  return true;
 }
 
 export function backendSkipReason(): string {

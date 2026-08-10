@@ -196,4 +196,13 @@ d("stores, memberships, roles, and app flags", () => {
     expect(staff.data).toBe("staff");
     expect(nonMember.data).toBeNull();
   });
+
+  it("returns null without error for fn_current_store_role called as anon", async () => {
+    const { data, error } = await getAnonClient().rpc("fn_current_store_role", {
+      p_store_id: storeId,
+    });
+
+    expect(error).toBeNull();
+    expect(data).toBeNull();
+  });
 });
