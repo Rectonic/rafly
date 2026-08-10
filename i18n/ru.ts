@@ -1,3 +1,5 @@
+import { buyerRu } from "./buyer";
+import { sellerRu } from "./seller";
 import type { Translations } from "./types";
 
 function pluralRu(n: number, one: string, few: string, many: string) {
@@ -515,4 +517,6 @@ export const ru: Translations = {
     onboardingFailedTitle: "Не удалось завершить настройку",
     onboardingFailedFallback: "Не удалось сохранить тип бизнеса.",
   },
+  buyerV2: buyerRu,
+  sellerV2: sellerRu,
 };

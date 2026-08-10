@@ -1,3 +1,5 @@
+import { buyerEn } from "./buyer";
+import { sellerEn } from "./seller";
 import type { Translations } from "./types";
 
 export const en: Translations = {
@@ -502,4 +504,6 @@ export const en: Translations = {
     onboardingFailedTitle: "Onboarding failed",
     onboardingFailedFallback: "Unable to save the business type.",
   },
+  buyerV2: buyerEn,
+  sellerV2: sellerEn,
 };

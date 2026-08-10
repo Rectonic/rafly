@@ -3,6 +3,8 @@ import type {
   BuyerReservationStatus,
   BuyerReservationSyncStatus,
 } from "@/types/reservation";
+import type { BuyerTranslations } from "./buyer";
+import type { SellerTranslations } from "./seller";
 
 export type Locale = "en" | "ru";
 
@@ -457,4 +459,6 @@ export interface Translations {
       profileValidationError: string;
     };
   };
+  buyerV2: BuyerTranslations;
+  sellerV2: SellerTranslations;
 }
