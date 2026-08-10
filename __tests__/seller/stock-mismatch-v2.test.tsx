@@ -281,6 +281,21 @@ describe("Seller v2 stock mismatch", () => {
     await waitFor(() =>
       expect(screen.getByTestId("pickups-v2-mismatch-recount-guidance")).toBeTruthy()
     );
+    // The guidance has to stay honest about what a recount can and cannot do.
+    // No command in either facade resolves a store exception, so the affected
+    // units stay encumbered until an operator closes the row in the database.
+    // Promising that a count reconciles them would be a lie the backend
+    // cannot keep.
+    const guidance = screen.getByTestId("pickups-v2-mismatch-recount-guidance");
+    expect(guidance).toHaveTextContent("stay reserved against this product", {
+      exact: false,
+    });
+    expect(guidance).toHaveTextContent("operator resolves the exception", {
+      exact: false,
+    });
+    expect(guidance).toHaveTextContent("does not release those units", {
+      exact: false,
+    });
     fireEvent.press(screen.getByTestId("pickups-v2-mismatch-recount-button"));
     expect(mockPush).toHaveBeenCalledWith({
       params: { storeProductId: scenario.highConfidenceProductId },

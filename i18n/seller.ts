@@ -440,7 +440,7 @@ export const sellerEn: SellerTranslations = {
     mismatchNotFoundError: "This offer could not be found. Refresh the pickup queue.",
     mismatchErrorFallback: "The mismatch was not confirmed. No local pause was applied.",
     recountGuidance:
-      "The affected stock remains allocated while the exception is open. Start a physical count to reconcile it.",
+      "The affected units stay reserved against this product until an operator resolves the exception directly in the database, which is the only way to close it in this beta. A recount corrects the on hand record but does not release those units.",
     recountButton: "Start recount",
   },
 };
@@ -661,7 +661,7 @@ export const sellerRu: SellerTranslations = {
     mismatchNotFoundError: "Предложение не найдено. Обновите очередь самовывоза.",
     mismatchErrorFallback: "Расхождение не подтверждено. Локальная приостановка не применялась.",
     recountGuidance:
-      "Затронутый остаток остаётся выделенным, пока исключение открыто. Запустите физический пересчёт для сверки.",
+      "Затронутые единицы остаются закреплёнными за этим товаром, пока оператор не закроет исключение прямо в базе данных, других способов закрыть его в этой бете нет. Пересчёт исправляет учётный остаток, но не освобождает эти единицы.",
     recountButton: "Начать пересчёт",
   },
 };

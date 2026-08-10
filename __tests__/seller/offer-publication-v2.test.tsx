@@ -526,22 +526,22 @@ describe("Seller v2 offer publication", () => {
       );
     });
 
-    it("still surfaces the backend's own expired rejection honestly for a product that passed the client side check", async () => {
-      // A client side filter is a convenience, not the authority. This
-      // fixture's expiry date is safely in the future relative to the real
-      // wall clock (so it stays eligible in the picker) and the pickup
-      // window is further out still (so the window validation stays
-      // satisfied), the backend's own clock is then advanced to a point
-      // after the expiry date but before the pickup window with setNow, so
-      // the publish attempt hits the same validation_failed rejection a
-      // truly expired product would, proving the backend check is never
-      // skipped just because a client side filter also exists.
+    it("still surfaces the backend's own expiry rejection for a product the client side filter let through", async () => {
+      // A client side filter is a convenience, not the authority. It only
+      // asks whether the batch is already expired today, which this fixture
+      // is not, so the product stays eligible in the picker. The backend asks
+      // the stricter food safety question, does the batch outlast the last
+      // moment a buyer can collect it, and this fixture expires a full year
+      // before the pickup window closes. The publish attempt therefore hits a
+      // validation_failed the client side check could never have raised,
+      // proving the backend rule is never skipped just because a client side
+      // filter also exists.
       const { core, scenario } = makeWorld();
       const laterExpiringId = core.addProduct({
         confidence: "high",
         expiryDate: "2030-01-01",
         onHandQuantity: 4,
-        productName: "Will expire on the backend clock",
+        productName: "Expires before the pickup window closes",
         storeId: scenario.storeId,
       });
       const manager = core.sellerApi({ userId: scenario.managerUserId });
@@ -567,11 +567,10 @@ describe("Seller v2 offer publication", () => {
       fireEvent.press(screen.getByTestId("publish-v2-review-button"));
       await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
 
-      core.setNow("2030-06-01T09:00:00.000Z");
       fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
 
       await waitFor(() => expect(screen.getByTestId("publish-v2-publish-error")).toBeTruthy());
-      expect(screen.getByText(/expired/)).toBeTruthy();
+      expect(screen.getByText(/expires on 2030-01-01 before pickup ends/)).toBeTruthy();
       expect(screen.queryByTestId("publish-v2-published-panel")).toBeNull();
     });
 

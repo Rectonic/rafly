@@ -1,5 +1,29 @@
 -- Migration C adds v2 offers, reservations, the redacted marketplace view,
 -- and the transactional buyer and seller RPCs.
+--
+-- GLOBAL LOCK ORDER RULE for every function in this file:
+--
+--   an offers_v2 row is always locked BEFORE any reservations_v2 row of that
+--   offer, never after.
+--
+-- The expiry sweep, report_stock_mismatch_v2, pause_offer_v2, reserve_offer_v2
+-- and cancel_reservation_v2 all walk the pair in that direction. Two writers
+-- that walk the same pair in opposite directions deadlock, and Postgres
+-- resolves a deadlock by killing one of them with a raw 40P01 that neither
+-- the buyer nor the seller contract has an error shape for, so it reaches the
+-- caller as unknown rather than as anything actionable.
+--
+-- Reading a row without a lock first, purely to learn which offer to lock, is
+-- allowed as long as nothing is decided on that read and every check is re-run
+-- against the locked copies afterwards. cancel_reservation_v2 and
+-- approve_stock_adjustment_v2 both do exactly that and say so at the site.
+--
+-- store_products sits outside this pair. fulfill_reservation_v2 locks its
+-- reservation and then the product, publish_offer_v2 and
+-- approve_stock_adjustment_v2 lock only the product, and nothing anywhere
+-- locks a product before locking a reservations_v2 row, so the product lock
+-- joins no cycle today. A future writer that needs both must take them in
+-- fulfillment's order, reservation and then product, or the loop closes.
 
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
@@ -792,6 +816,24 @@ begin
     perform public.fn_apply_offer_reservation_expiry_v2(v_sweep_offer_id);
   end if;
 
+  -- Lock order: OFFER first, then the reservation. See the global rule at the
+  -- top of this file. This path used to take the reservation first and reach
+  -- the offer only through its release update, while the expiry sweep and
+  -- report_stock_mismatch_v2 both walk offer then reservation, which is a
+  -- lock order cycle. Under concurrency Postgres resolves that with a raw
+  -- 40P01 deadlock error, a code the buyer contract has no shape for, so it
+  -- surfaced to the buyer as unknown.
+  --
+  -- The offer id came from an unlocked read above, so nothing is decided on
+  -- it. Both rows are re-read under their locks below and every check runs
+  -- against those locked copies, so a reservation that was fulfilled, expired,
+  -- or mismatched while this call waited for the offer is caught rather than
+  -- acted on.
+  perform 1
+    from public.offers_v2
+    where id = v_sweep_offer_id
+    for update;
+
   select *
     into v_reservation
     from public.reservations_v2
@@ -800,6 +842,13 @@ begin
 
   if not found then
     raise exception 'not_found: reservation % does not exist', p_reservation_id;
+  end if;
+  if v_reservation.offer_id is distinct from v_sweep_offer_id then
+    -- Defensive. offer_id is never reassigned, so this only fires if the
+    -- reservation row was replaced underneath this call, in which case the
+    -- offer this transaction holds is the wrong one and acting on it would
+    -- release a unit of an offer nobody reserved.
+    raise exception 'invalid_state: reservation % changed offer while locking', p_reservation_id;
   end if;
   if v_reservation.installation_id <> p_installation_id then
     raise exception 'forbidden: reservation belongs to another installation';
@@ -1024,6 +1073,7 @@ declare
   v_reservation public.reservations_v2%rowtype;
   v_offer public.offers_v2%rowtype;
   v_on_hand int;
+  v_applied_delta int;
 begin
   set local row_security = off;
   v_role := public.fn_current_store_role(p_store_id);
@@ -1094,8 +1144,30 @@ begin
   if not found then
     raise exception 'not_found: product % does not exist', v_offer.store_product_id;
   end if;
-  if v_on_hand - 1 < 0 then
-    raise exception 'validation_failed: fulfillment would make stock negative';
+  -- Which stock a handover actually comes out of depends on how the offer was
+  -- published.
+  --
+  -- A physically set aside offer is backed by units the seller pulled off the
+  -- shelf at publish time, which is exactly why publish_offer_v2 allowed its
+  -- allocation to exceed what the ledger claimed to hold. Those units are real
+  -- and the buyer standing at the counter is entitled to one, so a ledger that
+  -- has already run down to zero is a stale record here, not a reason to
+  -- refuse a handover the store can plainly perform. Fulfillment therefore
+  -- decrements with a floor at zero and never fails on ledger shortage, and
+  -- the stock_movements row carries the delta that was actually applied, 0 or
+  -- -1, rather than a fabricated -1, so the movement ledger keeps summing to
+  -- the true on_hand.
+  --
+  -- Every other offer is backed by the ledger and by nothing else, so the
+  -- strict guard stays, a negative on_hand would mean the store handed out
+  -- stock it never had.
+  if v_offer.physically_set_aside then
+    v_applied_delta := case when v_on_hand > 0 then -1 else 0 end;
+  else
+    if v_on_hand - 1 < 0 then
+      raise exception 'validation_failed: fulfillment would make stock negative';
+    end if;
+    v_applied_delta := -1;
   end if;
 
   update public.reservations_v2
@@ -1103,10 +1175,10 @@ begin
     where id = v_reservation.id
     returning * into v_reservation;
   update public.store_products
-    set on_hand_quantity = on_hand_quantity - 1, version = version + 1
+    set on_hand_quantity = on_hand_quantity + v_applied_delta, version = version + 1
     where id = v_offer.store_product_id;
   insert into public.stock_movements (store_id, store_product_id, delta, kind, ref_id)
-  values (p_store_id, v_offer.store_product_id, -1, 'fulfillment', v_reservation.id);
+  values (p_store_id, v_offer.store_product_id, v_applied_delta, 'fulfillment', v_reservation.id);
 
   v_outcome := jsonb_build_object(
     'reservation_id', v_reservation.id,

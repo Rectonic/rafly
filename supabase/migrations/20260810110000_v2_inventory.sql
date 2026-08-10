@@ -36,8 +36,18 @@ create table if not exists public.count_sessions (
   id uuid primary key,
   store_id uuid not null references public.stores (id) on delete cascade,
   created_by uuid not null references auth.users (id),
+  line_fingerprint text,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+-- Backfill safe, same reasoning as the idempotency_keys columns below. A
+-- fresh reset creates the column above and this is a clean no op there.
+-- line_fingerprint is what turns count session replay from "same id" into
+-- "same id and same lines", so a client that reuses a session id for a
+-- different count hears idempotency_conflict instead of silently receiving
+-- the first count's proposals.
+alter table if exists public.count_sessions
+  add column if not exists line_fingerprint text;
 
 create table if not exists public.stock_adjustment_proposals (
   id uuid primary key default gen_random_uuid(),
@@ -287,6 +297,9 @@ declare
   v_store_product_id uuid;
   v_observed_quantity int;
   v_current_quantity int;
+  v_line_fingerprint text;
+  v_existing_store_id uuid;
+  v_existing_fingerprint text;
 begin
   set local row_security = off;
 
@@ -295,17 +308,47 @@ begin
     raise exception 'forbidden: role % may not record inventory counts', coalesce(v_role, 'none');
   end if;
 
-  insert into public.count_sessions (id, store_id, created_by)
-  values (p_count_session_id, p_store_id, auth.uid())
+  -- Fingerprint of the line set, in the order the caller sent it. A retry of
+  -- the same command sends the same array and replays. A caller who reuses a
+  -- session id for a different count, a very easy mistake with a client
+  -- supplied id, gets idempotency_conflict rather than the first count's
+  -- proposals dressed up as the answer to the second. Ordering is taken from
+  -- the array itself rather than sorted, matching the fake, so the two agree
+  -- on what "the same lines" means.
+  select coalesce(
+    string_agg(
+      (line.value ->> 'storeProductId') || ':' || (line.value ->> 'observedQuantity'),
+      ',' order by line.ordinality
+    ),
+    ''
+  )
+    into v_line_fingerprint
+    from jsonb_array_elements(p_lines) with ordinality as line(value, ordinality);
+
+  insert into public.count_sessions (id, store_id, created_by, line_fingerprint)
+  values (p_count_session_id, p_store_id, auth.uid(), v_line_fingerprint)
   on conflict (id) do nothing
   returning id into v_inserted_session_id;
 
   if v_inserted_session_id is null then
-    -- Replay branch. Filtering on store_id too, not just count_session_id,
-    -- means a caller who reuses a session id under the wrong store gets an
-    -- empty result instead of a peek at another store's proposals. count
-    -- session ids are client supplied uuids, cheap insurance against a
-    -- collision or a caller passing the wrong store_id for a real session.
+    -- Replay branch. The session id is a client supplied value and one store
+    -- owns it, so both halves of that ownership are checked before anything
+    -- is handed back. Returning an empty proposal list for a session that
+    -- belongs to another store, which is what filtering by store_id used to
+    -- do, reads as "your count matched everywhere" and is a lie.
+    select store_id, line_fingerprint
+      into v_existing_store_id, v_existing_fingerprint
+      from public.count_sessions
+      where id = p_count_session_id;
+
+    if v_existing_store_id is distinct from p_store_id then
+      raise exception 'idempotency_conflict: count session % belongs to another store', p_count_session_id;
+    end if;
+
+    if v_existing_fingerprint is distinct from v_line_fingerprint then
+      raise exception 'idempotency_conflict: count session % was already used with different lines', p_count_session_id;
+    end if;
+
     return query
       select *
       from public.stock_adjustment_proposals
@@ -362,9 +405,22 @@ begin
       );
     end if;
 
+    -- Confidence discipline. A counted line only earns high confidence when
+    -- what the counter saw already matches what the ledger says. A discrepant
+    -- line proves the opposite, the on_hand value is known to be wrong and
+    -- stays wrong until a manager approves the proposal this loop just
+    -- created, so it drops to low (pending review) instead. Promoting a
+    -- discrepant line to high used to let publish_offer_v2 compute its
+    -- offerable ceiling from a quantity the store had already reported as
+    -- untrue, which is an oversell with a paper trail saying it was verified.
+    -- last_verified_at still moves on both branches, somebody really did walk
+    -- the shelf, the timestamp is not the thing in doubt.
     update public.store_products
       set last_verified_at = now(),
-          confidence = 'high',
+          confidence = case
+            when v_observed_quantity = v_current_quantity then 'high'
+            else 'low'
+          end,
           version = version + 1
       where id = v_store_product_id;
   end loop;
@@ -456,6 +512,7 @@ declare
   v_wait_attempt int;
   v_proposal public.stock_adjustment_proposals%rowtype;
   v_current_on_hand int;
+  v_allocated_ledger int;
   v_result public.stock_adjustment_proposals%rowtype;
 begin
   set local row_security = off;
@@ -603,8 +660,65 @@ begin
       raise exception 'validation_failed: adjustment would make stock negative';
     end if;
 
+    -- Encumbrance guard. A resulting on_hand of zero or more is not enough on
+    -- its own. Units already promised to buyers through a live, paused, or
+    -- sold out offer that is NOT physically set aside are backed by this
+    -- ledger row and by nothing else, so an approved downward adjustment that
+    -- drops on_hand under that promise quietly turns somebody's reservation
+    -- into an oversell that only surfaces at the counter.
+    --
+    -- The arithmetic is the same expression family publish_offer_v2 uses for
+    -- its v_allocated ceiling, narrowed to offers that lean on the ledger.
+    -- physically_set_aside offers are excluded on purpose, their units sit on
+    -- a shelf behind the counter rather than inside this number, see
+    -- fulfill_reservation_v2 for the other half of that rule.
+    --
+    -- offers_v2, reservations_v2, and store_exceptions are created by the
+    -- next migration. plpgsql resolves table names when a function runs, not
+    -- when it is created, so this forward reference is legal here and always
+    -- resolves by the time any caller can reach this function.
+    select coalesce(sum(
+      case
+        when o.status in ('live', 'paused', 'sold_out')
+          then o.quantity_available + reservation_counts.held
+        else 0
+      end
+      + reservation_counts.failed_mismatch
+    ), 0)::int
+      into v_allocated_ledger
+      from public.offers_v2 o
+      cross join lateral (
+        select
+          count(*) filter (where r.status = 'held')::int as held,
+          count(*) filter (
+            where r.status = 'failed_stock_mismatch'
+              and exists (
+                select 1
+                from public.store_exceptions e
+                where e.related_offer_id = o.id
+                  and e.kind = 'stock_mismatch'
+                  and e.status = 'open'
+              )
+          )::int as failed_mismatch
+        from public.reservations_v2 r
+        where r.offer_id = o.id
+      ) reservation_counts
+      where o.store_product_id = v_proposal.store_product_id
+        and o.physically_set_aside = false;
+
+    if v_current_on_hand + v_proposal.delta < v_allocated_ledger then
+      raise exception 'validation_failed: adjustment would undercut allocated offers, % units of product % are still promised to buyers and only expiry or withdrawal of those offers releases them',
+        v_allocated_ledger, v_proposal.store_product_id;
+    end if;
+
+    -- An approved count adjustment is a manager confirming what a counter
+    -- physically saw, so the product is verified now in a way a discrepant
+    -- count alone never was, and its confidence earns the promotion that
+    -- record_inventory_count_v2 deliberately withheld.
     update public.store_products
       set on_hand_quantity = on_hand_quantity + v_proposal.delta,
+          confidence = 'high',
+          last_verified_at = now(),
           version = version + 1
       where id = v_proposal.store_product_id;
 

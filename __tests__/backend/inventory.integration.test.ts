@@ -280,7 +280,12 @@ d("inventory ledger, counts, adjustments, movements, allocations", () => {
 
     expect(productsError).toBeNull();
     for (const product of products ?? []) {
-      expect(product.confidence).toBe("high");
+      // Both counted lines get a fresh last_verified_at and a version bump,
+      // somebody really did walk the shelf for each of them. Confidence is
+      // where they part ways. The matching line confirmed the ledger, the
+      // discrepant one disproved it and stays low until the proposal above is
+      // approved, so nothing downstream treats its stale quantity as verified.
+      expect(product.confidence).toBe(product.id === matching.id ? "high" : "low");
       expect(product.version).toBe(2);
       expect(product.last_verified_at).not.toBeNull();
     }
@@ -333,6 +338,83 @@ d("inventory ledger, counts, adjustments, movements, allocations", () => {
       .eq("id", countSessionId);
     expect(sessionsError).toBeNull();
     expect(sessions).toHaveLength(1);
+  });
+
+  it("raises idempotency_conflict when a count session id comes back with different lines", async () => {
+    const product = await createProduct({ onHandQuantity: 10 });
+    const countSessionId = randomUUID();
+
+    const first = await staffClient.rpc("record_inventory_count_v2", {
+      p_store_id: storeId,
+      p_count_session_id: countSessionId,
+      p_lines: [{ storeProductId: product.id, observedQuantity: 4 }],
+    });
+    expect(first.error).toBeNull();
+
+    // Same id, a different observation. Replaying the first count's proposals
+    // here would answer a question the caller did not ask, and would hide the
+    // fact that the second count was never recorded at all.
+    const changed = await staffClient.rpc("record_inventory_count_v2", {
+      p_store_id: storeId,
+      p_count_session_id: countSessionId,
+      p_lines: [{ storeProductId: product.id, observedQuantity: 3 }],
+    });
+    expect(changed.data).toBeNull();
+    expect(changed.error?.message).toMatch(/^idempotency_conflict:/);
+
+    const { data: proposals } = await serviceClient
+      .from("stock_adjustment_proposals")
+      .select("id")
+      .eq("count_session_id", countSessionId);
+    expect(proposals).toHaveLength(1);
+  });
+
+  it("raises idempotency_conflict when another store reuses a claimed count session id", async () => {
+    const product = await createProduct({ onHandQuantity: 10 });
+    const countSessionId = randomUUID();
+
+    const first = await staffClient.rpc("record_inventory_count_v2", {
+      p_store_id: storeId,
+      p_count_session_id: countSessionId,
+      p_lines: [{ storeProductId: product.id, observedQuantity: 4 }],
+    });
+    expect(first.error).toBeNull();
+
+    const otherStore = requireRow<IdRow>(
+      await serviceClient
+        .from("stores")
+        .insert({ name: `Session Scope Store ${randomUUID()}`, address: "elsewhere" })
+        .select()
+        .single(),
+      "failed to create the second store"
+    );
+    const membership = await serviceClient
+      .from("store_memberships")
+      .insert({ store_id: otherStore.id, user_id: ownerUserId, role: "owner" });
+    expect(membership.error).toBeNull();
+    const otherProduct = requireRow<IdRow>(
+      await serviceClient
+        .from("store_products")
+        .insert({
+          store_id: otherStore.id,
+          product_name: `Session Scope Product ${randomUUID()}`,
+          on_hand_quantity: 5,
+        })
+        .select()
+        .single(),
+      "failed to create the second store's product"
+    );
+
+    // The id belongs to the first store. This used to fall into the replay
+    // branch and hand back an empty proposal list, which reads as "your count
+    // matched everywhere" and is a lie about a count that never ran.
+    const reused = await ownerClient.rpc("record_inventory_count_v2", {
+      p_store_id: otherStore.id,
+      p_count_session_id: countSessionId,
+      p_lines: [{ storeProductId: otherProduct.id, observedQuantity: 1 }],
+    });
+    expect(reused.data).toBeNull();
+    expect(reused.error?.message).toMatch(/^idempotency_conflict:/);
   });
 
   it("forbids a non member from recording a count", async () => {

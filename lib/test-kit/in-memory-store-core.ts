@@ -209,6 +209,8 @@ export class InMemoryStoreCore {
   private readonly proposals = new Map<string, StockAdjustmentProposalV2>();
   private readonly exceptions = new Map<string, StoreExceptionV2>();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
+  /** Which store first claimed each client supplied count session id. */
+  private readonly countSessionStores = new Map<string, string>();
 
   private readonly movements: StockMovementV2[] = [];
   private readonly auditEntries: AuditEntryV2[] = [];
@@ -328,9 +330,17 @@ export class InMemoryStoreCore {
   private listMarketplaceOffers(): Result<MarketplaceOfferV2[]> {
     this.applyLazyExpiry();
     const nowMs = Date.parse(this.now);
+    // sold_out offers stay visible, matching marketplace_offers_v2_public,
+    // whose where clause is status in ('live', 'sold_out') and pickup_end in
+    // the future. A buyer who saw a card and lost the race to it is owed a
+    // sold out card rather than a listing that silently drops the offer out
+    // from under them, and the buyer surfaces already render that status as a
+    // disabled card.
     const visible = [...this.offers.values()]
       .filter(
-        (offer) => offer.status === "live" && Date.parse(offer.pickupEnd) > nowMs
+        (offer) =>
+          (offer.status === "live" || offer.status === "sold_out") &&
+          Date.parse(offer.pickupEnd) > nowMs
       )
       .sort((left, right) => left.id.localeCompare(right.id));
     return ok(visible.map((offer) => this.projectOffer(offer)));
@@ -596,6 +606,21 @@ export class InMemoryStoreCore {
     const access = this.requireRole(input.storeId, userId, COUNT_ROLES);
     if (!access.ok) return access;
 
+    // A count session id is client supplied and owned by exactly one store,
+    // mirroring the primary key on count_sessions. Reusing one under another
+    // store is a caller bug, and answering it with an empty proposal list, as
+    // the SQL replay branch used to, reads as "everything matched" and is a
+    // lie. This check runs before the lines are looked at so a caller who
+    // reuses the id hears about the id, not about a product they were never
+    // going to be allowed to count.
+    const sessionOwner = this.countSessionStores.get(input.countSessionId);
+    if (sessionOwner !== undefined && sessionOwner !== input.storeId) {
+      return err(
+        "idempotency_conflict",
+        `count session ${input.countSessionId} belongs to another store`
+      );
+    }
+
     const fingerprint = JSON.stringify({
       storeId: input.storeId,
       lines: input.lines.map((line) => ({
@@ -631,6 +656,8 @@ export class InMemoryStoreCore {
       counted.push(product);
     }
 
+    this.countSessionStores.set(input.countSessionId, input.storeId);
+
     const created: StockAdjustmentProposalV2[] = [];
     input.lines.forEach((line, index) => {
       const product = counted[index];
@@ -654,11 +681,20 @@ export class InMemoryStoreCore {
       created.push({ ...proposal });
     });
 
-    for (const product of counted) {
+    // Confidence discipline, mirroring record_inventory_count_v2. Only a line
+    // whose observed quantity already matched the ledger earns high
+    // confidence. A discrepant line has just proven the ledger wrong, and it
+    // stays wrong until a manager approves the proposal created above, so it
+    // drops to low. Promoting a discrepant line would let the publish ceiling
+    // trust a quantity the store itself reported as untrue. lastVerifiedAt
+    // moves either way, somebody really did walk the shelf.
+    input.lines.forEach((line, index) => {
+      const product = counted[index];
       product.lastVerifiedAt = this.now;
-      product.confidence = "high";
+      product.confidence =
+        line.observedQuantity === product.onHandQuantity ? "high" : "low";
       product.version += 1;
-    }
+    });
 
     this.appendAudit({
       storeId: input.storeId,
@@ -724,8 +760,37 @@ export class InMemoryStoreCore {
           `product ${proposal.storeProductId} does not exist`
         );
       }
-      product.onHandQuantity += proposal.delta;
+      // Two guards, both mirroring approve_stock_adjustment_v2.
+      //
+      // The first is the raw floor. Two pending proposals computed before
+      // either was reviewed can together drive on hand negative even though
+      // neither alone would.
+      const resulting = product.onHandQuantity + proposal.delta;
+      if (resulting < 0) {
+        return err(
+          "validation_failed",
+          "adjustment would make stock negative"
+        );
+      }
+      // The second is the encumbrance floor. Units already promised through a
+      // live, paused, or sold out offer that is not physically set aside are
+      // backed by this ledger row and nothing else, so an approved downward
+      // adjustment underneath that promise is an oversell that only surfaces
+      // at the counter. Set aside offers are excluded, their units are on a
+      // shelf rather than in this number.
+      const promised = this.allocatedFor(product.id, { ledgerBackedOnly: true });
+      if (resulting < promised) {
+        return err(
+          "validation_failed",
+          `adjustment would undercut allocated offers, ${promised} units of product ${product.id} are still promised to buyers and only expiry or withdrawal of those offers releases them`
+        );
+      }
+      product.onHandQuantity = resulting;
       product.lastVerifiedAt = this.now;
+      // A manager approving a count adjustment is a physical verification the
+      // discrepant count alone never was, so confidence earns the promotion
+      // recordInventoryCount deliberately withheld.
+      product.confidence = "high";
       product.version += 1;
       this.appendMovement(product, proposal.delta, "count_adjustment");
       proposal.status = "applied";
@@ -820,16 +885,23 @@ export class InMemoryStoreCore {
         `product ${input.allocation.storeProductId} is not in store ${input.storeId}`
       );
     }
-    if (product.expiryDate !== null && product.expiryDate < this.now.slice(0, 10)) {
+    // Food safety rule, mirroring publish_offer_v2. The comparison is against
+    // the last moment a buyer can collect, not against today. A product that
+    // expires while the pickup window is still open would otherwise be handed
+    // over after its expiry date.
+    if (
+      product.expiryDate !== null &&
+      product.expiryDate < input.pickupEnd.slice(0, 10)
+    ) {
       return err(
         "validation_failed",
-        `product ${product.id} expired on ${product.expiryDate}`
+        `product ${product.id} expires on ${product.expiryDate} before pickup ends ${input.pickupEnd}`
       );
     }
 
     const maxOfferable =
       product.confidence === "high"
-        ? product.onHandQuantity - this.activeAllocatedFor(product.id)
+        ? product.onHandQuantity - this.allocatedFor(product.id)
         : input.allocation.physicallySetAside
           ? input.allocation.quantity
           : 0;
@@ -1020,18 +1092,47 @@ export class InMemoryStoreCore {
       );
     }
 
+    // Which stock the handover comes out of depends on how the offer was
+    // published, mirroring fulfill_reservation_v2.
+    //
+    // A physically set aside offer is backed by units the seller pulled off
+    // the shelf at publish time, which is why publication let its allocation
+    // exceed what the ledger claimed. A ledger already down to zero is a stale
+    // record here, not a reason to turn a buyer away, so the decrement floors
+    // at zero and never fails. The movement row carries the delta that was
+    // actually applied, 0 or -1, so the movement ledger keeps summing to the
+    // true on hand.
+    //
+    // Every other offer is backed by the ledger alone, so a fulfillment that
+    // would drive on hand negative is refused. The check runs before anything
+    // is mutated, the fake has no transaction to roll back.
+    const offer = this.offers.get(reservation.offerId);
+    const product = offer
+      ? this.products.get(offer.allocation.storeProductId) ?? null
+      : null;
+    let appliedDelta = 0;
+    if (offer && product) {
+      if (offer.allocation.physicallySetAside) {
+        appliedDelta = product.onHandQuantity > 0 ? -1 : 0;
+      } else {
+        if (product.onHandQuantity - 1 < 0) {
+          return err(
+            "validation_failed",
+            "fulfillment would make stock negative"
+          );
+        }
+        appliedDelta = -1;
+      }
+    }
+
     reservation.status = "fulfilled";
     reservation.version += 1;
     reservation.updatedAt = this.now;
 
-    const offer = this.offers.get(reservation.offerId);
-    if (offer) {
-      const product = this.products.get(offer.allocation.storeProductId);
-      if (product) {
-        product.onHandQuantity -= 1;
-        product.version += 1;
-        this.appendMovement(product, -1, "pickup_fulfilled");
-      }
+    if (product) {
+      product.onHandQuantity += appliedDelta;
+      product.version += 1;
+      this.appendMovement(product, appliedDelta, "pickup_fulfilled");
     }
 
     this.appendAudit({
@@ -1101,17 +1202,26 @@ export class InMemoryStoreCore {
       reservation.updatedAt = this.now;
     }
 
-    const exception: StoreExceptionV2 = {
-      id: `exception-${this.nextSequence("exception")}`,
-      storeId: input.storeId,
-      kind: "stock_mismatch",
-      message: `${input.reason} (observed ${input.observedQuantity})`,
-      status: "open",
-      relatedOfferId: offer.id,
-      relatedStoreProductId: offer.allocation.storeProductId,
-      createdAt: this.now,
-    };
-    this.exceptions.set(exception.id, exception);
+    // One open stock mismatch per offer, mirroring the partial unique index in
+    // SQL. A second report on the same offer under a different idempotency key
+    // is a real case, a member reporting again after finding one more bag
+    // missing, and it reuses the open row rather than growing a second one.
+    // The stored message stays as first written, the SQL side does not rewrite
+    // it either.
+    let exception = this.findOpenMismatchFor(offer.id);
+    if (!exception) {
+      exception = {
+        id: `exception-${this.nextSequence("exception")}`,
+        storeId: input.storeId,
+        kind: "stock_mismatch",
+        message: `${input.reason} (observed ${input.observedQuantity})`,
+        status: "open",
+        relatedOfferId: offer.id,
+        relatedStoreProductId: offer.allocation.storeProductId,
+        createdAt: this.now,
+      };
+      this.exceptions.set(exception.id, exception);
+    }
 
     this.appendAudit({
       storeId: input.storeId,
@@ -1226,26 +1336,53 @@ export class InMemoryStoreCore {
         offer.status = "expired";
       }
     }
+    // Expired holds release their unit back to the offer, exactly as the SQL
+    // sweep does. Releases are grouped per offer so one offer takes one
+    // quantity update and one version bump per released unit, the count is
+    // capped at the offer's total so a double sweep can never invent stock,
+    // and a sold out offer whose window is still open returns to live. The
+    // offer version does move here, only the offer status flip above is
+    // treated as pure derivation.
+    const released = new Map<string, number>();
     for (const reservation of this.reservations.values()) {
       if (reservation.status !== "held") continue;
       if (Date.parse(reservation.holdExpiresAt) > nowMs) continue;
       reservation.status = "expired_no_show";
       reservation.version += 1;
       reservation.updatedAt = this.now;
+      released.set(reservation.offerId, (released.get(reservation.offerId) ?? 0) + 1);
+    }
+
+    for (const offerId of [...released.keys()].sort()) {
+      const offer = this.offers.get(offerId);
+      if (!offer) continue;
+      const count = released.get(offerId) ?? 0;
+      offer.quantityAvailable = Math.min(
+        offer.quantityAvailable + count,
+        offer.allocation.quantity
+      );
+      offer.version += count;
+      if (offer.status === "sold_out" && Date.parse(offer.pickupEnd) > nowMs) {
+        offer.status = "live";
+      }
     }
   }
 
-  private hasOpenMismatchFor(offerId: string): boolean {
+  private findOpenMismatchFor(offerId: string): StoreExceptionV2 | null {
     for (const exception of this.exceptions.values()) {
       if (
         exception.status === "open" &&
         exception.kind === "stock_mismatch" &&
         exception.relatedOfferId === offerId
       ) {
-        return true;
+        return exception;
       }
     }
-    return false;
+    return null;
+  }
+
+  private hasOpenMismatchFor(offerId: string): boolean {
+    return this.findOpenMismatchFor(offerId) !== null;
   }
 
   /**
@@ -1255,35 +1392,65 @@ export class InMemoryStoreCore {
    * unknown until somebody resolves the exception. Without that rule a mismatch
    * would hand the missing units straight back to the offerable pool.
    */
-  private encumberedCountFor(offerId: string): number {
-    const mismatchOpen = this.hasOpenMismatchFor(offerId);
-    let encumbered = 0;
+  private heldCountFor(offerId: string): number {
+    let held = 0;
     for (const reservation of this.reservations.values()) {
       if (reservation.offerId !== offerId) continue;
-      if (reservation.status === "held") {
-        encumbered += 1;
-        continue;
-      }
-      if (mismatchOpen && reservation.status === "failed_stock_mismatch") {
-        encumbered += 1;
-      }
+      if (reservation.status === "held") held += 1;
     }
-    return encumbered;
+    return held;
   }
 
   /**
-   * Units still tied up by non terminal offers of a product. Units that are on
-   * the shelf for an offer and units encumbered by a reservation both count, so
-   * fulfilment releases the allocation at the same moment it removes the unit
-   * from stock. Every non terminal offer on the product contributes, so two live
-   * offers on one product consume the pool together.
+   * Reservations this offer failed with a stock mismatch while that mismatch
+   * exception is still open. The physical truth of those units is unknown
+   * until somebody resolves the exception, so they stay out of the offerable
+   * pool. This term survives the offer reaching a terminal status, matching
+   * the SQL ceiling, where the failed mismatch count is added outside the
+   * status case rather than inside it. Letting an expiry quietly hand those
+   * units back would mean a mismatch could be walked off by waiting.
    */
-  private activeAllocatedFor(storeProductId: string): number {
+  private failedMismatchCountFor(offerId: string): number {
+    if (!this.hasOpenMismatchFor(offerId)) return 0;
+    let failed = 0;
+    for (const reservation of this.reservations.values()) {
+      if (reservation.offerId !== offerId) continue;
+      if (reservation.status === "failed_stock_mismatch") failed += 1;
+    }
+    return failed;
+  }
+
+  private encumberedCountFor(offerId: string): number {
+    return this.heldCountFor(offerId) + this.failedMismatchCountFor(offerId);
+  }
+
+  /**
+   * Units of a product that some offer still has a claim on. Units sitting on
+   * the shelf for a non terminal offer and units encumbered by a reservation
+   * both count, so fulfilment releases the allocation at the same moment it
+   * removes the unit from stock. Every non terminal offer on the product
+   * contributes, so two live offers on one product consume the pool together,
+   * and open mismatch units keep counting even after their offer expires.
+   *
+   * ledgerBackedOnly narrows the sum to offers that are NOT physically set
+   * aside, which is what an inventory adjustment has to respect. A set aside
+   * offer's units left the ledger when the seller pulled them off the shelf,
+   * so they neither consume nor protect the on hand number.
+   */
+  private allocatedFor(
+    storeProductId: string,
+    options?: { ledgerBackedOnly?: boolean }
+  ): number {
     let allocated = 0;
     for (const offer of this.offers.values()) {
       if (offer.allocation.storeProductId !== storeProductId) continue;
-      if (TERMINAL_OFFER_STATUSES.includes(offer.status)) continue;
-      allocated += offer.quantityAvailable + this.encumberedCountFor(offer.id);
+      if (options?.ledgerBackedOnly && offer.allocation.physicallySetAside) {
+        continue;
+      }
+      if (!TERMINAL_OFFER_STATUSES.includes(offer.status)) {
+        allocated += offer.quantityAvailable + this.heldCountFor(offer.id);
+      }
+      allocated += this.failedMismatchCountFor(offer.id);
     }
     return allocated;
   }
@@ -1452,7 +1619,7 @@ export class InMemoryStoreCore {
   }
 
   private projectInventory(product: ProductRecord): InventorySummaryV2 {
-    const allocated = this.activeAllocatedFor(product.id);
+    const allocated = this.allocatedFor(product.id);
     const maxOfferable =
       product.confidence === "high"
         ? Math.max(0, product.onHandQuantity - allocated)

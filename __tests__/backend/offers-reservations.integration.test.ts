@@ -1230,4 +1230,203 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     );
     expect(JSON.stringify(outbox.data)).not.toContain("LB-fulfill-77");
   });
+
+  it("fulfills every hold on a physically set aside offer and floors the ledger at zero", async () => {
+    // The set aside path exists because the seller has already pulled the
+    // units off the shelf, which is why publication is allowed to exceed what
+    // the ledger claims. Refusing the second handover on ledger grounds would
+    // strand a buyer holding a real code in front of a bag that is physically
+    // sitting there.
+    const product = await createProduct({ quantity: 1, confidence: "low" });
+    const offer = await publish(owner, product.id, {
+      allocation: { storeProductId: product.id, quantity: 2, physicallySetAside: true },
+    });
+
+    const firstCode = "LB-aside-01";
+    const secondCode = "LB-aside-02";
+    await reserve(offer.id, offer.version, `aside-a-${randomUUID()}`, randomUUID(), firstCode);
+    await reserve(
+      offer.id,
+      offer.version + 1,
+      `aside-b-${randomUUID()}`,
+      randomUUID(),
+      secondCode
+    );
+
+    const first = await owner.rpc("fulfill_reservation_v2", {
+      p_store_id: storeId,
+      p_pickup_code: firstCode,
+      p_idempotency_key: randomUUID(),
+    });
+    expect(first.error).toBeNull();
+    const second = await owner.rpc("fulfill_reservation_v2", {
+      p_store_id: storeId,
+      p_pickup_code: secondCode,
+      p_idempotency_key: randomUUID(),
+    });
+    expect(second.error).toBeNull();
+
+    const reloaded = requireRow<{ on_hand_quantity: number }>(
+      await service
+        .from("store_products")
+        .select("on_hand_quantity")
+        .eq("id", product.id)
+        .single(),
+      "reload set aside product"
+    );
+    expect(reloaded.on_hand_quantity).toBe(0);
+
+    // The movement rows carry what was actually applied, not a fabricated -1,
+    // so the movements still sum to the true on hand quantity.
+    const movements = await service
+      .from("stock_movements")
+      .select("delta, created_at")
+      .eq("store_product_id", product.id)
+      .eq("kind", "fulfillment")
+      .order("created_at", { ascending: true });
+    expect(movements.error).toBeNull();
+    expect(movements.data?.map((row) => row.delta)).toEqual([-1, 0]);
+  });
+
+  it("refuses an approved adjustment that would undercut a live non set aside offer", async () => {
+    const product = await createProduct({ quantity: 10 });
+    await publish(owner, product.id, {
+      allocation: { storeProductId: product.id, quantity: 10, physicallySetAside: false },
+    });
+
+    const countSessionId = randomUUID();
+    const counted = await staff.rpc("record_inventory_count_v2", {
+      p_store_id: storeId,
+      p_count_session_id: countSessionId,
+      p_lines: [{ storeProductId: product.id, observedQuantity: 5 }],
+    });
+    expect(counted.error).toBeNull();
+    const proposal = counted.data[0] as { id: string; version: number };
+
+    // The resulting quantity, 5, is comfortably above zero. Only the
+    // encumbrance guard can catch this one, and without it half the units
+    // promised to buyers would silently stop existing.
+    const approved = await manager.rpc("approve_stock_adjustment_v2", {
+      p_store_id: storeId,
+      p_proposal_id: proposal.id,
+      p_decision: "approve",
+      p_idempotency_key: randomUUID(),
+      p_expected_version: proposal.version,
+    });
+    expect(approved.error?.message).toMatch(
+      /^validation_failed: adjustment would undercut allocated offers/
+    );
+
+    const reloaded = requireRow<{ on_hand_quantity: number }>(
+      await service
+        .from("store_products")
+        .select("on_hand_quantity")
+        .eq("id", product.id)
+        .single(),
+      "reload undercut product"
+    );
+    expect(reloaded.on_hand_quantity).toBe(10);
+  });
+
+  it("keeps a discrepant count unpublishable at the stale quantity until it is approved", async () => {
+    const product = await createProduct({ quantity: 10 });
+
+    const counted = await staff.rpc("record_inventory_count_v2", {
+      p_store_id: storeId,
+      p_count_session_id: randomUUID(),
+      p_lines: [{ storeProductId: product.id, observedQuantity: 7 }],
+    });
+    expect(counted.error).toBeNull();
+    const proposal = counted.data[0] as { id: string; version: number };
+
+    const afterCount = requireRow<{ confidence: string; on_hand_quantity: number }>(
+      await service
+        .from("store_products")
+        .select("confidence, on_hand_quantity")
+        .eq("id", product.id)
+        .single(),
+      "reload counted product"
+    );
+    expect(afterCount.confidence).toBe("low");
+    expect(afterCount.on_hand_quantity).toBe(10);
+
+    // Not publishable at the observed quantity either. A discrepant count is
+    // not a licence to publish a smaller number, it is a statement that this
+    // ledger row cannot be trusted at all until somebody reviews it.
+    const blocked = await owner.rpc("publish_offer_v2", {
+      p_store_id: storeId,
+      p_input: offerInput(product.id, {
+        allocation: { storeProductId: product.id, quantity: 7, physicallySetAside: false },
+      }),
+      p_idempotency_key: randomUUID(),
+    });
+    expect(blocked.error?.message).toMatch(/^allocation_exceeded:/);
+
+    const approved = await manager.rpc("approve_stock_adjustment_v2", {
+      p_store_id: storeId,
+      p_proposal_id: proposal.id,
+      p_decision: "approve",
+      p_idempotency_key: randomUUID(),
+      p_expected_version: proposal.version,
+    });
+    expect(approved.error).toBeNull();
+
+    const afterApproval = requireRow<{ confidence: string; on_hand_quantity: number }>(
+      await service
+        .from("store_products")
+        .select("confidence, on_hand_quantity")
+        .eq("id", product.id)
+        .single(),
+      "reload approved product"
+    );
+    expect(afterApproval.confidence).toBe("high");
+    expect(afterApproval.on_hand_quantity).toBe(7);
+
+    const published = await owner.rpc("publish_offer_v2", {
+      p_store_id: storeId,
+      p_input: offerInput(product.id, {
+        allocation: { storeProductId: product.id, quantity: 7, physicallySetAside: false },
+      }),
+      p_idempotency_key: randomUUID(),
+    });
+    expect(published.error).toBeNull();
+  });
+
+  it("denies every direct write to offers_v2 and every read of audit_entries", async () => {
+    // offers_v2 carries a select grant so members can read their own store's
+    // offers. Writes belong to publish_offer_v2 and pause_offer_v2 alone, and
+    // a member who could insert one directly would bypass every allocation
+    // ceiling in this file. Same reasoning as the store_products write pin.
+    const product = await createProduct();
+    const writers: [string, SupabaseClient][] = [
+      ["anon", anon],
+      ["staff", staff],
+      ["owner", owner],
+    ];
+    for (const [label, client] of writers) {
+      const attempt = await client.from("offers_v2").insert({
+        store_id: storeId,
+        store_product_id: product.id,
+        title: `Direct insert by ${label}`,
+        category: "bakery",
+        offer_price_uzs: 1000,
+        quantity_total: 1,
+        quantity_available: 1,
+        pickup_start: new Date(suiteBaseMs + 60 * 60 * 1000).toISOString(),
+        pickup_end: new Date(suiteBaseMs + 3 * 60 * 60 * 1000).toISOString(),
+      });
+      expect(`${label}:${attempt.error !== null}`).toBe(`${label}:true`);
+    }
+
+    // audit_entries is the tamper evident record of who did what. No client
+    // role reads it, the service role and a future operator console do.
+    for (const [label, client] of writers) {
+      const read = await client.from("audit_entries").select("*");
+      const rows = read.data ?? [];
+      expect(`${label}:${read.error !== null || rows.length === 0}`).toBe(
+        `${label}:true`
+      );
+      expect(rows).toHaveLength(0);
+    }
+  });
 });

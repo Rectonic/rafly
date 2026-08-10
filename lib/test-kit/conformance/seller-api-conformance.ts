@@ -216,6 +216,156 @@ export function runSellerApiConformance(
         );
       });
 
+      it("refuses a replayed countSessionId whose lines changed", async () => {
+        expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-1",
+            lines: [
+              {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                observedQuantity: 4,
+              },
+            ],
+          })
+        );
+
+        // Same session id, different observation. This is a caller reusing an
+        // id for a second count, not retrying the first, and handing back the
+        // first count's proposals would answer a question nobody asked.
+        expectErrorCode(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-1",
+            lines: [
+              {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                observedQuantity: 3,
+              },
+            ],
+          }),
+          "idempotency_conflict"
+        );
+      });
+
+      it("refuses a countSessionId already claimed by another store", async () => {
+        expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-1",
+            lines: [
+              {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                observedQuantity: 4,
+              },
+            ],
+          })
+        );
+
+        const otherOwner = harness.sellerApi({
+          userId: harness.scenario.otherStoreOwnerUserId,
+        });
+
+        // The id belongs to the first store. The second store must hear that,
+        // not an empty proposal list that reads as "everything you counted
+        // matched", and never the other store's proposals.
+        expectErrorCode(
+          await otherOwner.recordInventoryCountV2({
+            storeId: harness.scenario.otherStoreId,
+            countSessionId: "count-session-1",
+            lines: [
+              {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                observedQuantity: 4,
+              },
+            ],
+          }),
+          "idempotency_conflict"
+        );
+      });
+
+      it("keeps a discrepant line unpublishable until the adjustment is approved", async () => {
+        const before = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const observed = before.onHandQuantity - 3;
+
+        const proposals = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-1",
+            lines: [
+              {
+                storeProductId: before.storeProductId,
+                observedQuantity: observed,
+              },
+            ],
+          })
+        );
+
+        // The counter has just proven the ledger wrong. Until a manager
+        // approves the correction, the product is not something a publish
+        // ceiling may lean on, so it drops out of the offerable pool entirely
+        // rather than staying publishable at the quantity everyone now knows
+        // is stale.
+        const afterCount = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(afterCount.confidence).not.toBe("high");
+        expect(afterCount.onHandQuantity).toBe(before.onHandQuantity);
+        expect(afterCount.maxOfferableQuantity).toBe(0);
+
+        expectErrorCode(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "publish-after-count",
+              allocation: {
+                storeProductId: before.storeProductId,
+                quantity: observed,
+                physicallySetAside: false,
+              },
+            })
+          ),
+          "allocation_exceeded"
+        );
+
+        expectOk(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: proposals[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-after-count",
+            expectedVersion: proposals[0].version,
+          })
+        );
+
+        // Approval is a manager confirming the physical count, so the product
+        // is verified now in a way the bare count was not, and it becomes
+        // publishable at the quantity that was actually on the shelf.
+        const afterApproval = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(afterApproval.confidence).toBe("high");
+        expect(afterApproval.onHandQuantity).toBe(observed);
+        expect(afterApproval.maxOfferableQuantity).toBe(observed);
+
+        expectOk(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "publish-after-approval",
+              allocation: {
+                storeProductId: before.storeProductId,
+                quantity: observed,
+                physicallySetAside: false,
+              },
+            })
+          )
+        );
+      });
+
       it("refuses a count from a non member with forbidden", async () => {
         expectErrorCode(
           await stranger.recordInventoryCountV2({
@@ -325,6 +475,159 @@ export function runSellerApiConformance(
           findSummary(summaries, harness.scenario.highConfidenceProductId)
             .onHandQuantity
         ).toBe(proposal.onHandBefore);
+      });
+
+      it("refuses an approval that would drive the on hand quantity negative", async () => {
+        const low = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.lowConfidenceProductId
+        );
+
+        // Two counts of the same product taken before either was reviewed.
+        // Each proposal is computed against the same starting quantity, so
+        // applying both would remove twice the stock that ever existed.
+        const first = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-negative-1",
+            lines: [
+              { storeProductId: low.storeProductId, observedQuantity: 0 },
+            ],
+          })
+        );
+        const second = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-negative-2",
+            lines: [
+              { storeProductId: low.storeProductId, observedQuantity: 0 },
+            ],
+          })
+        );
+
+        expectOk(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: first[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-negative-1",
+            expectedVersion: first[0].version,
+          })
+        );
+
+        expectErrorCode(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: second[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-negative-2",
+            expectedVersion: second[0].version,
+          }),
+          "validation_failed"
+        );
+
+        expect(
+          findSummary(
+            expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+            harness.scenario.lowConfidenceProductId
+          ).onHandQuantity
+        ).toBe(0);
+      });
+
+      it("refuses a downward adjustment that would undercut a live offer", async () => {
+        const before = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        // Every unit on the shelf is now promised to buyers through a live
+        // offer that is backed by the ledger and nothing else.
+        await publishOffer(harness, {
+          allocation: {
+            storeProductId: before.storeProductId,
+            quantity: before.onHandQuantity,
+            physicallySetAside: false,
+          },
+        });
+
+        const proposals = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-undercut",
+            lines: [
+              {
+                storeProductId: before.storeProductId,
+                observedQuantity: before.onHandQuantity - 5,
+              },
+            ],
+          })
+        );
+
+        // The resulting quantity is comfortably positive, so the plain non
+        // negative floor would wave this through, and half the promised units
+        // would quietly stop existing.
+        expectErrorCode(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: proposals[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-undercut",
+            expectedVersion: proposals[0].version,
+          }),
+          "validation_failed"
+        );
+
+        expect(
+          findSummary(
+            expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+            harness.scenario.highConfidenceProductId
+          ).onHandQuantity
+        ).toBe(before.onHandQuantity);
+      });
+
+      it("allows a downward adjustment under a physically set aside offer", async () => {
+        const before = findSummary(
+          expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.lowConfidenceProductId
+        );
+
+        // A set aside offer's units left the shelf when it was published, so
+        // they are not in the ledger number and the guard above must not read
+        // them as a promise this row still has to keep.
+        await publishOffer(harness, {
+          allocation: {
+            storeProductId: before.storeProductId,
+            quantity: 2,
+            physicallySetAside: true,
+          },
+        });
+
+        const proposals = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-set-aside",
+            lines: [
+              { storeProductId: before.storeProductId, observedQuantity: 1 },
+            ],
+          })
+        );
+
+        expectOk(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: proposals[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-set-aside",
+            expectedVersion: proposals[0].version,
+          })
+        );
+
+        expect(
+          findSummary(
+            expectOk(await staff.listStoreInventoryV2(harness.scenario.storeId)),
+            harness.scenario.lowConfidenceProductId
+          ).onHandQuantity
+        ).toBe(1);
       });
 
       it("returns version_conflict for a stale expectedVersion", async () => {
@@ -907,6 +1210,82 @@ export function runSellerApiConformance(
           harness.scenario.highConfidenceProductId
         );
         expect(after.onHandQuantity).toBe(before.onHandQuantity - 1);
+      });
+
+      it("fulfils every hold on a physically set aside offer even once the ledger reads zero", async () => {
+        const buyer = harness.buyerApi();
+        const low = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.lowConfidenceProductId
+        );
+
+        // Two units pulled off the shelf and put behind the counter. The
+        // ledger never backed this offer, which is the whole point of the
+        // physical set aside path.
+        const offer = await publishOffer(harness, {
+          allocation: {
+            storeProductId: low.storeProductId,
+            quantity: 2,
+            physicallySetAside: true,
+          },
+        });
+
+        // Meanwhile the ledger for that product is corrected down to a single
+        // unit, less than the two the set aside offer promises.
+        const proposals = expectOk(
+          await staff.recordInventoryCountV2({
+            storeId: harness.scenario.storeId,
+            countSessionId: "count-session-set-aside-fulfil",
+            lines: [{ storeProductId: low.storeProductId, observedQuantity: 1 }],
+          })
+        );
+        expectOk(
+          await manager.approveStockAdjustmentV2({
+            storeId: harness.scenario.storeId,
+            proposalId: proposals[0].id,
+            decision: "approve",
+            idempotencyKey: "approve-set-aside-fulfil",
+            expectedVersion: proposals[0].version,
+          })
+        );
+
+        const firstHold = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        const afterFirst = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
+        const secondHold = expectOk(
+          await buyer.reserveOfferV2(
+            buildReserveInput(harness, afterFirst, {
+              clientReservationId: "client-reservation-2",
+              installationId: harness.scenario.installationB,
+            })
+          )
+        );
+
+        // Both buyers are entitled to the unit that is physically waiting for
+        // them, so neither handover may be refused on ledger grounds. The
+        // ledger floors at zero instead of going negative.
+        expectOk(
+          await manager.fulfillReservationV2({
+            storeId: harness.scenario.storeId,
+            pickupCode: requirePickupCode(firstHold),
+            idempotencyKey: "fulfill-set-aside-1",
+          })
+        );
+        expectOk(
+          await manager.fulfillReservationV2({
+            storeId: harness.scenario.storeId,
+            pickupCode: requirePickupCode(secondHold),
+            idempotencyKey: "fulfill-set-aside-2",
+          })
+        );
+
+        expect(
+          findSummary(
+            expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+            harness.scenario.lowConfidenceProductId
+          ).onHandQuantity
+        ).toBe(0);
       });
 
       it("refuses fulfilment by staff with forbidden", async () => {

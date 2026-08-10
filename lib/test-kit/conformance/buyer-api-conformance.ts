@@ -241,6 +241,26 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         expect(offers[0].status).toBe("live");
       });
 
+      it("keeps a sold out offer in the marketplace list", async () => {
+        const offer = await publishOffer(harness, {
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: 1,
+            physicallySetAside: false,
+          },
+        });
+        expectOk(await buyer.reserveOfferV2(buildReserveInput(harness, offer)));
+
+        // A buyer who already saw this card is owed a sold out card, not an
+        // offer that vanishes out from under them with no explanation. The
+        // buyer surfaces render the status as a disabled card.
+        const offers = expectOk(await buyer.listMarketplaceOffersV2());
+
+        expect(offers.map((entry) => entry.id)).toEqual([offer.id]);
+        expect(offers[0].status).toBe("sold_out");
+        expect(offers[0].quantityAvailable).toBe(0);
+      });
+
       it("expires offers past the pickup end on read and never revives them", async () => {
         const offer = await publishOffer(harness);
         expect(expectOk(await buyer.listMarketplaceOffersV2())).toHaveLength(1);

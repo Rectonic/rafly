@@ -195,4 +195,12 @@ $$;
 revoke execute on function public.list_store_exceptions_v2(uuid) from public;
 grant execute on function public.list_store_exceptions_v2(uuid) to authenticated;
 
+-- Additive hardening. audit_entries already has row level security on with no
+-- policy for either client role, so a select returns nothing today. That is
+-- one edit away from being untrue, since adding any policy to the table would
+-- silently open it to whichever role still holds a table grant. Revoking the
+-- grants outright means a future policy is not enough on its own, the same
+-- belt and braces the offers and reservations tables already have.
+revoke all on table public.audit_entries from anon, authenticated;
+
 notify pgrst, 'reload schema';
