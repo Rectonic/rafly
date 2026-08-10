@@ -5,15 +5,19 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { AccessGateV2 } from "@/components/seller/AccessGateV2";
 import { useT } from "@/i18n";
 import type { InventorySummaryV2 } from "@/lib/contracts";
-import { formatIsoTimestampV2, parseLinesV2 } from "@/lib/seller/format-v2";
+import { formatIsoTimestampV2, isExpiredV2, parseLinesV2 } from "@/lib/seller/format-v2";
 import { useStoreInventoryV2 } from "@/lib/seller/inventory-v2-store";
 import { usePublishOfferV2, type PublishDraftInputV2 } from "@/lib/seller/publish-v2";
 import { useStoreMembershipV2 } from "@/lib/seller/store-context-v2";
 
 function isEligible(item: InventorySummaryV2): boolean {
-  // A depleted high confidence product has nothing safe left to offer.
-  // Low and medium confidence products stay selectable, they can still
-  // publish through an explicit physical set aside confirmation.
+  // An already expired batch can never publish, the backend rejects it
+  // outright, keeping it out of the picker saves a pointless trip through
+  // the form. A depleted high confidence product also has nothing safe
+  // left to offer. Low and medium confidence products stay selectable
+  // regardless of maxOfferableQuantity, they can still publish through an
+  // explicit physical set aside confirmation.
+  if (isExpiredV2(item.expiryDate)) return false;
   return item.confidence !== "high" || item.maxOfferableQuantity > 0;
 }
 
@@ -72,6 +76,7 @@ export default function PublishV2Screen() {
   const price = parseIntOrNull(priceText);
   const priceValid = price !== null && price > 0;
   const referencePrice = parseIntOrNull(referencePriceText);
+  const categoryMissing = category.trim().length === 0;
 
   const canReview =
     Boolean(selectedProduct) &&
@@ -81,10 +86,11 @@ export default function PublishV2Screen() {
     windowKnown &&
     !windowInvalid &&
     title.trim().length > 0 &&
+    !categoryMissing &&
     priceValid;
 
   function buildInput(): PublishDraftInputV2 | null {
-    if (!selectedProduct || quantity === null || price === null) return null;
+    if (!selectedProduct || quantity === null || price === null || categoryMissing) return null;
     return {
       allergens: parseLinesV2(allergensText),
       allocation: {
@@ -93,7 +99,7 @@ export default function PublishV2Screen() {
         storeProductId: selectedProduct.storeProductId,
       },
       cancellationPolicy: cancellationPolicy.trim().length > 0 ? cancellationPolicy.trim() : null,
-      category: category.trim().length > 0 ? category.trim() : "general",
+      category: category.trim(),
       contents: parseLinesV2(contentsText),
       dietaryBadges: parseLinesV2(dietaryBadgesText),
       imageUrl: imageUrl.trim().length > 0 ? imageUrl.trim() : null,
@@ -111,6 +117,15 @@ export default function PublishV2Screen() {
     const input = buildInput();
     if (!input) return;
     void session.publish(input);
+  };
+
+  const backToEdit = () => {
+    // Finding 5, fix round 1: any edit made after coming back here is a
+    // materially different draft, the publish idempotencyKey must not
+    // survive into it. Entering edit mode always rotates the key, the
+    // simplest of the two options the review named as acceptable.
+    session.reset();
+    setStep("form");
   };
 
   return (
@@ -146,20 +161,27 @@ export default function PublishV2Screen() {
                   {t.sellerV2.publish.pausedLabel}
                 </Text>
               ) : (
-                <Pressable
-                  accessibilityLabel={t.sellerV2.publish.pauseButton}
-                  accessibilityRole="button"
-                  disabled={session.pauseStatus === "in-flight"}
-                  onPress={() => void session.pause()}
-                  style={styles.pauseButton}
-                  testID="publish-v2-pause-button"
-                >
-                  <Text style={styles.pauseButtonText}>
-                    {session.pauseStatus === "in-flight"
-                      ? t.sellerV2.publish.pausing
-                      : t.sellerV2.publish.pauseButton}
-                  </Text>
-                </Pressable>
+                <>
+                  <Pressable
+                    accessibilityLabel={t.sellerV2.publish.pauseButton}
+                    accessibilityRole="button"
+                    disabled={session.pauseStatus === "in-flight"}
+                    onPress={() => void session.pause()}
+                    style={styles.pauseButton}
+                    testID="publish-v2-pause-button"
+                  >
+                    <Text style={styles.pauseButtonText}>
+                      {session.pauseStatus === "in-flight"
+                        ? t.sellerV2.publish.pausing
+                        : t.sellerV2.publish.pauseButton}
+                    </Text>
+                  </Pressable>
+                  {session.pauseStatus === "error" ? (
+                    <Text style={styles.errorHint} testID="publish-v2-pause-error">
+                      {session.pauseError?.message ?? t.sellerV2.publish.pauseErrorFallback}
+                    </Text>
+                  ) : null}
+                </>
               )}
             </View>
           ) : step === "form" ? (
@@ -171,25 +193,39 @@ export default function PublishV2Screen() {
               {inventory.status === "ready" && eligibleItems.length === 0 ? (
                 <Text style={styles.meta}>{t.sellerV2.publish.noEligibleProducts}</Text>
               ) : null}
-              <View style={styles.chipRow}>
+              <View>
                 {eligibleItems.map((item) => (
                   <Pressable
                     key={item.storeProductId}
                     onPress={() => setSelectedProductId(item.storeProductId)}
                     style={[
-                      styles.chip,
-                      selectedProductId === item.storeProductId ? styles.chipActive : null,
+                      styles.productRow,
+                      selectedProductId === item.storeProductId ? styles.productRowActive : null,
                     ]}
                     testID={`publish-v2-product-${item.storeProductId}`}
                   >
                     <Text
                       style={[
-                        styles.chipText,
-                        selectedProductId === item.storeProductId ? styles.chipTextActive : null,
+                        styles.productRowText,
+                        selectedProductId === item.storeProductId
+                          ? styles.productRowTextActive
+                          : null,
                       ]}
                     >
                       {item.productName}
                     </Text>
+                    {item.expiryDate ? (
+                      <Text
+                        style={[
+                          styles.productRowMeta,
+                          selectedProductId === item.storeProductId
+                            ? styles.productRowTextActive
+                            : null,
+                        ]}
+                      >
+                        {t.sellerV2.publish.productExpiryLabel(item.expiryDate)}
+                      </Text>
+                    ) : null}
                   </Pressable>
                 ))}
               </View>
@@ -266,6 +302,11 @@ export default function PublishV2Screen() {
                 testID="publish-v2-category-input"
                 value={category}
               />
+              {categoryMissing ? (
+                <Text style={styles.errorHint} testID="publish-v2-category-required-hint">
+                  {t.sellerV2.publish.categoryRequiredHint}
+                </Text>
+              ) : null}
 
               <Text style={styles.label}>{t.sellerV2.publish.imageUrlLabel}</Text>
               <TextInput
@@ -386,6 +427,9 @@ export default function PublishV2Screen() {
               <Text style={styles.meta} testID="publish-v2-review-quantity">
                 {t.sellerV2.publish.reviewQuantity(quantity ?? 0)}
               </Text>
+              <Text style={styles.meta} testID="publish-v2-review-category">
+                {t.sellerV2.publish.reviewCategory(category.trim())}
+              </Text>
               <Text style={styles.meta} testID="publish-v2-review-price">
                 {t.sellerV2.publish.reviewPrice(price ?? 0)}
               </Text>
@@ -403,6 +447,42 @@ export default function PublishV2Screen() {
               {needsSetAside ? (
                 <Text style={styles.meta}>{t.sellerV2.publish.reviewSetAsideConfirmed}</Text>
               ) : null}
+
+              {/* Finding 2, fix round 1: every public content and safety
+                  field a buyer will see must be in front of the manager
+                  before they approve, not just the commercial terms. */}
+              <Text style={styles.meta} testID="publish-v2-review-contents">
+                {parseLinesV2(contentsText).length > 0
+                  ? t.sellerV2.publish.reviewContents(parseLinesV2(contentsText).join(", "))
+                  : t.sellerV2.publish.reviewNoContents}
+              </Text>
+              <Text style={styles.meta} testID="publish-v2-review-allergens">
+                {parseLinesV2(allergensText).length > 0
+                  ? t.sellerV2.publish.reviewAllergens(parseLinesV2(allergensText).join(", "))
+                  : t.sellerV2.publish.reviewNoAllergens}
+              </Text>
+              <Text style={styles.meta} testID="publish-v2-review-dietary-badges">
+                {parseLinesV2(dietaryBadgesText).length > 0
+                  ? t.sellerV2.publish.reviewDietaryBadges(
+                      parseLinesV2(dietaryBadgesText).join(", ")
+                    )
+                  : t.sellerV2.publish.reviewNoDietaryBadges}
+              </Text>
+              <Text style={styles.meta} testID="publish-v2-review-image">
+                {imageUrl.trim().length > 0
+                  ? t.sellerV2.publish.reviewImageAttached
+                  : t.sellerV2.publish.reviewNoImage}
+              </Text>
+              <Text style={styles.meta} testID="publish-v2-review-pickup-instructions">
+                {pickupInstructions.trim().length > 0
+                  ? t.sellerV2.publish.reviewPickupInstructions(pickupInstructions.trim())
+                  : t.sellerV2.publish.reviewNoPickupInstructions}
+              </Text>
+              <Text style={styles.meta} testID="publish-v2-review-cancellation-policy">
+                {cancellationPolicy.trim().length > 0
+                  ? t.sellerV2.publish.reviewCancellationPolicy(cancellationPolicy.trim())
+                  : t.sellerV2.publish.reviewNoCancellationPolicy}
+              </Text>
 
               {session.status === "error" ? (
                 <View style={styles.errorPanel} testID="publish-v2-publish-error">
@@ -425,7 +505,7 @@ export default function PublishV2Screen() {
                 <Pressable
                   accessibilityLabel={t.sellerV2.publish.backButton}
                   accessibilityRole="button"
-                  onPress={() => setStep("form")}
+                  onPress={backToEdit}
                   style={styles.secondaryButton}
                   testID="publish-v2-back-button"
                 >
@@ -455,29 +535,6 @@ export default function PublishV2Screen() {
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    backgroundColor: "#F3F4F6",
-    borderRadius: 999,
-    marginBottom: 8,
-    marginRight: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  chipActive: {
-    backgroundColor: "#16C79A",
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginBottom: 8,
-  },
-  chipText: {
-    color: "#111827",
-    fontWeight: "500",
-  },
-  chipTextActive: {
-    color: "#FFFFFF",
-  },
   container: {
     backgroundColor: "#F8F9FA",
     minHeight: "100%",
@@ -586,6 +643,30 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#FFFFFF",
     fontWeight: "700",
+  },
+  productRow: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "#D1D5DB",
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+    padding: 12,
+  },
+  productRowActive: {
+    backgroundColor: "#16C79A",
+    borderColor: "#16C79A",
+  },
+  productRowMeta: {
+    color: "#6B7280",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  productRowText: {
+    color: "#111827",
+    fontWeight: "600",
+  },
+  productRowTextActive: {
+    color: "#FFFFFF",
   },
   publishedPanel: {
     backgroundColor: "#ECFDF5",

@@ -302,7 +302,7 @@ describe("Seller v2 offer publication", () => {
       expect(screen.queryByTestId("publish-v2-review-panel")).toBeNull();
     });
 
-    it("shows a complete review sourced from the entered fields before any approval", async () => {
+    it("fix round 1, finding 2: blocks review with an empty category instead of silently defaulting it", async () => {
       const { core, scenario } = makeWorld();
       const manager = core.sellerApi({ userId: scenario.managerUserId });
 
@@ -319,7 +319,54 @@ describe("Seller v2 offer publication", () => {
       fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
       fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
       fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-start-input"),
+        scenario.pickupStart
+      );
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-end-input"),
+        scenario.pickupEnd
+      );
+      // Category left blank on purpose.
+
+      expect(screen.getByTestId("publish-v2-category-required-hint")).toBeTruthy();
+      fireEvent.press(screen.getByTestId("publish-v2-review-button"));
+      expect(screen.queryByTestId("publish-v2-review-panel")).toBeNull();
+
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
+      expect(screen.queryByTestId("publish-v2-category-required-hint")).toBeNull();
+      fireEvent.press(screen.getByTestId("publish-v2-review-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
+    });
+
+    it("shows a complete review sourced from the entered fields before any approval, including contents, allergens, dietary badges, and category", async () => {
+      const { core, scenario } = makeWorld();
+      const manager = core.sellerApi({ userId: scenario.managerUserId });
+
+      const screen = render(providerTree(manager, <PublishV2Screen />));
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+        ).toBeTruthy()
+      );
+
+      fireEvent.press(
+        screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+      );
+      fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
+      fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
+      fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
       fireEvent.changeText(screen.getByTestId("publish-v2-reference-price-input"), "50000");
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-contents-input"),
+        "Sourdough loaf\nCinnamon roll"
+      );
+      fireEvent.changeText(screen.getByTestId("publish-v2-allergens-input"), "Gluten\nDairy");
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-dietary-badges-input"),
+        "Vegetarian"
+      );
       fireEvent.changeText(
         screen.getByTestId("publish-v2-pickup-start-input"),
         scenario.pickupStart
@@ -338,6 +385,24 @@ describe("Seller v2 offer publication", () => {
       expect(screen.getByTestId("publish-v2-review-price")).toHaveTextContent("20000", {
         exact: false,
       });
+      expect(screen.getByTestId("publish-v2-review-category")).toHaveTextContent("bakery", {
+        exact: false,
+      });
+      expect(screen.getByTestId("publish-v2-review-contents")).toHaveTextContent(
+        "Sourdough loaf",
+        { exact: false }
+      );
+      expect(screen.getByTestId("publish-v2-review-contents")).toHaveTextContent(
+        "Cinnamon roll",
+        { exact: false }
+      );
+      expect(screen.getByTestId("publish-v2-review-allergens")).toHaveTextContent("Gluten", {
+        exact: false,
+      });
+      expect(screen.getByTestId("publish-v2-review-dietary-badges")).toHaveTextContent(
+        "Vegetarian",
+        { exact: false }
+      );
       expect(screen.queryByTestId("publish-v2-published-panel")).toBeNull();
 
       fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
@@ -362,6 +427,7 @@ describe("Seller v2 offer publication", () => {
       );
       fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
       fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
       fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
       fireEvent.changeText(screen.getByTestId("publish-v2-reference-price-input"), "50000");
       fireEvent.changeText(
@@ -382,11 +448,15 @@ describe("Seller v2 offer publication", () => {
         })
       );
 
-      // A second offer without a reference price shows no discount.
+      // A second offer without a reference price shows no discount. The
+      // readiness check below waits on the high confidence product rather
+      // than the scenario's already expired fixture, that fixture no
+      // longer appears in the picker at all once expired products are
+      // excluded client side (finding 6).
       const secondScreen = render(providerTree(manager, <PublishV2Screen />));
       await waitFor(() =>
         expect(
-          secondScreen.getByTestId(`publish-v2-product-${scenario.expiredProductId}`)
+          secondScreen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
         ).toBeTruthy()
       );
       fireEvent.press(
@@ -398,6 +468,7 @@ describe("Seller v2 offer publication", () => {
         secondScreen.getByTestId("publish-v2-title-input"),
         "Dairy clearance"
       );
+      fireEvent.changeText(secondScreen.getByTestId("publish-v2-category-input"), "dairy");
       fireEvent.changeText(secondScreen.getByTestId("publish-v2-price-input"), "9000");
       fireEvent.changeText(
         secondScreen.getByTestId("publish-v2-pickup-start-input"),
@@ -418,31 +489,85 @@ describe("Seller v2 offer publication", () => {
       );
     });
 
-    it("surfaces the backend's expired batch rejection instead of a fabricated success", async () => {
+    it("fix round 1, finding 6: excludes a product whose expiry date has already passed from the eligible picker", async () => {
+      const { core, scenario } = makeWorld();
+      const longPastProductId = core.addProduct({
+        confidence: "high",
+        expiryDate: "2020-01-01",
+        onHandQuantity: 4,
+        productName: "Ancient batch",
+        storeId: scenario.storeId,
+      });
+      const manager = core.sellerApi({ userId: scenario.managerUserId });
+
+      const screen = render(providerTree(manager, <PublishV2Screen />));
+
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+        ).toBeTruthy()
+      );
+      expect(screen.queryByTestId(`publish-v2-product-${longPastProductId}`)).toBeNull();
+    });
+
+    it("fix round 1, finding 6: shows expiry date on the eligible picker rows that carry one", async () => {
       const { core, scenario } = makeWorld();
       const manager = core.sellerApi({ userId: scenario.managerUserId });
 
       const screen = render(providerTree(manager, <PublishV2Screen />));
+
+      // lib/test-kit/scenarios.ts seeds the high confidence fixture with a
+      // fixed "2026-08-12" expiry date, asserted directly since
+      // DefaultScenario does not expose it as a named field.
       await waitFor(() =>
         expect(
-          screen.getByTestId(`publish-v2-product-${scenario.expiredProductId}`)
-        ).toBeTruthy()
+          screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+        ).toHaveTextContent("2026-08-12", { exact: false })
+      );
+    });
+
+    it("still surfaces the backend's own expired rejection honestly for a product that passed the client side check", async () => {
+      // A client side filter is a convenience, not the authority. This
+      // fixture's expiry date is safely in the future relative to the real
+      // wall clock (so it stays eligible in the picker) and the pickup
+      // window is further out still (so the window validation stays
+      // satisfied), the backend's own clock is then advanced to a point
+      // after the expiry date but before the pickup window with setNow, so
+      // the publish attempt hits the same validation_failed rejection a
+      // truly expired product would, proving the backend check is never
+      // skipped just because a client side filter also exists.
+      const { core, scenario } = makeWorld();
+      const laterExpiringId = core.addProduct({
+        confidence: "high",
+        expiryDate: "2030-01-01",
+        onHandQuantity: 4,
+        productName: "Will expire on the backend clock",
+        storeId: scenario.storeId,
+      });
+      const manager = core.sellerApi({ userId: scenario.managerUserId });
+
+      const screen = render(providerTree(manager, <PublishV2Screen />));
+      await waitFor(() =>
+        expect(screen.getByTestId(`publish-v2-product-${laterExpiringId}`)).toBeTruthy()
       );
 
-      fireEvent.press(screen.getByTestId(`publish-v2-product-${scenario.expiredProductId}`));
+      fireEvent.press(screen.getByTestId(`publish-v2-product-${laterExpiringId}`));
       fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
       fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Day old pastries");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
       fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "5000");
       fireEvent.changeText(
         screen.getByTestId("publish-v2-pickup-start-input"),
-        scenario.pickupStart
+        "2031-01-01T09:00:00.000Z"
       );
       fireEvent.changeText(
         screen.getByTestId("publish-v2-pickup-end-input"),
-        scenario.pickupEnd
+        "2031-01-01T12:00:00.000Z"
       );
       fireEvent.press(screen.getByTestId("publish-v2-review-button"));
       await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
+
+      core.setNow("2030-06-01T09:00:00.000Z");
       fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
 
       await waitFor(() => expect(screen.getByTestId("publish-v2-publish-error")).toBeTruthy());
@@ -466,6 +591,7 @@ describe("Seller v2 offer publication", () => {
       );
       fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
       fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
       fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
       fireEvent.changeText(
         screen.getByTestId("publish-v2-pickup-start-input"),
@@ -491,6 +617,114 @@ describe("Seller v2 offer publication", () => {
       // in "pauses idempotently, a repeated pause call replays the same
       // result" above.
       expect(screen.queryByTestId("publish-v2-pause-button")).toBeNull();
+    });
+
+    it("fix round 1, finding 5: rotates the idempotency key after Back to edit changes the draft", async () => {
+      const { core, scenario } = makeWorld();
+      const workingApi = core.sellerApi({ userId: scenario.managerUserId });
+      const seenKeys: string[] = [];
+      let attempt = 0;
+      const flakyFirstApi: SellerStoreApiV2 = {
+        ...workingApi,
+        approveAndPublishOfferV2: async (input) => {
+          attempt += 1;
+          seenKeys.push(input.idempotencyKey);
+          if (attempt === 1) {
+            return {
+              ok: false,
+              error: { code: "network_error", message: "offline", retryable: true },
+            };
+          }
+          return workingApi.approveAndPublishOfferV2(input);
+        },
+      };
+
+      const screen = render(providerTree(flakyFirstApi, <PublishV2Screen />));
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+        ).toBeTruthy()
+      );
+
+      fireEvent.press(
+        screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+      );
+      fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
+      fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
+      fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-start-input"),
+        scenario.pickupStart
+      );
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-end-input"),
+        scenario.pickupEnd
+      );
+      fireEvent.press(screen.getByTestId("publish-v2-review-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-publish-error")).toBeTruthy());
+
+      fireEvent.press(screen.getByTestId("publish-v2-back-button"));
+      fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "18000");
+      fireEvent.press(screen.getByTestId("publish-v2-review-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
+
+      await waitFor(() =>
+        expect(screen.getByTestId("publish-v2-published-panel")).toBeTruthy()
+      );
+      expect(seenKeys).toHaveLength(2);
+      expect(seenKeys[0]).not.toBe(seenKeys[1]);
+    });
+
+    it("fix round 1, finding 4: shows an honest error when pausing fails instead of pretending it worked", async () => {
+      const { core, scenario } = makeWorld();
+      const workingApi = core.sellerApi({ userId: scenario.managerUserId });
+      const failingPauseApi: SellerStoreApiV2 = {
+        ...workingApi,
+        pauseOfferV2: async () => ({
+          ok: false,
+          error: { code: "network_error", message: "Pause offline", retryable: true },
+        }),
+      };
+
+      const screen = render(providerTree(failingPauseApi, <PublishV2Screen />));
+      await waitFor(() =>
+        expect(
+          screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+        ).toBeTruthy()
+      );
+
+      fireEvent.press(
+        screen.getByTestId(`publish-v2-product-${scenario.highConfidenceProductId}`)
+      );
+      fireEvent.changeText(screen.getByTestId("publish-v2-quantity-input"), "2");
+      fireEvent.changeText(screen.getByTestId("publish-v2-title-input"), "Bakery rescue box");
+      fireEvent.changeText(screen.getByTestId("publish-v2-category-input"), "bakery");
+      fireEvent.changeText(screen.getByTestId("publish-v2-price-input"), "20000");
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-start-input"),
+        scenario.pickupStart
+      );
+      fireEvent.changeText(
+        screen.getByTestId("publish-v2-pickup-end-input"),
+        scenario.pickupEnd
+      );
+      fireEvent.press(screen.getByTestId("publish-v2-review-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-review-panel")).toBeTruthy());
+      fireEvent.press(screen.getByTestId("publish-v2-confirm-button"));
+      await waitFor(() => expect(screen.getByTestId("publish-v2-pause-button")).toBeTruthy());
+
+      fireEvent.press(screen.getByTestId("publish-v2-pause-button"));
+
+      await waitFor(() =>
+        expect(screen.getByTestId("publish-v2-pause-error")).toHaveTextContent("Pause offline")
+      );
+      expect(screen.queryByTestId("publish-v2-paused-label")).toBeNull();
+      // The pause control stays available for a genuine retry.
+      expect(screen.getByTestId("publish-v2-pause-button")).toBeTruthy();
     });
 
     it("denies the publish screen to staff", async () => {

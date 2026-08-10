@@ -28,6 +28,10 @@ export default function InventoryV2Screen() {
     router.push("/(seller-tabs)/publish-v2");
   };
 
+  const goToOffers = () => {
+    router.push("/(seller-tabs)/offers-v2");
+  };
+
   return (
     <AccessGateV2 access={access} screenTestId="inventory-v2">
       <ScreenScrollView contentContainerStyle={styles.container} testID="inventory-v2-screen">
@@ -60,6 +64,15 @@ export default function InventoryV2Screen() {
               </Text>
             </Pressable>
           ) : null}
+          <Pressable
+            accessibilityLabel={t.sellerV2.inventory.offersButton}
+            accessibilityRole="button"
+            onPress={goToOffers}
+            style={styles.secondaryButton}
+            testID="inventory-v2-offers-button"
+          >
+            <Text style={styles.secondaryButtonText}>{t.sellerV2.inventory.offersButton}</Text>
+          </Pressable>
         </View>
 
         {inventory.status === "loading" || inventory.status === "idle" ? (

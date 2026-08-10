@@ -57,6 +57,7 @@ export interface SellerTranslations {
     exceptionActionButton: string;
     recordCountButton: string;
     publishButton: string;
+    offersButton: string;
   };
   count: {
     title: string;
@@ -78,6 +79,7 @@ export interface SellerTranslations {
     rejectButton: string;
     deciding: string;
     approvedLabel: string;
+    appliedLabel: string;
     rejectedLabel: string;
     staleTitle: string;
     staleMessage: string;
@@ -90,6 +92,7 @@ export interface SellerTranslations {
     forbiddenMessage: string;
     selectProductTitle: string;
     noEligibleProducts: string;
+    productExpiryLabel: (date: string) => string;
     quantityLabel: string;
     maxOfferableHint: (n: number) => string;
     quantityExceedsMaxHint: string;
@@ -98,6 +101,7 @@ export interface SellerTranslations {
     physicalSetAsideRequiredHint: string;
     titleLabel: string;
     categoryLabel: string;
+    categoryRequiredHint: string;
     imageUrlLabel: string;
     contentsLabel: string;
     contentsPlaceholder: string;
@@ -118,6 +122,19 @@ export interface SellerTranslations {
     reviewPrice: (price: number) => string;
     reviewReferencePrice: (price: number) => string;
     reviewNoReferencePrice: string;
+    reviewCategory: (category: string) => string;
+    reviewContents: (joined: string) => string;
+    reviewNoContents: string;
+    reviewAllergens: (joined: string) => string;
+    reviewNoAllergens: string;
+    reviewDietaryBadges: (joined: string) => string;
+    reviewNoDietaryBadges: string;
+    reviewImageAttached: string;
+    reviewNoImage: string;
+    reviewPickupInstructions: (text: string) => string;
+    reviewNoPickupInstructions: string;
+    reviewCancellationPolicy: (text: string) => string;
+    reviewNoCancellationPolicy: string;
     reviewPickupWindow: (start: string, end: string) => string;
     reviewSetAsideConfirmed: string;
     confirmButton: string;
@@ -131,6 +148,25 @@ export interface SellerTranslations {
     pauseButton: string;
     pausing: string;
     pausedLabel: string;
+    pauseErrorFallback: string;
+  };
+  offers: {
+    title: string;
+    loading: string;
+    emptyTitle: string;
+    emptyHint: string;
+    errorTitle: string;
+    retry: string;
+    statusLabel: Record<
+      "live" | "paused" | "sold_out" | "expired" | "withdrawn",
+      string
+    >;
+    pickupWindowLabel: (start: string, end: string) => string;
+    quantityLabel: (n: number) => string;
+    pauseButton: string;
+    pausing: string;
+    pausedLabel: string;
+    pauseErrorFallback: string;
   };
 }
 
@@ -180,6 +216,7 @@ export const sellerEn: SellerTranslations = {
     exceptionActionButton: "Recount",
     recordCountButton: "Record a count",
     publishButton: "New offer",
+    offersButton: "View offers",
   },
   count: {
     title: "Count session",
@@ -200,7 +237,8 @@ export const sellerEn: SellerTranslations = {
     approveButton: "Approve",
     rejectButton: "Reject",
     deciding: "Saving decision...",
-    approvedLabel: "Approved",
+    approvedLabel: "Approved, stock update pending",
+    appliedLabel: "Approved, stock updated",
     rejectedLabel: "Rejected",
     staleTitle: "This proposal changed",
     staleMessage: "Someone else decided this proposal first. Refreshed to the latest version.",
@@ -213,6 +251,7 @@ export const sellerEn: SellerTranslations = {
     forbiddenMessage: "Your role cannot approve or publish an offer for this store.",
     selectProductTitle: "Select the inventory this offer allocates",
     noEligibleProducts: "No inventory is currently eligible to publish.",
+    productExpiryLabel: (date) => `Expires ${date}`,
     quantityLabel: "Quantity",
     maxOfferableHint: (n) => `Up to ${n} available without physical set aside`,
     quantityExceedsMaxHint: "Quantity is above the safe maximum for this product.",
@@ -222,6 +261,7 @@ export const sellerEn: SellerTranslations = {
     physicalSetAsideRequiredHint: "Confirm the physical set aside before continuing.",
     titleLabel: "Offer title",
     categoryLabel: "Category",
+    categoryRequiredHint: "Enter a category before you can review this offer.",
     imageUrlLabel: "Image URL",
     contentsLabel: "Contents, one line per item",
     contentsPlaceholder: "Bread\nPastry",
@@ -242,6 +282,19 @@ export const sellerEn: SellerTranslations = {
     reviewPrice: (price) => `Offer price: UZS ${price}`,
     reviewReferencePrice: (price) => `Reference price: UZS ${price}`,
     reviewNoReferencePrice: "No reference price, no discount will be shown",
+    reviewCategory: (category) => `Category: ${category}`,
+    reviewContents: (joined) => `Contents: ${joined}`,
+    reviewNoContents: "Contents: none listed",
+    reviewAllergens: (joined) => `Allergens: ${joined}`,
+    reviewNoAllergens: "Allergens: none listed",
+    reviewDietaryBadges: (joined) => `Dietary badges: ${joined}`,
+    reviewNoDietaryBadges: "Dietary badges: none listed",
+    reviewImageAttached: "Image attached",
+    reviewNoImage: "No image attached",
+    reviewPickupInstructions: (text) => `Pickup instructions: ${text}`,
+    reviewNoPickupInstructions: "Pickup instructions: none given",
+    reviewCancellationPolicy: (text) => `Cancellation policy: ${text}`,
+    reviewNoCancellationPolicy: "Cancellation policy: none given",
     reviewPickupWindow: (start, end) => `Pickup ${start} to ${end}`,
     reviewSetAsideConfirmed: "Physical set aside confirmed",
     confirmButton: "Approve and publish",
@@ -255,6 +308,28 @@ export const sellerEn: SellerTranslations = {
     pauseButton: "Pause offer",
     pausing: "Pausing...",
     pausedLabel: "Paused",
+    pauseErrorFallback: "Unable to pause this offer.",
+  },
+  offers: {
+    title: "Store offers",
+    loading: "Loading offers...",
+    emptyTitle: "No offers published yet",
+    emptyHint: "Publish an inventory backed offer to see it here.",
+    errorTitle: "Unable to load offers",
+    retry: "Retry",
+    statusLabel: {
+      expired: "Expired",
+      live: "Live",
+      paused: "Paused",
+      sold_out: "Sold out",
+      withdrawn: "Withdrawn",
+    },
+    pickupWindowLabel: (start, end) => `Pickup ${start} to ${end}`,
+    quantityLabel: (n) => `${n} available`,
+    pauseButton: "Pause",
+    pausing: "Pausing...",
+    pausedLabel: "Paused",
+    pauseErrorFallback: "Unable to pause this offer.",
   },
 };
 
@@ -304,6 +379,7 @@ export const sellerRu: SellerTranslations = {
     exceptionActionButton: "Пересчитать",
     recordCountButton: "Записать пересчёт",
     publishButton: "Новое предложение",
+    offersButton: "Смотреть предложения",
   },
   count: {
     title: "Сессия пересчёта",
@@ -324,7 +400,8 @@ export const sellerRu: SellerTranslations = {
     approveButton: "Одобрить",
     rejectButton: "Отклонить",
     deciding: "Сохраняем решение...",
-    approvedLabel: "Одобрено",
+    approvedLabel: "Одобрено, обновление остатка ожидается",
+    appliedLabel: "Одобрено, остаток обновлён",
     rejectedLabel: "Отклонено",
     staleTitle: "Это предложение изменилось",
     staleMessage: "Кто-то другой уже принял решение по этому предложению. Показана последняя версия.",
@@ -337,6 +414,7 @@ export const sellerRu: SellerTranslations = {
     forbiddenMessage: "Ваша роль не позволяет одобрять или публиковать предложения для этого магазина.",
     selectProductTitle: "Выберите товар, под который выделяется предложение",
     noEligibleProducts: "Сейчас нет товаров, доступных для публикации.",
+    productExpiryLabel: (date) => `Истекает ${date}`,
     quantityLabel: "Количество",
     maxOfferableHint: (n) => `Доступно без физического резерва: ${n}`,
     quantityExceedsMaxHint: "Количество превышает безопасный максимум для этого товара.",
@@ -346,6 +424,7 @@ export const sellerRu: SellerTranslations = {
     physicalSetAsideRequiredHint: "Подтвердите физический резерв, чтобы продолжить.",
     titleLabel: "Название предложения",
     categoryLabel: "Категория",
+    categoryRequiredHint: "Введите категорию, чтобы перейти к проверке предложения.",
     imageUrlLabel: "URL изображения",
     contentsLabel: "Состав, по одному пункту на строку",
     contentsPlaceholder: "Хлеб\nВыпечка",
@@ -366,6 +445,19 @@ export const sellerRu: SellerTranslations = {
     reviewPrice: (price) => `Цена предложения: ${price} сум`,
     reviewReferencePrice: (price) => `Базовая цена: ${price} сум`,
     reviewNoReferencePrice: "Без базовой цены скидка не будет показана",
+    reviewCategory: (category) => `Категория: ${category}`,
+    reviewContents: (joined) => `Состав: ${joined}`,
+    reviewNoContents: "Состав: не указан",
+    reviewAllergens: (joined) => `Аллергены: ${joined}`,
+    reviewNoAllergens: "Аллергены: не указаны",
+    reviewDietaryBadges: (joined) => `Диетические отметки: ${joined}`,
+    reviewNoDietaryBadges: "Диетические отметки: не указаны",
+    reviewImageAttached: "Изображение прикреплено",
+    reviewNoImage: "Изображение не прикреплено",
+    reviewPickupInstructions: (text) => `Инструкции по самовывозу: ${text}`,
+    reviewNoPickupInstructions: "Инструкции по самовывозу: не указаны",
+    reviewCancellationPolicy: (text) => `Правила отмены: ${text}`,
+    reviewNoCancellationPolicy: "Правила отмены: не указаны",
     reviewPickupWindow: (start, end) => `Самовывоз с ${start} до ${end}`,
     reviewSetAsideConfirmed: "Физический резерв подтверждён",
     confirmButton: "Одобрить и опубликовать",
@@ -379,5 +471,27 @@ export const sellerRu: SellerTranslations = {
     pauseButton: "Приостановить предложение",
     pausing: "Приостановка...",
     pausedLabel: "Приостановлено",
+    pauseErrorFallback: "Не удалось приостановить это предложение.",
+  },
+  offers: {
+    title: "Предложения магазина",
+    loading: "Загрузка предложений...",
+    emptyTitle: "Предложения ещё не опубликованы",
+    emptyHint: "Опубликуйте предложение на основе остатков, чтобы увидеть его здесь.",
+    errorTitle: "Не удалось загрузить предложения",
+    retry: "Повторить",
+    statusLabel: {
+      expired: "Истекло",
+      live: "Активно",
+      paused: "Приостановлено",
+      sold_out: "Раскуплено",
+      withdrawn: "Отозвано",
+    },
+    pickupWindowLabel: (start, end) => `Самовывоз с ${start} до ${end}`,
+    quantityLabel: (n) => `Доступно: ${n}`,
+    pauseButton: "Приостановить",
+    pausing: "Приостановка...",
+    pausedLabel: "Приостановлено",
+    pauseErrorFallback: "Не удалось приостановить это предложение.",
   },
 };

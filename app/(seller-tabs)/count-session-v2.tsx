@@ -27,11 +27,27 @@ function parseObservedQuantity(raw: string): number | null {
   return parsed;
 }
 
+/**
+ * StockAdjustmentProposalV2.status carries four distinct values, each one
+ * gets its own copy here rather than a two way applied-or-rejected guess,
+ * an "approved" proposal (decided, not yet reflected in stock) must never
+ * read as "Rejected" just because it is not literally "applied" yet.
+ */
 function decisionLabel(
   t: ReturnType<typeof useT>,
-  proposal: StockAdjustmentProposalV2
+  status: StockAdjustmentProposalV2["status"]
 ): string {
-  return proposal.status === "applied" ? t.sellerV2.count.approvedLabel : t.sellerV2.count.rejectedLabel;
+  switch (status) {
+    case "approved":
+      return t.sellerV2.count.approvedLabel;
+    case "applied":
+      return t.sellerV2.count.appliedLabel;
+    case "rejected":
+      return t.sellerV2.count.rejectedLabel;
+    case "pending":
+    default:
+      return t.sellerV2.count.pendingApproval;
+  }
 }
 
 export default function CountSessionV2Screen() {
@@ -206,7 +222,7 @@ export default function CountSessionV2Screen() {
                             style={styles.decided}
                             testID={`count-session-v2-decided-${item.storeProductId}`}
                           >
-                            {decisionLabel(t, proposal)}
+                            {decisionLabel(t, proposal.status)}
                           </Text>
                         )}
 
@@ -216,14 +232,23 @@ export default function CountSessionV2Screen() {
                             <Text style={styles.meta}>{t.sellerV2.count.staleMessage}</Text>
                           </View>
                         ) : null}
-                        {session.decisionStatusFor(proposal.id) === "error" &&
-                        session.decisionErrorFor(proposal.id)?.code === "invalid_state" ? (
-                          <Text
-                            style={styles.staleTitle}
-                            testID={`count-session-v2-already-decided-${item.storeProductId}`}
-                          >
-                            {t.sellerV2.count.alreadyDecidedTitle}
-                          </Text>
+                        {session.decisionStatusFor(proposal.id) === "error" ? (
+                          session.decisionErrorFor(proposal.id)?.code === "invalid_state" ? (
+                            <Text
+                              style={styles.staleTitle}
+                              testID={`count-session-v2-already-decided-${item.storeProductId}`}
+                            >
+                              {t.sellerV2.count.alreadyDecidedTitle}
+                            </Text>
+                          ) : (
+                            <Text
+                              style={styles.errorText}
+                              testID={`count-session-v2-decision-error-${item.storeProductId}`}
+                            >
+                              {session.decisionErrorFor(proposal.id)?.message ??
+                                t.sellerV2.count.decisionErrorFallback}
+                            </Text>
+                          )
                         ) : null}
                       </View>
                     ) : null}
