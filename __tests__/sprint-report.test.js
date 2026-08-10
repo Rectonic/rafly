@@ -1,0 +1,52 @@
+/* eslint-env jest */
+const { join } = require("node:path");
+const { pathToFileURL } = require("node:url");
+const { spawnSync } = require("node:child_process");
+
+describe("formatSprintReport", () => {
+  it("compares catalog snapshots and reports sprint activity deltas", () => {
+    const reportModule = pathToFileURL(
+      join(process.cwd(), "scripts", "sprint-report.mjs")
+    ).href;
+    const beforePath = join(
+      process.cwd(),
+      "__tests__",
+      "fixtures",
+      "sprint-report-before.json"
+    );
+    const afterPath = join(
+      process.cwd(),
+      "__tests__",
+      "fixtures",
+      "sprint-report-after.json"
+    );
+    const runner = `
+      import { readFileSync } from "node:fs";
+      import { formatSprintReport } from ${JSON.stringify(reportModule)};
+
+      const before = JSON.parse(readFileSync(process.argv[1], "utf8"));
+      const after = JSON.parse(readFileSync(process.argv[2], "utf8"));
+      process.stdout.write(formatSprintReport(before, after));
+    `;
+    const result = spawnSync(
+      process.execPath,
+      ["--input-type=module", "--eval", runner, beforePath, afterPath],
+      { encoding: "utf8" }
+    );
+
+    if (result.status !== 0) {
+      throw new Error(result.stderr);
+    }
+
+    expect(result.stdout).toBe(
+      [
+        "Отчёт Store Control Sprint",
+        "",
+        "Каталог: было 24 позиций без штрихкода, стало 3.",
+        "Просрочка: снято 7 позиций на сумму 186 500 сум.",
+        "Исключения: закрыто 9.",
+        "Офферы: опубликовано 6, выполнено 4."
+      ].join("\n")
+    );
+  });
+});

@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Анкета Store Control Sprint</title>
+<meta name="description" content="Анкета магазина для Store Control Sprint LastBite">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&amp;family=Onest:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #16c79a;
+  --seal: #0e8a6c;
+  --ink: #101418;
+  --paper: #ffffff;
+  --fog: #f4f6f5;
+  --coral: #ff6b6b;
+  --ink-70: rgba(16, 20, 24, 0.74);
+  --ink-55: rgba(16, 20, 24, 0.62);
+  --line: rgba(16, 20, 24, 0.1);
+  --line-2: rgba(16, 20, 24, 0.16);
+  --display: "Unbounded", system-ui, sans-serif;
+  --body: "Onest", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fog);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+input,
+textarea,
+.choice {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 3px;
+}
+
+.page {
+  width: min(100% - 32px, 960px);
+  margin: 36px auto 64px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: end;
+  padding: 38px;
+  color: var(--paper);
+  background: var(--ink);
+  border-radius: 24px;
+}
+
+.brand {
+  margin: 0 0 28px;
+  color: var(--teal);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 16ch;
+  margin-bottom: 16px;
+  font-family: var(--display);
+  font-size: clamp(28px, 5vw, 46px);
+  font-weight: 500;
+  line-height: 1.17;
+  letter-spacing: -0.02em;
+}
+
+.hero-copy {
+  max-width: 62ch;
+  margin-bottom: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.print-button {
+  min-height: 50px;
+  padding: 13px 20px;
+  border: 1px solid var(--teal);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--teal);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.print-button:hover {
+  background: #35d2ab;
+}
+
+.privacy-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  margin: 18px 0;
+  padding: 18px 20px;
+  border: 1px solid rgba(14, 138, 108, 0.28);
+  border-radius: 16px;
+  background: rgba(22, 199, 154, 0.09);
+}
+
+.privacy-mark {
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid var(--seal);
+  border-radius: 50%;
+  color: var(--seal);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.privacy-note strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.privacy-note p {
+  margin-bottom: 0;
+  color: var(--ink-70);
+}
+
+form {
+  display: grid;
+  gap: 18px;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 2px 8px rgba(16, 20, 24, 0.06);
+}
+
+legend {
+  padding: 0 10px 0 0;
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.section-note {
+  margin: 0 0 22px;
+  color: var(--ink-55);
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hint {
+  color: var(--ink-55);
+  font-size: 12px;
+}
+
+input[type="text"],
+input[type="tel"],
+input[type="number"],
+textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(16, 20, 24, 0.38);
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.choices.pains {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.choice {
+  display: flex;
+  min-height: 48px;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.choice:hover {
+  border-color: var(--seal);
+  background: var(--fog);
+}
+
+.choice input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--seal);
+  flex: 0 0 auto;
+}
+
+.choice span {
+  line-height: 1.35;
+}
+
+.agreements {
+  display: grid;
+  gap: 12px;
+}
+
+.agreement {
+  padding: 16px;
+  background: var(--fog);
+}
+
+.agreement strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.agreement small {
+  display: block;
+  color: var(--ink-55);
+  line-height: 1.45;
+}
+
+.signature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-top: 26px;
+}
+
+.signature-line {
+  min-height: 46px;
+  padding-top: 20px;
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink-55);
+  font-size: 13px;
+}
+
+.footer-note {
+  margin: 18px 4px 0;
+  color: var(--ink-55);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .page {
+    width: min(100% - 20px, 960px);
+    margin-top: 10px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 28px 22px;
+  }
+
+  .print-button {
+    width: 100%;
+  }
+
+  fieldset {
+    padding: 24px 18px;
+  }
+
+  .grid,
+  .choices,
+  .choices.pains,
+  .signature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body {
+    background: var(--paper);
+    color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .page {
+    width: 100%;
+    margin: 0;
+  }
+
+  .hero {
+    padding: 22px 24px;
+    border-radius: 0;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  .brand {
+    margin-bottom: 14px;
+  }
+
+  .print-button {
+    display: none;
+  }
+
+  .privacy-note {
+    margin: 12px 0;
+  }
+
+  form {
+    gap: 12px;
+  }
+
+  fieldset {
+    break-inside: avoid;
+    padding: 20px;
+    border-color: var(--line-2);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  .choice {
+    background: var(--paper);
+  }
+
+  .footer-note {
+    margin-top: 12px;
+  }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <div>
+      <p class="brand">LastBite</p>
+      <h1>Анкета Store Control Sprint</h1>
+      <p class="hero-copy">Заполним с владельцем до старта. Форма фиксирует магазин, рабочую боль, границы спринта и разрешённый доступ.</p>
+    </div>
+    <button class="print-button" id="print-form" type="button">Распечатать анкету</button>
+  </header>
+
+  <aside class="privacy-note" aria-label="Как хранятся данные">
+    <span class="privacy-mark" aria-hidden="true">i</span>
+    <div>
+      <strong>Данные никуда не уходят</strong>
+      <p>Эта статическая форма ничего не отправляет и не сохраняет. Заполненные поля остаются только в этом окне и в распечатанной копии.</p>
+    </div>
+  </aside>
+
+  <form id="intake-form" autocomplete="on">
+    <fieldset>
+      <legend>1. Магазин</legend>
+      <p class="section-note">Фактические данные точки, где команда будет проводить спринт.</p>
+      <div class="grid">
+        <label class="field full">
+          <span class="label">Название магазина</span>
+          <input type="text" name="store_name" placeholder="Например, Нонвой 12">
+        </label>
+
+        <label class="field full">
+          <span class="label">Адрес</span>
+          <input type="text" name="address" placeholder="Район, улица, ориентир">
+        </label>
+
+        <label class="field">
+          <span class="label">Контакт владельца или менеджера</span>
+          <input type="text" name="contact_name" placeholder="Имя и роль">
+        </label>
+
+        <label class="field">
+          <span class="label">Телефон или Телеграм</span>
+          <input type="tel" name="contact_phone" placeholder="+998">
+        </label>
+
+        <div class="field full">
+          <span class="label">POS есть</span>
+          <div class="choices">
+            <label class="choice">
+              <input type="radio" name="pos_status" value="yes">
+              <span>Да</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="pos_status" value="no">
+              <span>Нет</span>
+            </label>
+          </div>
+        </div>
+
+        <label class="field">
+          <span class="label">Какая POS или программа учёта</span>
+          <input type="text" name="pos_name" placeholder="Название и версия, если известна">
+        </label>
+
+        <label class="field">
+          <span class="label">Примерное число SKU</span>
+          <input type="number" name="sku_count" min="1" step="1" inputmode="numeric" placeholder="Например, 1800">
+        </label>
+
+        <label class="field full">
+          <span class="label">Основные категории</span>
+          <textarea name="categories" placeholder="Молочные продукты, хлеб, напитки, готовая еда"></textarea>
+        </label>
+
+        <label class="field full">
+          <span class="label">Часы работы и удобные окна для пересчёта</span>
+          <input type="text" name="hours" placeholder="Ежедневно 08:00-23:00, пересчёт 07:30-08:00">
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. Боли</legend>
+      <p class="section-note">Отметьте только то, что команда магазина видит в реальной работе.</p>
+      <div class="choices pains">
+        <label class="choice">
+          <input type="checkbox" name="pain" value="expiry">
+          <span>Просрочка</span>
+        </label>
+        <label class="choice">
+          <input type="checkbox" name="pain" value="counts">
+          <span>Пересчёты</span>
+        </label>
+        <label class="choice">
+          <input type="checkbox" name="pain" value="suppliers">
+          <span>Поставщики</span>
+        </label>
+        <label class="choice">
+          <input type="checkbox" name="pain" value="showcase">
+          <span>Витрина</span>
+        </label>
+        <label class="choice">
+          <input type="checkbox" name="pain" value="accounting">
+          <span>Учёт</span>
+        </label>
+      </div>
+      <label class="field" style="margin-top: 20px">
+        <span class="label">Один свежий пример</span>
+        <textarea name="pain_example" placeholder="Что произошло, когда, сколько времени или товара затронуто"></textarea>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. Скоуп спринта</legend>
+      <p class="section-note">Фиксируем объём до начала работ. Новые категории добавляются только отдельным решением.</p>
+      <div class="grid">
+        <label class="field">
+          <span class="label">Число топ-SKU</span>
+          <input type="number" name="sprint_sku_count" min="100" max="300" step="1" value="100" inputmode="numeric">
+          <span class="hint">Рабочий диапазон спринта, от 100 до 300 SKU.</span>
+        </label>
+
+        <label class="field">
+          <span class="label">Депозит, сум</span>
+          <input type="number" name="deposit_uzs" min="0" step="1000" inputmode="numeric" placeholder="Сумма">
+          <span class="hint">Зафиксируйте также дату и условия зачёта.</span>
+        </label>
+
+        <label class="field full">
+          <span class="label">Исключаемые категории</span>
+          <textarea name="excluded_categories" placeholder="Алкоголь, маркируемые товары, товары без согласованного процесса"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="label">Дата старта</span>
+          <input type="text" name="start_date" placeholder="ДД.ММ.ГГГГ">
+        </label>
+
+        <label class="field">
+          <span class="label">Оператор спринта</span>
+          <input type="text" name="operator_name" placeholder="Имя и контакт">
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. Согласия</legend>
+      <p class="section-note">Каждый пункт обсуждается отдельно. Согласие на данные не означает согласие на любую съёмку.</p>
+      <div class="agreements">
+        <label class="choice agreement">
+          <input type="checkbox" name="consent_data" value="yes">
+          <span>
+            <strong>Доступ к данным</strong>
+            <small>Разрешаю использовать согласованные выгрузки и записи только для каталога, пересчёта, приёмки, исключений, офферов и отчёта этого спринта.</small>
+          </span>
+        </label>
+
+        <label class="choice agreement">
+          <input type="checkbox" name="consent_shelf_photos" value="yes">
+          <span>
+            <strong>Съёмка полок ТОЛЬКО для каталога</strong>
+            <small>Разрешаю фото выбранных полок и этикеток для идентификации товаров. Фото не является автоматической истиной об остатке.</small>
+          </span>
+        </label>
+
+        <label class="choice agreement">
+          <input type="checkbox" name="consent_no_people_cameras" value="yes">
+          <span>
+            <strong>Без камер на людей</strong>
+            <small>Камеры не направляются на сотрудников, покупателей и кассовую зону. Распознавание лиц и связь с личностью не используются.</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="signature-grid" aria-label="Подписи">
+        <div class="signature-line">Владелец или уполномоченный менеджер, имя и подпись</div>
+        <div class="signature-line">Дата</div>
+      </div>
+    </fieldset>
+  </form>
+
+  <p class="footer-note">LastBite. Камера замечает. LastBite готовит доказательства. Менеджер решает.</p>
+</main>
+
+<script>
+const form = document.getElementById("intake-form")
+const printButton = document.getElementById("print-form")
+
+form.addEventListener("submit", function (event) {
+  event.preventDefault()
+})
+
+printButton.addEventListener("click", function () {
+  window.print()
+})
+</script>
+</body>
+</html>

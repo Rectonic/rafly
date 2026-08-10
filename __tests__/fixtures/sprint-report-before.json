@@ -1,0 +1,16 @@
+{
+  "catalog": {
+    "itemsWithoutBarcode": 24
+  },
+  "expiry": {
+    "removedItems": 1,
+    "removedValueUzs": 17500
+  },
+  "exceptions": {
+    "closed": 2
+  },
+  "offers": {
+    "published": 3,
+    "fulfilled": 1
+  }
+}
