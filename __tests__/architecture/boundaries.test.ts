@@ -128,7 +128,7 @@ function isSupabaseImportAllowed(relativePath: string): boolean {
 const LEGACY_CROSS_SURFACE_IMPORTS: readonly {
   file: string;
   targetPrefix: string;
-}[] = [{ file: "app/(tabs)/settings.tsx", targetPrefix: "lib/seller" }];
+}[] = [{ file: "app/(tabs)/settings.tsx", targetPrefix: "lib/seller/auth-store" }];
 
 function isCrossSurfaceImportAllowed(relativePath: string, target: string): boolean {
   return LEGACY_CROSS_SURFACE_IMPORTS.some(
