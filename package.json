@@ -15,6 +15,7 @@
     "backend:auth-smoke": "node scripts/supabase-auth-smoke.cjs",
     "backend:e2e": "node scripts/supabase-reservation-lifecycle-e2e.cjs",
     "test": "jest",
+    "test:backend": "bash scripts/run-backend-tests.sh",
     "typecheck": "tsc --noEmit",
     "lint": "eslint app components lib data i18n types __tests__"
   },

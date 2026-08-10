@@ -22,7 +22,7 @@ export interface InventorySummaryV2 {
 export interface RecordInventoryCountV2Input {
   storeId: string
   countSessionId: string
-  lines: Array<{ storeProductId: string, observedQuantity: number }>
+  lines: { storeProductId: string, observedQuantity: number }[]
 }
 
 export interface StockAdjustmentProposalV2 {
