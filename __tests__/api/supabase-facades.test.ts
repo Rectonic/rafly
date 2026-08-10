@@ -436,11 +436,15 @@ describe("owner digest facade wiring", () => {
                 lastVerifiedAt: "2026-07-20T08:00:00+00:00",
               },
             ],
+            staleVerificationTotal: 1,
             expiryRisk: [],
+            expiryRiskTotal: 0,
             openExceptions: [],
+            openExceptionsTotal: 0,
             pausedOffers: [
               { title: "Rescue box", pausedSinceVersionNote: null },
             ],
+            pausedOffersTotal: 1,
             countActivity7d: { daysWithCountSession: 2, days: 7 },
             offers7d: {
               published: 3,
@@ -472,11 +476,15 @@ describe("owner digest facade wiring", () => {
             lastVerifiedAt: "2026-07-20T08:00:00.000Z",
           },
         ],
+        staleVerificationTotal: 1,
         expiryRisk: [],
+        expiryRiskTotal: 0,
         openExceptions: [],
+        openExceptionsTotal: 0,
         pausedOffers: [
           { title: "Rescue box", pausedSinceVersionNote: null },
         ],
+        pausedOffersTotal: 1,
         countActivity7d: { daysWithCountSession: 2, days: 7 },
         offers7d: {
           published: 3,

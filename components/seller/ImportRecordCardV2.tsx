@@ -32,7 +32,12 @@ export function ImportRecordCardV2({
   const terminal = record.matchStatus === "approved" || record.matchStatus === "rejected";
 
   const candidateReasonLabel = (reason: string) => {
-    if (reason === "barcode" || reason === "alias" || reason === "product_name") {
+    if (
+      reason === "barcode" ||
+      reason === "alias" ||
+      reason === "product_name" ||
+      reason === "duplicate_in_file"
+    ) {
       return t.sellerV2.imports.candidateReason[reason];
     }
     return reason;
@@ -62,6 +67,13 @@ export function ImportRecordCardV2({
         <View style={styles.candidates}>
           <Text style={styles.label}>{t.sellerV2.imports.candidatesTitle}</Text>
           {record.candidates.map((candidate) => {
+            if (candidate.reason === "duplicate_in_file") {
+              return (
+                <Text key={`duplicate-${record.id}`} style={styles.meta}>
+                  {candidateReasonLabel(candidate.reason)}
+                </Text>
+              );
+            }
             const selected = selectedTarget === candidate.storeProductId;
             const reasonLabel = candidateReasonLabel(candidate.reason);
             return (
@@ -100,7 +112,7 @@ export function ImportRecordCardV2({
                 : t.sellerV2.imports.approveSelected}
             </Text>
           </Pressable>
-          <Pressable
+          {record.matchStatus !== "auto_matched" ? <Pressable
             accessibilityLabel={t.sellerV2.imports.approveNew}
             accessibilityRole="button"
             disabled={decisionStatus === "in-flight"}
@@ -109,7 +121,7 @@ export function ImportRecordCardV2({
             testID={`import-v2-approve-new-${record.id}`}
           >
             <Text style={styles.secondaryButtonText}>{t.sellerV2.imports.approveNew}</Text>
-          </Pressable>
+          </Pressable> : null}
           <Pressable
             accessibilityLabel={t.sellerV2.imports.reject}
             accessibilityRole="button"

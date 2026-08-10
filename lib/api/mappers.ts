@@ -418,21 +418,25 @@ export function mapOwnerDigestV2(digest: OwnerDigestV2): OwnerDigestV2 {
       onHand: item.onHand,
       lastVerifiedAt: toIsoDateTimeOrNull(item.lastVerifiedAt),
     })),
+    staleVerificationTotal: digest.staleVerificationTotal,
     expiryRisk: digest.expiryRisk.map((item) => ({
       productName: item.productName,
       expiryDate: item.expiryDate,
       daysToExpiry: item.daysToExpiry,
       onHand: item.onHand,
     })),
+    expiryRiskTotal: digest.expiryRiskTotal,
     openExceptions: digest.openExceptions.map((item) => ({
       kind: item.kind,
       message: item.message,
       createdAt: toIsoDateTime(item.createdAt),
     })),
+    openExceptionsTotal: digest.openExceptionsTotal,
     pausedOffers: digest.pausedOffers.map((item) => ({
       title: item.title,
       pausedSinceVersionNote: null,
     })),
+    pausedOffersTotal: digest.pausedOffersTotal,
     countActivity7d: {
       daysWithCountSession: digest.countActivity7d.daysWithCountSession,
       days: 7,

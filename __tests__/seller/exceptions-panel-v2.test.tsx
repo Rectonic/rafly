@@ -110,6 +110,48 @@ function findProductMax(
 }
 
 describe("ExceptionsPanelV2", () => {
+  it("uses release copy only for stock mismatch exceptions", async () => {
+    const { exceptionId, manager, scenario } = await makeMismatchWorld();
+    const listed = await manager.listStoreExceptionsV2(scenario.storeId);
+    if (!listed.ok) throw new Error("expected exception list");
+    const stockMismatch = listed.value.find((entry) => entry.id === exceptionId);
+    if (!stockMismatch) throw new Error("expected stock mismatch");
+    const mixedApi: SellerStoreApiV2 = {
+      ...manager,
+      listStoreExceptionsV2: async () => ({
+        ok: true,
+        value: [
+          stockMismatch,
+          {
+            ...stockMismatch,
+            id: "expiry-risk-copy",
+            kind: "expiry_risk",
+            message: "expiry review needed",
+            relatedOfferId: null,
+          },
+        ],
+      }),
+    };
+    const screen = render(
+      providerTree(
+        mixedApi,
+        <ExceptionsPanelV2 canResolve storeId={scenario.storeId} />
+      )
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId(`exceptions-panel-v2-resolve-${exceptionId}`)).toBeTruthy()
+    );
+    fireEvent.press(screen.getByTestId(`exceptions-panel-v2-resolve-${exceptionId}`));
+    expect(screen.getByTestId(`exceptions-panel-v2-submit-${exceptionId}`)).toHaveTextContent(
+      "Resolve and release units"
+    );
+    fireEvent.press(screen.getByTestId("exceptions-panel-v2-resolve-expiry-risk-copy"));
+    expect(screen.getByTestId("exceptions-panel-v2-submit-expiry-risk-copy")).toHaveTextContent(
+      "Resolve exception"
+    );
+  });
+
   it("shows the exception to staff without any resolve control", async () => {
     const { core, exceptionId, scenario } = await makeMismatchWorld();
     const staff = core.sellerApi({ userId: scenario.staffUserId });

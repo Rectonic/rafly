@@ -296,6 +296,18 @@ d("resolve_store_exception_v2", () => {
     expect(before.allocated_quantity).toBe(3);
     expect(before.max_offerable_quantity).toBe(7);
     expect(before.has_open_exceptions).toBe(true);
+    const linkedFailures = await service
+      .from("reservations_v2")
+      .select("failed_exception_id")
+      .eq("offer_id", opened.offerId)
+      .eq("status", "failed_stock_mismatch");
+    expect(linkedFailures.error).toBeNull();
+    expect(linkedFailures.data).toHaveLength(2);
+    expect(
+      linkedFailures.data?.every(
+        (reservation) => reservation.failed_exception_id === opened.exceptionId
+      )
+    ).toBe(true);
 
     const note = "Manager recounted the shelf and found the two reserved units";
     const resolved = requireRow<{
@@ -380,5 +392,37 @@ d("resolve_store_exception_v2", () => {
     });
     expect(conflict.data).toBeNull();
     expect(conflict.error?.message).toMatch(/^idempotency_conflict:/);
+
+    const changedNote = await owner.rpc("resolve_store_exception_v2", {
+      ...input,
+      p_resolution_note: "A different resolution note under the same key",
+    });
+    expect(changedNote.data).toBeNull();
+    expect(changedNote.error?.message).toMatch(/^idempotency_conflict:/);
+  });
+
+  it("does not re-encumber resolved failures when the same paused offer gets a new mismatch", async () => {
+    const opened = await openMismatch();
+    const resolved = await manager.rpc("resolve_store_exception_v2", {
+      p_store_id: storeId,
+      p_exception_id: opened.exceptionId,
+      p_resolution_note: "Historical failed reservations reconciled",
+      p_idempotency_key: randomUUID(),
+    });
+    expect(resolved.error).toBeNull();
+    const afterResolve = await inventoryRow(opened.productId);
+
+    const laterMismatch = await manager.rpc("report_stock_mismatch_v2", {
+      p_store_id: storeId,
+      p_offer_id: opened.offerId,
+      p_observed_quantity: 0,
+      p_reason: "later mismatch on the same paused offer",
+      p_idempotency_key: randomUUID(),
+    });
+    expect(laterMismatch.error).toBeNull();
+    const afterLaterMismatch = await inventoryRow(opened.productId);
+
+    expect(afterLaterMismatch.allocated_quantity).toBe(afterResolve.allocated_quantity);
+    expect(afterLaterMismatch.max_offerable_quantity).toBe(afterResolve.max_offerable_quantity);
   });
 });

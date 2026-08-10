@@ -291,7 +291,9 @@ export function ExceptionsPanelV2({
                       </Text>
                     ) : null}
                     <Pressable
-                      accessibilityLabel={t.sellerV2.exceptions.submitButton}
+                      accessibilityLabel={exception.kind === "stock_mismatch"
+                        ? t.sellerV2.exceptions.submitButton
+                        : t.sellerV2.exceptions.submitButtonDefault}
                       accessibilityRole="button"
                       disabled={isResolving}
                       onPress={() => void resolveException(exception.id)}
@@ -301,7 +303,9 @@ export function ExceptionsPanelV2({
                       <Text style={styles.submitButtonText}>
                         {isResolving
                           ? t.sellerV2.exceptions.resolving
-                          : t.sellerV2.exceptions.submitButton}
+                          : exception.kind === "stock_mismatch"
+                            ? t.sellerV2.exceptions.submitButton
+                            : t.sellerV2.exceptions.submitButtonDefault}
                       </Text>
                     </Pressable>
                   </View>

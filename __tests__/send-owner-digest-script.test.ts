@@ -54,9 +54,13 @@ describe("send-owner-digest.mjs", () => {
         storeName: "Тестовый магазин",
         generatedAt: "2026-08-11T08:05:00.000Z",
         staleVerification: [{ productName: "Хлеб", onHand: 12, lastVerifiedAt: null }],
+        staleVerificationTotal: 1,
         expiryRisk: [],
+        expiryRiskTotal: 0,
         openExceptions: [],
+        openExceptionsTotal: 0,
         pausedOffers: [],
+        pausedOffersTotal: 0,
         countActivity7d: { daysWithCountSession: 0, days: 7 },
         offers7d: {
           published: 0,

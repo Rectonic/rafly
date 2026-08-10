@@ -46,6 +46,7 @@ export interface SellerTranslations {
   };
   imports: {
     title: string;
+    introNotice: string;
     filenameLabel: string;
     csvLabel: string;
     parseButton: string;
@@ -77,7 +78,7 @@ export interface SellerTranslations {
     missingValue: string;
     matchStatus: Record<"auto_matched" | "ambiguous" | "unmatched" | "approved" | "rejected", string>;
     candidatesTitle: string;
-    candidateReason: Record<"barcode" | "alias" | "product_name", string>;
+    candidateReason: Record<"barcode" | "alias" | "product_name" | "duplicate_in_file", string>;
     selectedCandidate: string;
     selectCandidate: string;
     approveSelected: string;
@@ -147,6 +148,7 @@ export interface SellerTranslations {
     noteLabel: string;
     noteRequired: string;
     submitButton: string;
+    submitButtonDefault: string;
     resolving: string;
     resolvedSuccess: string;
     resolutionNoteLabel: (note: string) => string;
@@ -359,6 +361,7 @@ export const sellerEn: SellerTranslations = {
   },
   imports: {
     title: "CSV import",
+    introNotice: "Quantities from the file are saved as observations. To change stock, run a count session. After import, the product needs a count session before it can back an offer.",
     filenameLabel: "Filename",
     csvLabel: "CSV content",
     parseButton: "Parse CSV",
@@ -408,6 +411,7 @@ export const sellerEn: SellerTranslations = {
       barcode: "Barcode match",
       alias: "Alias match",
       product_name: "Name match",
+      duplicate_in_file: "Duplicate barcode in this file",
     },
     selectedCandidate: "Selected",
     selectCandidate: "Select",
@@ -415,7 +419,7 @@ export const sellerEn: SellerTranslations = {
     approveNew: "Approve as new product",
     reject: "Reject",
     deciding: "Saving decision...",
-    decisionSuccess: "The store service confirmed the decision",
+    decisionSuccess: "Decision saved. After import, the product needs a count session before it can back an offer.",
     staffReviewNote: "Staff can review rows. A manager or owner makes the decision",
     uploadForbidden: "Your role can review imports but cannot upload a CSV batch",
   },
@@ -488,6 +492,7 @@ export const sellerEn: SellerTranslations = {
     noteLabel: "Resolution note",
     noteRequired: "Enter what was checked and how the exception was resolved.",
     submitButton: "Resolve and release units",
+    submitButtonDefault: "Resolve exception",
     resolving: "Resolving...",
     resolvedSuccess: "Exception resolved.",
     resolutionNoteLabel: (note) => `Resolution: ${note}`,
@@ -711,6 +716,7 @@ export const sellerRu: SellerTranslations = {
   },
   imports: {
     title: "Импорт CSV",
+    introNotice: "Количество из файла сохраняется как наблюдение. Чтобы изменить остаток, проведите пересчёт. После импорта товар нужно пересчитать, прежде чем использовать его для оффера.",
     filenameLabel: "Имя файла",
     csvLabel: "Содержимое CSV",
     parseButton: "Проверить CSV",
@@ -760,6 +766,7 @@ export const sellerRu: SellerTranslations = {
       barcode: "Совпадение по штрих-коду",
       alias: "Совпадение по псевдониму",
       product_name: "Совпадение по названию",
+      duplicate_in_file: "Повторяющийся штрих-код в этом файле",
     },
     selectedCandidate: "Выбрано",
     selectCandidate: "Выбрать",
@@ -767,7 +774,7 @@ export const sellerRu: SellerTranslations = {
     approveNew: "Одобрить как новый товар",
     reject: "Отклонить",
     deciding: "Сохраняем решение...",
-    decisionSuccess: "Решение подтверждено сервисом магазина",
+    decisionSuccess: "Решение сохранено. После импорта товар нужно пересчитать, прежде чем использовать его для оффера.",
     staffReviewNote: "Сотрудники могут проверять строки, решение принимает менеджер или владелец",
     uploadForbidden: "Ваша роль позволяет проверять импорт, но не загружать пакет CSV",
   },
@@ -841,6 +848,7 @@ export const sellerRu: SellerTranslations = {
     noteLabel: "Комментарий к решению",
     noteRequired: "Опишите, что вы проверили и как устранили расхождение.",
     submitButton: "Закрыть и освободить единицы",
+    submitButtonDefault: "Закрыть исключение",
     resolving: "Закрываем...",
     resolvedSuccess: "Исключение закрыто.",
     resolutionNoteLabel: (note) => `Решение: ${note}`,

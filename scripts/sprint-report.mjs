@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export function formatSprintReport(before, after) {
+export function formatSprintReport(before, after, generatedAt = new Date()) {
   const removedItems = after.expiry.removedItems - before.expiry.removedItems;
   const removedValueUzs =
     after.expiry.removedValueUzs - before.expiry.removedValueUzs;
@@ -13,6 +13,12 @@ export function formatSprintReport(before, after) {
     /\B(?=(\d{3})+(?!\d))/g,
     " "
   );
+  const reportDate = new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "Asia/Tashkent"
+  }).format(generatedAt);
 
   return [
     "Отчёт Store Control Sprint",
@@ -20,7 +26,9 @@ export function formatSprintReport(before, after) {
     `Каталог: было ${before.catalog.itemsWithoutBarcode} позиций без штрихкода, стало ${after.catalog.itemsWithoutBarcode}.`,
     `Просрочка: снято ${removedItems} позиций на сумму ${formattedRemovedValue} сум.`,
     `Исключения: закрыто ${closedExceptions}.`,
-    `Офферы: опубликовано ${publishedOffers}, выполнено ${fulfilledOffers}.`
+    `Офферы: опубликовано ${publishedOffers}, выполнено ${fulfilledOffers}.`,
+    "",
+    `Данные внесены оператором спринта вручную. Дата: ${reportDate}. Источник: не система.`
   ].join("\n");
 }
 

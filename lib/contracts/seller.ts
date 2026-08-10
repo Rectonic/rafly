@@ -38,21 +38,25 @@ export interface OwnerDigestV2 {
     onHand: number
     lastVerifiedAt: IsoDateTime | null
   }[]
+  staleVerificationTotal: number
   expiryRisk: {
     productName: string
     expiryDate: IsoDate
     daysToExpiry: number
     onHand: number
   }[]
+  expiryRiskTotal: number
   openExceptions: {
     kind: StoreExceptionV2['kind']
     message: string
     createdAt: IsoDateTime
   }[]
+  openExceptionsTotal: number
   pausedOffers: {
     title: string
     pausedSinceVersionNote: null
   }[]
+  pausedOffersTotal: number
   countActivity7d: {
     daysWithCountSession: number
     days: 7

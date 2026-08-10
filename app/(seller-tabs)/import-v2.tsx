@@ -263,6 +263,9 @@ export default function ImportV2Screen() {
     <AccessGateV2 access={access} screenTestId="import-v2">
       <ScreenScrollView contentContainerStyle={styles.container} testID="import-v2-screen">
         <Text style={styles.title}>{t.sellerV2.imports.title}</Text>
+        <Text style={styles.notice} testID="import-v2-intro-notice">
+          {t.sellerV2.imports.introNotice}
+        </Text>
         {access.canRecordCount ? (
           <>
             <Text style={styles.label}>{t.sellerV2.imports.filenameLabel}</Text>
@@ -505,6 +508,14 @@ const styles = StyleSheet.create({
   meta: {
     color: "#6B7280",
     fontSize: 13,
+  },
+  notice: {
+    backgroundColor: "#FFF7ED",
+    borderColor: "#FDBA74",
+    borderRadius: 10,
+    borderWidth: 1,
+    color: "#7C2D12",
+    padding: 12,
   },
   primaryButton: {
     alignItems: "center",

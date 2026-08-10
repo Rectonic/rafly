@@ -304,7 +304,7 @@ export function runSellerApiConformance(
         );
 
         expect(digest.countActivity7d).toEqual({
-          daysWithCountSession: 1,
+          daysWithCountSession: 0,
           days: 7,
         });
         expect(digest.offers7d).toEqual({
@@ -349,6 +349,10 @@ export function runSellerApiConformance(
         );
         expect(digest.openExceptions).toHaveLength(10);
         expect(digest.pausedOffers).toHaveLength(10);
+        expect(digest).toMatchObject({
+          openExceptionsTotal: 11,
+          pausedOffersTotal: 11,
+        });
       });
     });
 
@@ -1924,6 +1928,68 @@ export function runSellerApiConformance(
         expect(replay).toEqual(first);
       });
 
+      it("conflicts when a resolution key is reused with a changed note", async () => {
+        const opened = await openMismatch();
+        const input = {
+          storeId: harness.scenario.storeId,
+          exceptionId: opened.exceptionId,
+          resolutionNote: "Shelf count completed",
+          idempotencyKey: "resolve-key-note-fingerprint",
+        };
+
+        expectOk(await owner.resolveStoreExceptionV2(input));
+        expectErrorCode(
+          await owner.resolveStoreExceptionV2({
+            ...input,
+            resolutionNote: "Shelf count completed with a corrected note",
+          }),
+          "idempotency_conflict"
+        );
+      });
+
+      it("does not resurrect historical failures when the same offer gets a new mismatch", async () => {
+        const opened = await openMismatch();
+        expectOk(
+          await manager.resolveStoreExceptionV2({
+            storeId: harness.scenario.storeId,
+            exceptionId: opened.exceptionId,
+            resolutionNote: "Historical failed reservations were reconciled",
+            idempotencyKey: "resolve-before-new-mismatch",
+          })
+        );
+        const afterResolve = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const resolved = expectOk(
+          await manager.listStoreExceptionsV2(harness.scenario.storeId)
+        ).find((entry) => entry.id === opened.exceptionId);
+        if (!resolved?.relatedOfferId) {
+          throw new Error("resolved mismatch is missing its offer");
+        }
+
+        expectOk(
+          await manager.reportStockMismatchV2({
+            storeId: harness.scenario.storeId,
+            offerId: resolved.relatedOfferId,
+            observedQuantity: 0,
+            reason: "a later mismatch on the paused offer",
+            idempotencyKey: "new-mismatch-after-resolution",
+          })
+        );
+        const afterNewMismatch = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        expect(afterNewMismatch.allocatedQuantity).toBe(
+          afterResolve.allocatedQuantity
+        );
+        expect(afterNewMismatch.maxOfferableQuantity).toBe(
+          afterResolve.maxOfferableQuantity
+        );
+      });
+
       it("returns invalid_state for a resolved exception with a fresh key", async () => {
         const opened = await openMismatch();
         expectOk(
@@ -2008,7 +2074,7 @@ export function runSellerApiConformance(
         ]);
       });
 
-      it("uses the first populated matching tier and never auto approves ambiguity", async () => {
+      it("unions all matching tiers and never auto approves ambiguity", async () => {
         const batch = expectOk(
           await staff.uploadImportBatchV2({
             storeId: harness.scenario.storeId,
@@ -2066,6 +2132,102 @@ export function runSellerApiConformance(
           matchedStoreProductId: null,
           candidates: [],
         });
+      });
+
+      it("marks conflicting barcode and alias matches ambiguous with both reasons", async () => {
+        const aliasSourceBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "conflicting-alias-source.csv",
+            records: [{ rawName: "Barcode alias collision" }],
+            idempotencyKey: "conflicting-alias-source-upload",
+          })
+        );
+        const aliasSource = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              aliasSourceBatch.id
+            )
+          ),
+          "Barcode alias collision"
+        );
+        expectOk(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: aliasSource.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
+            idempotencyKey: "approve-conflicting-alias",
+          })
+        );
+
+        const batch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "conflicting-tiers.csv",
+            records: [
+              {
+                rawName: "Barcode alias collision",
+                rawBarcode: "4780000000011",
+              },
+            ],
+            idempotencyKey: "conflicting-tiers-upload",
+          })
+        );
+        const collision = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              batch.id
+            )
+          ),
+          "Barcode alias collision"
+        );
+
+        expect(collision.matchStatus).toBe("ambiguous");
+        expect(collision.matchedStoreProductId).toBeNull();
+        expect(collision.candidates).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              storeProductId: harness.scenario.highConfidenceProductId,
+              reason: "barcode",
+            }),
+            expect.objectContaining({
+              storeProductId: harness.scenario.lowConfidenceProductId,
+              reason: "alias",
+            }),
+          ])
+        );
+      });
+
+      it("marks every row sharing a novel in-batch barcode as ambiguous", async () => {
+        const batch = expectOk(
+          await staff.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "duplicate-in-file.csv",
+            records: [
+              { rawName: "Duplicate delivery one", rawBarcode: "NOVEL-BATCH-DUPLICATE" },
+              { rawName: "Duplicate delivery two", rawBarcode: "NOVEL-BATCH-DUPLICATE" },
+            ],
+            idempotencyKey: "duplicate-in-file-upload",
+          })
+        );
+        const records = expectOk(
+          await staff.listStagedRecordsV2(harness.scenario.storeId, batch.id)
+        );
+
+        expect(records).toHaveLength(2);
+        expect(
+          records.every(
+            (record) =>
+              record.matchStatus === "ambiguous" &&
+              record.matchedStoreProductId === null &&
+              record.candidates.some(
+                (candidate) => candidate.reason === "duplicate_in_file"
+              )
+          )
+        ).toBe(true);
       });
 
       it("replays an upload by key and rejects a changed upload fingerprint", async () => {
@@ -2178,14 +2340,14 @@ export function runSellerApiConformance(
         );
       });
 
-      it("approves a new product with an alias and applies barcode before alias before name", async () => {
+      it("approves a new product with an alias and auto matches the same file next time", async () => {
         const sourceBatch = expectOk(
           await manager.uploadImportBatchV2({
             storeId: harness.scenario.storeId,
             filename: "new-product.csv",
             records: [
               {
-                rawName: "Day old pastry batch",
+                rawName: "Day old supplier pastry",
                 rawBarcode: "CSV-NEW-BARCODE",
                 rawQuantity: 3,
               },
@@ -2201,7 +2363,7 @@ export function runSellerApiConformance(
         );
         const source = findStagedRecord(
           sourceRecords,
-          "Day old pastry batch"
+          "Day old supplier pastry"
         );
         const decided = expectOk(
           await manager.decideStagedRecordV2({
@@ -2221,17 +2383,17 @@ export function runSellerApiConformance(
         expect(
           findSummary(inventory, decided.matchedStoreProductId as string)
         ).toMatchObject({
-          productName: "Day old pastry batch",
+          productName: "Day old supplier pastry",
           barcode: "CSV-NEW-BARCODE",
           onHandQuantity: 0,
           confidence: "low",
-          lastVerifiedAt: expect.any(String),
+          lastVerifiedAt: null,
         });
         const effects = harness.listImportEffects();
         expect(effects.aliases).toContainEqual({
           storeId: harness.scenario.storeId,
           storeProductId: decided.matchedStoreProductId,
-          alias: "Day old pastry batch",
+          alias: "Day old supplier pastry",
           approved: true,
         });
         expect(effects.observations).toContainEqual(
@@ -2244,17 +2406,7 @@ export function runSellerApiConformance(
             createdAt: expect.any(String),
           })
         );
-        expect(effects.proposals).toContainEqual(
-          expect.objectContaining({
-            storeId: harness.scenario.storeId,
-            storeProductId: decided.matchedStoreProductId,
-            currentQuantity: 0,
-            proposedQuantity: 3,
-            delta: 3,
-            status: "pending",
-            createdByRole: "manager",
-          })
-        );
+        expect(effects.proposals).toHaveLength(0);
 
         const precedenceBatch = expectOk(
           await manager.uploadImportBatchV2({
@@ -2262,10 +2414,10 @@ export function runSellerApiConformance(
             filename: "tier-precedence.csv",
             records: [
               {
-                rawName: "Day old pastry batch",
+                rawName: "Day old supplier pastry",
                 rawBarcode: "4780000000011",
               },
-              { rawName: "DAY OLD PASTRY BATCH" },
+              { rawName: "DAY OLD SUPPLIER PASTRY" },
             ],
             idempotencyKey: "tier-precedence-upload",
           })
@@ -2278,21 +2430,26 @@ export function runSellerApiConformance(
         );
         const barcodePrecedence = findStagedRecord(
           precedence,
-          "Day old pastry batch"
+          "Day old supplier pastry"
         );
         const aliasPrecedence = findStagedRecord(
           precedence,
-          "DAY OLD PASTRY BATCH"
+          "DAY OLD SUPPLIER PASTRY"
         );
-        expect(barcodePrecedence).toMatchObject({
-          matchedStoreProductId: harness.scenario.highConfidenceProductId,
-          candidates: [
-            {
+        expect(barcodePrecedence.matchStatus).toBe("ambiguous");
+        expect(barcodePrecedence.matchedStoreProductId).toBeNull();
+        expect(barcodePrecedence.candidates).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
               storeProductId: harness.scenario.highConfidenceProductId,
               reason: "barcode",
-            },
-          ],
-        });
+            }),
+            expect.objectContaining({
+              storeProductId: decided.matchedStoreProductId,
+              reason: "alias",
+            }),
+          ])
+        );
         expect(aliasPrecedence).toMatchObject({
           matchedStoreProductId: decided.matchedStoreProductId,
           candidates: [
@@ -2302,14 +2459,42 @@ export function runSellerApiConformance(
             },
           ],
         });
+
+        const repeatedBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "new-product-repeat.csv",
+            records: [
+              {
+                rawName: "Day old supplier pastry",
+                rawBarcode: "CSV-NEW-BARCODE",
+                rawQuantity: 3,
+              },
+            ],
+            idempotencyKey: "new-product-repeat-upload",
+          })
+        );
+        const repeated = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              repeatedBatch.id
+            )
+          ),
+          "Day old supplier pastry"
+        );
+        expect(repeated).toMatchObject({
+          matchStatus: "auto_matched",
+          matchedStoreProductId: decided.matchedStoreProductId,
+        });
       });
 
-      it("records low confidence quantity evidence and proposes differences without writing on hand", async () => {
+      it("records quantity only as low confidence observation without verifying or proposing stock", async () => {
         const before = findSummary(
           expectOk(
             await manager.listStoreInventoryV2(harness.scenario.storeId)
           ),
-          harness.scenario.highConfidenceProductId
+          harness.scenario.lowConfidenceProductId
         );
         const batch = expectOk(
           await manager.uploadImportBatchV2({
@@ -2335,7 +2520,7 @@ export function runSellerApiConformance(
             storeId: harness.scenario.storeId,
             recordId: matchingCount.id,
             decision: "approve",
-            targetStoreProductId: harness.scenario.highConfidenceProductId,
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
             idempotencyKey: "quantity-decision-matching",
           })
         );
@@ -2344,40 +2529,89 @@ export function runSellerApiConformance(
             storeId: harness.scenario.storeId,
             recordId: differingCount.id,
             decision: "approve",
-            targetStoreProductId: harness.scenario.highConfidenceProductId,
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
             idempotencyKey: "quantity-decision-differing",
           })
         );
         expect(differingDecision).toMatchObject({
           id: differingCount.id,
           matchStatus: "approved",
-          matchedStoreProductId: harness.scenario.highConfidenceProductId,
+          matchedStoreProductId: harness.scenario.lowConfidenceProductId,
         });
 
         const after = findSummary(
           expectOk(
             await manager.listStoreInventoryV2(harness.scenario.storeId)
           ),
-          harness.scenario.highConfidenceProductId
+          harness.scenario.lowConfidenceProductId
         );
         expect(after.onHandQuantity).toBe(before.onHandQuantity);
         expect(after.confidence).toBe("low");
-        expect(after.lastVerifiedAt).toEqual(expect.any(String));
+        expect(after.lastVerifiedAt).toBe(before.lastVerifiedAt);
+        const digest = expectOk(
+          await owner.composeOwnerDigestV2(harness.scenario.storeId)
+        );
+        expect(
+          digest.staleVerification.map((item) => item.productName)
+        ).toContain(before.productName);
         const effects = harness.listImportEffects();
         expect(effects.observations).toHaveLength(2);
         expect(effects.observations.map((entry) => entry.confidence)).toEqual([
           "low",
           "low",
         ]);
-        expect(effects.proposals).toHaveLength(1);
-        expect(effects.proposals[0]).toMatchObject({
-          storeProductId: harness.scenario.highConfidenceProductId,
-          currentQuantity: before.onHandQuantity,
-          proposedQuantity: before.onHandQuantity - 3,
-          delta: -3,
-          reason: "count",
-          status: "pending",
-          createdByRole: "manager",
+        expect(effects.proposals).toHaveLength(0);
+      });
+
+      it("records an alias when approving an unmatched name to an existing product", async () => {
+        const firstBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "existing-alias-first.csv",
+            records: [{ rawName: "Bread supplier description" }],
+            idempotencyKey: "existing-alias-first-upload",
+          })
+        );
+        const firstRecord = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              firstBatch.id
+            )
+          ),
+          "Bread supplier description"
+        );
+        expectOk(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: firstRecord.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.highConfidenceProductId,
+            idempotencyKey: "existing-alias-first-decision",
+          })
+        );
+
+        const secondBatch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "existing-alias-second.csv",
+            records: [{ rawName: "Bread supplier description" }],
+            idempotencyKey: "existing-alias-second-upload",
+          })
+        );
+        const secondRecord = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              secondBatch.id
+            )
+          ),
+          "Bread supplier description"
+        );
+
+        expect(secondRecord).toMatchObject({
+          matchStatus: "auto_matched",
+          matchedStoreProductId: harness.scenario.highConfidenceProductId,
         });
       });
 
@@ -2554,6 +2788,42 @@ export function runSellerApiConformance(
           findStagedRecord(afterFailedDecision, "Target validation source")
             .matchStatus
         ).toBe("unmatched");
+      });
+
+      it("rejects an existing target outside the record candidates", async () => {
+        const batch = expectOk(
+          await manager.uploadImportBatchV2({
+            storeId: harness.scenario.storeId,
+            filename: "candidate-binding.csv",
+            records: [
+              {
+                rawName: "Fresh bread loaf",
+                rawBarcode: "4780000000011",
+              },
+            ],
+            idempotencyKey: "candidate-binding-upload",
+          })
+        );
+        const record = findStagedRecord(
+          expectOk(
+            await manager.listStagedRecordsV2(
+              harness.scenario.storeId,
+              batch.id
+            )
+          ),
+          "Fresh bread loaf"
+        );
+
+        expectErrorCode(
+          await manager.decideStagedRecordV2({
+            storeId: harness.scenario.storeId,
+            recordId: record.id,
+            decision: "approve",
+            targetStoreProductId: harness.scenario.lowConfidenceProductId,
+            idempotencyKey: "candidate-binding-decision",
+          }),
+          "validation_failed"
+        );
       });
     });
   });

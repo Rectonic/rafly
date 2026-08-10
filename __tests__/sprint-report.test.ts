@@ -25,7 +25,11 @@ describe("formatSprintReport", () => {
 
       const before = JSON.parse(readFileSync(process.argv[1], "utf8"));
       const after = JSON.parse(readFileSync(process.argv[2], "utf8"));
-      process.stdout.write(formatSprintReport(before, after));
+      process.stdout.write(formatSprintReport(
+        before,
+        after,
+        new Date("2026-08-11T00:00:00+05:00")
+      ));
     `;
     const result = spawnSync(
       process.execPath,
@@ -44,7 +48,9 @@ describe("formatSprintReport", () => {
         "Каталог: было 24 позиций без штрихкода, стало 3.",
         "Просрочка: снято 7 позиций на сумму 186 500 сум.",
         "Исключения: закрыто 9.",
-        "Офферы: опубликовано 6, выполнено 4."
+        "Офферы: опубликовано 6, выполнено 4.",
+        "",
+        "Данные внесены оператором спринта вручную. Дата: 11.08.2026. Источник: не система."
       ].join("\n")
     );
   });

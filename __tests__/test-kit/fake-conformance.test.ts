@@ -93,9 +93,13 @@ describe("InMemoryStoreCore", () => {
         storeName: "Empty digest store",
         generatedAt: core.getNow(),
         staleVerification: [],
+        staleVerificationTotal: 0,
         expiryRisk: [],
+        expiryRiskTotal: 0,
         openExceptions: [],
+        openExceptionsTotal: 0,
         pausedOffers: [],
+        pausedOffersTotal: 0,
         countActivity7d: { daysWithCountSession: 0, days: 7 },
         offers7d: {
           published: 0,
@@ -129,6 +133,10 @@ describe("InMemoryStoreCore", () => {
 
       expect(digest.staleVerification).toHaveLength(10);
       expect(digest.expiryRisk).toHaveLength(10);
+      expect(digest).toMatchObject({
+        staleVerificationTotal: 13,
+        expiryRiskTotal: 14,
+      });
     });
 
     it("reads the expiry watchlist without applying the lazy offer expiry sweep", async () => {
@@ -253,6 +261,18 @@ describe("InMemoryStoreCore", () => {
       expect(staged.every((record) => record.rawName === "Cheese bun")).toBe(
         true
       );
+      expect(staged.every((record) => record.matchStatus === "ambiguous")).toBe(
+        true
+      );
+      expect(
+        staged.every(
+          (record) =>
+            record.matchedStoreProductId === null &&
+            record.candidates.some(
+              (candidate) => candidate.reason === "duplicate_in_file"
+            )
+        )
+      ).toBe(true);
     });
 
     it("issues pickup codes from a seeded counter", async () => {

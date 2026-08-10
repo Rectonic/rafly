@@ -195,6 +195,7 @@ interface ReservationRecord {
   holdExpiresAt: string;
   createdAt: string;
   updatedAt: string;
+  failedExceptionId: string | null;
 }
 
 interface IdempotencyRecord {
@@ -231,6 +232,7 @@ interface InventoryObservationRecord {
 interface CountSessionRecord {
   storeId: string;
   createdAt: string;
+  lineCount: number;
 }
 
 function padSequence(value: number, width: number): string {
@@ -535,6 +537,7 @@ export class InMemoryStoreCore {
       holdExpiresAt: offer.pickupEnd,
       createdAt: this.now,
       updatedAt: this.now,
+      failedExceptionId: null,
     };
     this.reservations.set(record.id, record);
 
@@ -760,7 +763,7 @@ export class InMemoryStoreCore {
     const utcToday = new Date(this.now).toISOString().slice(0, 10);
     const expiryLimitMs = Date.parse(utcToday) + 3 * 86_400_000;
 
-    const staleVerification = [...this.products.values()]
+    const staleVerificationMatches = [...this.products.values()]
       .filter(
         (product) =>
           product.storeId === storeId &&
@@ -776,6 +779,7 @@ export class InMemoryStoreCore {
           Date.parse(right.lastVerifiedAt ?? "");
         return byTime || left.id.localeCompare(right.id);
       })
+    const staleVerification = staleVerificationMatches
       .slice(0, 10)
       .map((product) => ({
         productName: product.productName,
@@ -783,7 +787,7 @@ export class InMemoryStoreCore {
         lastVerifiedAt: product.lastVerifiedAt,
       }));
 
-    const expiryRisk = [...this.products.values()]
+    const expiryRiskMatches = [...this.products.values()]
       .filter(
         (product) =>
           product.storeId === storeId &&
@@ -796,6 +800,7 @@ export class InMemoryStoreCore {
             Date.parse(right.expiryDate as string) ||
           left.id.localeCompare(right.id)
       )
+    const expiryRisk = expiryRiskMatches
       .slice(0, 10)
       .map((product) => ({
         productName: product.productName,
@@ -807,7 +812,7 @@ export class InMemoryStoreCore {
         onHand: product.onHandQuantity,
       }));
 
-    const openExceptions = [...this.exceptions.values()]
+    const openExceptionMatches = [...this.exceptions.values()]
       .filter(
         (exception) =>
           exception.storeId === storeId && exception.status === "open"
@@ -817,6 +822,7 @@ export class InMemoryStoreCore {
           Date.parse(right.createdAt) - Date.parse(left.createdAt) ||
           right.id.localeCompare(left.id)
       )
+    const openExceptions = openExceptionMatches
       .slice(0, 10)
       .map((exception) => ({
         kind: exception.kind,
@@ -824,13 +830,14 @@ export class InMemoryStoreCore {
         createdAt: exception.createdAt,
       }));
 
-    const pausedOffers = [...this.offers.values()]
+    const pausedOfferMatches = [...this.offers.values()]
       .filter((offer) => offer.storeId === storeId && offer.status === "paused")
       .sort(
         (left, right) =>
           Date.parse(right.createdAt) - Date.parse(left.createdAt) ||
           right.id.localeCompare(left.id)
       )
+    const pausedOffers = pausedOfferMatches
       .slice(0, 10)
       .map((offer) => ({
         title: offer.title,
@@ -842,6 +849,7 @@ export class InMemoryStoreCore {
         .filter(
           (session) =>
             session.storeId === storeId &&
+            session.lineCount > 0 &&
             Date.parse(session.createdAt) >= sevenDaysAgoMs
         )
         .map((session) =>
@@ -862,9 +870,13 @@ export class InMemoryStoreCore {
       storeName: store.name,
       generatedAt: this.now,
       staleVerification,
+      staleVerificationTotal: staleVerificationMatches.length,
       expiryRisk,
+      expiryRiskTotal: expiryRiskMatches.length,
       openExceptions,
+      openExceptionsTotal: openExceptionMatches.length,
       pausedOffers,
+      pausedOffersTotal: pausedOfferMatches.length,
       countActivity7d: {
         daysWithCountSession: countDays.size,
         days: 7,
@@ -950,6 +962,7 @@ export class InMemoryStoreCore {
     this.countSessions.set(input.countSessionId, {
       storeId: input.storeId,
       createdAt: this.now,
+      lineCount: input.lines.length,
     });
 
     const created: StockAdjustmentProposalV2[] = [];
@@ -1489,14 +1502,6 @@ export class InMemoryStoreCore {
     offer.status = "paused";
     offer.version += 1;
 
-    for (const reservation of this.reservations.values()) {
-      if (reservation.offerId !== offer.id) continue;
-      if (reservation.status !== "held") continue;
-      reservation.status = "failed_stock_mismatch";
-      reservation.version += 1;
-      reservation.updatedAt = this.now;
-    }
-
     // One open stock mismatch per offer, mirroring the partial unique index in
     // SQL. A second report on the same offer under a different idempotency key
     // is a real case, a member reporting again after finding one more bag
@@ -1518,6 +1523,15 @@ export class InMemoryStoreCore {
         createdAt: this.now,
       };
       this.exceptions.set(exception.id, exception);
+    }
+
+    for (const reservation of this.reservations.values()) {
+      if (reservation.offerId !== offer.id) continue;
+      if (reservation.status !== "held") continue;
+      reservation.status = "failed_stock_mismatch";
+      reservation.failedExceptionId = exception.id;
+      reservation.version += 1;
+      reservation.updatedAt = this.now;
     }
 
     this.appendAudit({
@@ -1559,7 +1573,10 @@ export class InMemoryStoreCore {
       return err("validation_failed", "idempotency key is required");
     }
 
-    const fingerprint = input.exceptionId;
+    const fingerprint = JSON.stringify({
+      exceptionId: input.exceptionId,
+      resolutionNote: input.resolutionNote.trim(),
+    });
     const replay = this.readIdempotent<StoreExceptionV2>(
       "resolveStoreExceptionV2",
       input.storeId,
@@ -1704,12 +1721,36 @@ export class InMemoryStoreCore {
     };
     this.importBatches.set(batch.id, batch);
 
+    const duplicateBarcodes = new Set(
+      input.records
+        .map((record) => record.rawBarcode || null)
+        .filter((barcode): barcode is string => barcode !== null)
+        .filter(
+          (barcode, _index, barcodes) =>
+            barcodes.filter((candidate) => candidate === barcode).length > 1 &&
+            ![...this.products.values()].some(
+              (product) =>
+                product.storeId === input.storeId && product.barcode === barcode
+            )
+        )
+    );
+
     for (const source of input.records) {
       const rawBarcode = source.rawBarcode || null;
-      const candidates = this.matchImportCandidates(
-        input.storeId,
-        source.rawName,
-        rawBarcode
+      const duplicateInFile = rawBarcode !== null && duplicateBarcodes.has(rawBarcode);
+      const candidates = duplicateInFile
+        ? [
+            {
+              storeProductId: "",
+              productName: source.rawName,
+              reason: "duplicate_in_file",
+            },
+          ]
+        : this.matchImportCandidates(input.storeId, source.rawName, rawBarcode);
+      const distinctCandidateIds = new Set(
+        candidates
+          .map((candidate) => candidate.storeProductId)
+          .filter((candidateId) => candidateId.length > 0)
       );
       const stagedSequence = this.nextSequence("stagedRecord");
       const staged: StagedSourceRecord = {
@@ -1722,13 +1763,17 @@ export class InMemoryStoreCore {
         rawQuantity: source.rawQuantity ?? null,
         rawPrice: source.rawPrice ?? null,
         matchStatus:
-          candidates.length === 1
+          duplicateInFile
+            ? "ambiguous"
+            : distinctCandidateIds.size === 1
             ? "auto_matched"
-            : candidates.length > 1
+            : distinctCandidateIds.size > 1
               ? "ambiguous"
               : "unmatched",
         matchedStoreProductId:
-          candidates.length === 1 ? candidates[0].storeProductId : null,
+          !duplicateInFile && distinctCandidateIds.size === 1
+            ? [...distinctCandidateIds][0]
+            : null,
         candidates,
         createdAt: this.now,
       };
@@ -1839,6 +1884,17 @@ export class InMemoryStoreCore {
           `target product ${input.targetStoreProductId} is not in store ${input.storeId}`
         );
       }
+      const candidateIds = new Set(
+        staged.candidates
+          .map((candidate) => candidate.storeProductId)
+          .filter((candidateId) => candidateId.length > 0)
+      );
+      if (candidateIds.size > 0 && !candidateIds.has(targetProduct.id)) {
+        return err(
+          "validation_failed",
+          `target product ${targetProduct.id} is not a candidate for staged record ${staged.id}`
+        );
+      }
     }
 
     const batch = this.importBatches.get(staged.batchId);
@@ -1893,6 +1949,22 @@ export class InMemoryStoreCore {
     }
 
     if (input.decision === "approve" && targetProduct) {
+      const existingAlias = [...this.productAliases.values()].find(
+        (alias) =>
+          alias.storeId === input.storeId &&
+          alias.alias.toLowerCase() === staged.rawName.toLowerCase()
+      );
+      if (!existingAlias) {
+        const alias: ProductAliasRecord = {
+          id: `product-alias-${this.nextSequence("productAlias")}`,
+          storeId: input.storeId,
+          storeProductId: targetProduct.id,
+          alias: staged.rawName,
+          approved: true,
+        };
+        this.productAliases.set(alias.id, alias);
+      }
+
       if (staged.rawQuantity !== null) {
         const observation: InventoryObservationRecord = {
           id: `inventory-observation-${this.nextSequence(
@@ -1908,26 +1980,7 @@ export class InMemoryStoreCore {
         this.inventoryObservations.set(observation.id, observation);
 
         targetProduct.confidence = "low";
-        targetProduct.lastVerifiedAt = this.now;
         targetProduct.version += 1;
-
-        if (staged.rawQuantity !== targetProduct.onHandQuantity) {
-          const proposal: StockAdjustmentProposalV2 = {
-            id: `proposal-${this.nextSequence("proposal")}`,
-            storeId: input.storeId,
-            storeProductId: targetProduct.id,
-            productName: targetProduct.productName,
-            currentQuantity: targetProduct.onHandQuantity,
-            proposedQuantity: staged.rawQuantity,
-            delta: staged.rawQuantity - targetProduct.onHandQuantity,
-            reason: "count",
-            status: "pending",
-            createdByRole: access.value.role,
-            createdAt: this.now,
-            version: 1,
-          };
-          this.proposals.set(proposal.id, proposal);
-        }
       }
 
       staged.matchStatus = "approved";
@@ -2084,10 +2137,6 @@ export class InMemoryStoreCore {
     return null;
   }
 
-  private hasOpenMismatchFor(offerId: string): boolean {
-    return this.findOpenMismatchFor(offerId) !== null;
-  }
-
   /**
    * Reservations that still tie up a unit of an offer. Held reservations always
    * do. Reservations failed by a stock mismatch keep their unit encumbered while
@@ -2114,11 +2163,13 @@ export class InMemoryStoreCore {
    * units back would mean a mismatch could be walked off by waiting.
    */
   private failedMismatchCountFor(offerId: string): number {
-    if (!this.hasOpenMismatchFor(offerId)) return 0;
     let failed = 0;
     for (const reservation of this.reservations.values()) {
       if (reservation.offerId !== offerId) continue;
-      if (reservation.status === "failed_stock_mismatch") failed += 1;
+      if (reservation.status !== "failed_stock_mismatch") continue;
+      if (!reservation.failedExceptionId) continue;
+      const exception = this.exceptions.get(reservation.failedExceptionId);
+      if (exception?.status === "open") failed += 1;
     }
     return failed;
   }
@@ -2181,42 +2232,27 @@ export class InMemoryStoreCore {
     const barcodeMatches = rawBarcode
       ? products.filter((product) => product.barcode === rawBarcode)
       : [];
-    const aliasMatches =
-      barcodeMatches.length === 0
-        ? [...this.productAliases.values()]
-            .filter(
-              (alias) =>
-                alias.storeId === storeId &&
-                alias.approved &&
-                alias.alias.toLowerCase() === rawName.toLowerCase()
-            )
-            .map((alias) => this.products.get(alias.storeProductId))
-            .filter((product): product is ProductRecord => Boolean(product))
-        : [];
-    const nameMatches =
-      barcodeMatches.length === 0 && aliasMatches.length === 0
-        ? products.filter(
-            (product) =>
-              product.productName.toLowerCase() === rawName.toLowerCase()
-          )
-        : [];
-    const matches =
-      barcodeMatches.length > 0
-        ? barcodeMatches
-        : aliasMatches.length > 0
-          ? aliasMatches
-          : nameMatches;
-    const reason =
-      barcodeMatches.length > 0
-        ? "barcode"
-        : aliasMatches.length > 0
-          ? "alias"
-          : "product_name";
-    return matches
-      .sort((left, right) => left.id.localeCompare(right.id))
-      .map((product) => ({
-        storeProductId: product.id,
-        productName: product.productName,
+    const aliasMatches = [...this.productAliases.values()]
+      .filter(
+        (alias) =>
+          alias.storeId === storeId &&
+          alias.approved &&
+          alias.alias.toLowerCase() === rawName.toLowerCase()
+      )
+      .map((alias) => this.products.get(alias.storeProductId))
+      .filter((product): product is ProductRecord => Boolean(product));
+    const nameMatches = products.filter(
+      (product) => product.productName.toLowerCase() === rawName.toLowerCase()
+    );
+    const reasonByProductId = new Map<string, string>();
+    for (const product of nameMatches) reasonByProductId.set(product.id, "product_name");
+    for (const product of aliasMatches) reasonByProductId.set(product.id, "alias");
+    for (const product of barcodeMatches) reasonByProductId.set(product.id, "barcode");
+    return [...reasonByProductId.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([storeProductId, reason]) => ({
+        storeProductId,
+        productName: this.products.get(storeProductId)?.productName ?? "",
         reason,
       }));
   }

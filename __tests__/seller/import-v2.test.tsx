@@ -290,16 +290,36 @@ describe("ImportV2Screen", () => {
     await waitFor(() => expect(screen.getByTestId("import-v2-record-staged-record-1")).toBeTruthy());
 
     expect(screen.getByText("Совпадений нет")).toBeTruthy();
+    expect(screen.getByText(/количество из файла сохраняется как наблюдение/i)).toBeTruthy();
     fireEvent.press(screen.getByTestId("import-v2-approve-new-staged-record-1"));
 
     await waitFor(() =>
       expect(screen.getByTestId("import-v2-decision-success-staged-record-1")).toHaveTextContent(
-        "Решение подтверждено сервисом магазина"
+        "Решение сохранено. После импорта товар нужно пересчитать, прежде чем использовать его для оффера."
       )
     );
     expect(screen.getByTestId("import-v2-record-status-staged-record-1")).toHaveTextContent(
       "Одобрено"
     );
+  });
+
+  it("hides approve as new for an automatically matched row", async () => {
+    const { core, scenario } = makeWorld();
+    const api = core.sellerApi({ userId: scenario.managerUserId });
+    await api.uploadImportBatchV2({
+      filename: "auto-match.csv",
+      idempotencyKey: "auto-match-seed",
+      records: [{ rawName: "Fresh bread loaf", rawBarcode: "4780000000011" }],
+      storeId: scenario.storeId,
+    });
+    const screen = render(providerTree(api, <ImportV2Screen />));
+
+    await waitFor(() => expect(screen.getByTestId("import-v2-batch-import-batch-1")).toBeTruthy());
+    fireEvent.press(screen.getByTestId("import-v2-batch-import-batch-1"));
+    await waitFor(() => expect(screen.getByTestId("import-v2-record-staged-record-1")).toBeTruthy());
+
+    expect(screen.queryByTestId("import-v2-approve-new-staged-record-1")).toBeNull();
+    expect(screen.getByTestId("import-v2-approve-staged-record-1")).toBeTruthy();
   });
 
   it("rejects a staged row and refreshes the record and completed batch", async () => {

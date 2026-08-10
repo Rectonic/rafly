@@ -280,7 +280,7 @@ d("canonical CSV import", () => {
     expect(rows[0]).toMatchObject({ raw_name: "Fractional price" });
   });
 
-  it("lets staff upload and applies strict match precedence without auto approving ambiguity", async () => {
+  it("lets staff upload and unions conflicting match tiers without auto approving ambiguity", async () => {
     const records = [
       {
         rawName: "Tiered source name",
@@ -344,20 +344,29 @@ d("canonical CSV import", () => {
 
     const precedence = staged.find((row) => row.raw_name === "Tiered source name");
     expect(precedence).toMatchObject({
-      match_status: "auto_matched",
-      matched_store_product_id: barcodeWinnerId,
+      match_status: "ambiguous",
+      matched_store_product_id: null,
     });
-    expect(precedence?.candidates).toHaveLength(1);
-    expect(precedence?.candidates[0].reason).toBe("barcode");
+    expect(precedence?.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ storeProductId: barcodeWinnerId, reason: "barcode" }),
+        expect.objectContaining({ storeProductId: aliasWinnerId, reason: "alias" }),
+      ])
+    );
 
     const aliasPrecedence = staged.find(
       (row) => row.raw_name === "Alias precedence name"
     );
     expect(aliasPrecedence).toMatchObject({
-      match_status: "auto_matched",
-      matched_store_product_id: aliasWinnerId,
+      match_status: "ambiguous",
+      matched_store_product_id: null,
     });
-    expect(aliasPrecedence?.candidates[0].reason).toBe("alias");
+    expect(aliasPrecedence?.candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ storeProductId: aliasWinnerId, reason: "alias" }),
+        expect.objectContaining({ reason: "product_name" }),
+      ])
+    );
 
     const exactName = staged.find((row) => row.raw_name === "exact NAME only");
     expect(exactName).toMatchObject({
@@ -536,7 +545,7 @@ d("canonical CSV import", () => {
     expect(currentBatch.pending_records).toBe(6);
   });
 
-  it("approves an existing product with an observation and proposal but no direct stock write", async () => {
+  it("approves an existing product with an alias and observation but no stock proposal or verification", async () => {
     const record = staged.find((row) => row.raw_name === "Existing quantity evidence") as StagedRow;
     const key = randomUUID();
     const decided = requireRow<StagedRow>(
@@ -569,31 +578,71 @@ d("canonical CSV import", () => {
     });
     expect(reusedKey.error?.message).toContain("idempotency_conflict:");
 
-    const product = requireRow<{ on_hand_quantity: number; confidence: string }>(
+    const product = requireRow<{
+      on_hand_quantity: number;
+      confidence: string;
+      last_verified_at: string | null;
+    }>(
       await service
         .from("store_products")
-        .select("on_hand_quantity, confidence")
+        .select("on_hand_quantity, confidence, last_verified_at")
         .eq("id", existingProductId)
         .single(),
       "read observed product"
     );
-    expect(product).toEqual({ on_hand_quantity: 5, confidence: "low" });
+    expect(product).toEqual({
+      on_hand_quantity: 5,
+      confidence: "low",
+      last_verified_at: null,
+    });
 
     const { count: observationCount } = await service
       .from("inventory_observations")
       .select("id", { count: "exact", head: true })
       .eq("staged_source_record_id", record.id);
-    const { data: proposals } = await service
+    const { count: proposalCount } = await service
       .from("stock_adjustment_proposals")
-      .select("current_quantity, proposed_quantity, status")
+      .select("id", { count: "exact", head: true })
       .eq("store_product_id", existingProductId)
       .eq("status", "pending");
+    const { data: aliases } = await service
+      .from("product_aliases")
+      .select("store_product_id, approved")
+      .eq("store_id", storeId)
+      .ilike("alias", "Existing quantity evidence");
     expect(observationCount).toBe(1);
-    expect(proposals).toHaveLength(1);
-    expect(proposals).toContainEqual({
-      current_quantity: 5,
-      proposed_quantity: 8,
-      status: "pending",
+    expect(proposalCount).toBe(0);
+    expect(aliases).toEqual([{ store_product_id: existingProductId, approved: true }]);
+
+    const digest = requireRow<{
+      staleVerification: { productName: string }[];
+    }>(
+      await manager.rpc("compose_owner_digest_v2", { p_store_id: storeId }),
+      "compose digest after CSV observation"
+    );
+    expect(digest.staleVerification.map((item) => item.productName)).toContain(
+      "Existing observation target"
+    );
+
+    const repeatedBatch = requireRow<ImportBatchRow>(
+      await manager.rpc("upload_import_batch_v2", {
+        p_store_id: storeId,
+        p_filename: "existing-alias-repeat.csv",
+        p_records: [{ rawName: "Existing quantity evidence", rawQuantity: 8 }],
+        p_idempotency_key: randomUUID(),
+      }),
+      "upload repeated existing alias"
+    );
+    const repeatedRows = requireRow<StagedRow[]>(
+      await manager.rpc("list_staged_records_v2", {
+        p_store_id: storeId,
+        p_batch_id: repeatedBatch.id,
+      }),
+      "read repeated existing alias"
+    );
+    expect(repeatedRows[0]).toMatchObject({
+      match_status: "auto_matched",
+      matched_store_product_id: existingProductId,
     });
   });
 
@@ -646,7 +695,7 @@ d("canonical CSV import", () => {
       { store_product_id: first.matched_store_product_id, approved: true },
     ]);
     expect(observations).toBe(1);
-    expect(proposals).toBe(1);
+    expect(proposals).toBe(0);
   });
 
   it("completes the batch after every decision and emits once per decision", async () => {
@@ -660,7 +709,9 @@ d("canonical CSV import", () => {
         continue;
       }
       const decision = record.raw_name === "Rejected source row" ? "reject" : "approve";
-      const target = decision === "approve" ? record.matched_store_product_id ?? barcodeWinnerId : null;
+      const target = decision === "approve"
+        ? record.matched_store_product_id ?? record.candidates[0]?.storeProductId ?? barcodeWinnerId
+        : null;
       requireRow<StagedRow>(
         await manager.rpc("decide_staged_record_v2", {
           p_store_id: storeId,

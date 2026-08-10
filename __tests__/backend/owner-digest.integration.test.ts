@@ -35,9 +35,13 @@ interface DigestRow {
   storeName: string;
   generatedAt: string;
   staleVerification: unknown[];
+  staleVerificationTotal: number;
   expiryRisk: unknown[];
+  expiryRiskTotal: number;
   openExceptions: unknown[];
+  openExceptionsTotal: number;
   pausedOffers: unknown[];
+  pausedOffersTotal: number;
   countActivity7d: { daysWithCountSession: number; days: number };
   offers7d: {
     published: number;
@@ -170,11 +174,11 @@ d("compose_owner_digest_v2", () => {
     }
 
     const countResult = await service.from("count_sessions").insert(
-      [0, 0, -2, -8].map((offsetDays) => ({
+      [0, 0, -2, -8].map((offsetDays, index) => ({
         id: randomUUID(),
         store_id: storeId,
         created_by: staffId,
-        line_fingerprint: "[]",
+        line_fingerprint: index === 1 ? "" : "counted-product:1",
         created_at: new Date(Date.now() + offsetDays * 86_400_000).toISOString(),
       }))
     );
@@ -249,6 +253,12 @@ d("compose_owner_digest_v2", () => {
     expect(digest.expiryRisk).toHaveLength(10);
     expect(digest.openExceptions).toHaveLength(10);
     expect(digest.pausedOffers).toHaveLength(10);
+    expect(digest).toMatchObject({
+      staleVerificationTotal: 12,
+      expiryRiskTotal: 12,
+      openExceptionsTotal: 12,
+      pausedOffersTotal: 12,
+    });
     expect(digest.countActivity7d).toEqual({
       daysWithCountSession: 2,
       days: 7,
@@ -271,9 +281,13 @@ d("compose_owner_digest_v2", () => {
     expect(result.error).toBeNull();
     expect(result.data).toMatchObject({
       staleVerification: [],
+      staleVerificationTotal: 0,
       expiryRisk: [],
+      expiryRiskTotal: 0,
       openExceptions: [],
+      openExceptionsTotal: 0,
       pausedOffers: [],
+      pausedOffersTotal: 0,
       countActivity7d: { daysWithCountSession: 0, days: 7 },
       offers7d: {
         published: 0,

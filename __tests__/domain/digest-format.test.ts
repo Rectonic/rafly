@@ -6,9 +6,13 @@ function digest(overrides: Partial<OwnerDigestV2> = {}): OwnerDigestV2 {
     storeName: "Магазин у дома",
     generatedAt: "2026-08-11T08:05:00.000Z",
     staleVerification: [],
+    staleVerificationTotal: 0,
     expiryRisk: [],
+    expiryRiskTotal: 0,
     openExceptions: [],
+    openExceptionsTotal: 0,
     pausedOffers: [],
+    pausedOffersTotal: 0,
     countActivity7d: { daysWithCountSession: 0, days: 7 },
     offers7d: {
       published: 0,
@@ -32,6 +36,7 @@ describe("formatDigestRu", () => {
             lastVerifiedAt: null,
           },
         ],
+        staleVerificationTotal: 11,
         expiryRisk: [
           {
             productName: "Йогурт",
@@ -40,6 +45,7 @@ describe("formatDigestRu", () => {
             onHand: 8,
           },
         ],
+        expiryRiskTotal: 1,
         openExceptions: [
           {
             kind: "stock_mismatch",
@@ -47,12 +53,14 @@ describe("formatDigestRu", () => {
             createdAt: "2026-08-11T07:00:00.000Z",
           },
         ],
+        openExceptionsTotal: 1,
         pausedOffers: [
           {
             title: "Набор выпечки",
             pausedSinceVersionNote: null,
           },
         ],
+        pausedOffersTotal: 1,
         countActivity7d: { daysWithCountSession: 3, days: 7 },
         offers7d: {
           published: 12,
@@ -70,6 +78,7 @@ describe("formatDigestRu", () => {
         "Сформировано: 11.08.2026 08:05 UTC",
         "",
         "Давно не проверялось",
+        "показаны первые 10 из 11",
         "01. Молоко 1 л | остаток 1 200 | не проверялось",
         "",
         "Срок годности до 3 дней",
@@ -91,7 +100,7 @@ describe("formatDigestRu", () => {
         "неявка: 1",
         "не хватило стока: 3",
         "",
-        "итого: 4 задач на сегодня",
+        "итого: 14 задач на сегодня",
       ].join("\n")
     );
     expect(text).not.toMatch(/[\u{1F300}-\u{1FAFF}]/u);
@@ -116,6 +125,7 @@ describe("formatDigestRu", () => {
         pausedOffers: [
           { title: "Вечерний набор", pausedSinceVersionNote: null },
         ],
+        pausedOffersTotal: 1,
       })
     );
 
