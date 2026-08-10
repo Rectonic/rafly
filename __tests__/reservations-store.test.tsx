@@ -248,6 +248,7 @@ describe("ReservationHistoryProvider", () => {
       reminderStatus: "scheduled",
     });
     mockSecureStoreUnavailable = false;
+    delete process.env.EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE;
   });
 
   it("persists reservation metadata and recovers secure pickup codes after remount", async () => {
@@ -291,7 +292,51 @@ describe("ReservationHistoryProvider", () => {
     );
   });
 
-  it("falls back to private storage when SecureStore is unavailable", async () => {
+  it("writes no plaintext pickup code when SecureStore fails and the escape hatch is off", async () => {
+    // A pickup code is what a stranger needs to collect somebody else's bag.
+    // Without EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE the v1 store now
+    // fails closed exactly like the v2 helper, the code lives in memory for
+    // this session and nothing unencrypted is written or read.
+    mockSecureStoreUnavailable = true;
+    const screen = renderProbe();
+
+    await waitFor(() =>
+      expect(screen.getByTestId("reservation-loading")).toHaveTextContent("false")
+    );
+
+    fireEvent.press(screen.getByTestId("add-reservation"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("reservation-count")).toHaveTextContent("1")
+    );
+    const reservationId = screen.getByTestId("reservation-id").props.children;
+    expect(mockSecureStore.size).toBe(0);
+    expect(mockAsyncStorage.has(reservationCodeFallbackKey(reservationId))).toBe(
+      false
+    );
+
+    screen.unmount();
+
+    const restoredScreen = renderProbe();
+
+    await waitFor(() =>
+      expect(restoredScreen.getByTestId("reservation-count")).toHaveTextContent("1")
+    );
+
+    fireEvent.press(restoredScreen.getByTestId("reveal-reservation"));
+
+    // The reservation survives, only the raw code does not. The probe renders
+    // the literal "hidden" placeholder for an unrevealed code, and nothing
+    // invents a code to cover the gap.
+    await waitFor(() =>
+      expect(restoredScreen.getByTestId("reservation-code")).toHaveTextContent(
+        "hidden"
+      )
+    );
+  });
+
+  it("falls back to private storage when SecureStore is unavailable and the escape hatch is on", async () => {
+    process.env.EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE = "1";
     mockSecureStoreUnavailable = true;
     const screen = renderProbe();
 

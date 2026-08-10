@@ -9,6 +9,8 @@ import {
   signInTestUser,
 } from "../../scripts/backend-test-helpers";
 
+import { installationAuditActor } from "@/lib/test-kit/audit-actor";
+
 if (!backendEnvPresent()) {
   console.log(`offers-reservations.integration.test.ts: ${backendSkipReason()}`);
 }
@@ -198,6 +200,10 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     return requireRow(result, "publish offer");
   }
 
+  // Every installation id this suite hands to reserve_offer_v2, so the audit
+  // trail assertion can prove none of them was ever stored verbatim.
+  const usedInstallationIds = new Set<string>();
+
   async function reserve(
     offerId: string,
     version: number,
@@ -205,6 +211,7 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     clientReservationId: string = randomUUID(),
     pickupCode: string = `LB-${randomUUID().slice(0, 8)}`
   ): Promise<any> {
+    usedInstallationIds.add(installationId);
     const result = await anon.rpc("reserve_offer_v2", {
       p_offer_id: offerId,
       p_client_reservation_id: clientReservationId,
@@ -1215,6 +1222,44 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
       )
     ).toBe(true);
     expect(JSON.stringify(audits.data)).not.toContain("LB-fulfill-77");
+
+    // An installation id is a bearer secret, so the audit trail records a one
+    // way reference to it and never the id itself. Every buyer actor is the
+    // prefix plus twelve hex characters, and the ids this suite used are
+    // nowhere in the trail.
+    const buyerActors = (audits.data ?? [])
+      .filter((row) => row.actor.startsWith("installation:"))
+      .map((row) => row.actor);
+    expect(buyerActors.length).toBeGreaterThan(0);
+    for (const actor of buyerActors) {
+      expect(actor).toMatch(/^installation:[0-9a-f]{12}$/);
+    }
+    const serializedAudit = JSON.stringify(audits.data);
+    for (const installationId of usedInstallationIds) {
+      expect(serializedAudit).not.toContain(installationId);
+    }
+
+    // And the reference is exactly what the fake computes, so an audit reader
+    // can correlate rows across the two implementations.
+    const knownInstallation = `installation-audit-${randomUUID()}`;
+    const auditProduct = await createProduct({ quantity: 1 });
+    const auditOffer = await publish(owner, auditProduct.id, {
+      allocation: { storeProductId: auditProduct.id, quantity: 1, physicallySetAside: false },
+    });
+    await reserve(
+      auditOffer.id,
+      auditOffer.version,
+      knownInstallation,
+      randomUUID(),
+      `LB-audit-${randomUUID().slice(0, 6)}`
+    );
+    const knownActor = await service
+      .from("audit_entries")
+      .select("actor")
+      .eq("command", "reserve_offer_v2")
+      .eq("actor", installationAuditActor(knownInstallation));
+    expect(knownActor.error).toBeNull();
+    expect(knownActor.data).toHaveLength(1);
 
     const outbox = await service.from("outbox_events").select("event_type, payload");
     expect(outbox.error).toBeNull();

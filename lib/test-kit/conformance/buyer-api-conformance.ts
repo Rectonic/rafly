@@ -51,6 +51,8 @@ import type {
   Result,
 } from "@/lib/contracts";
 
+import { installationAuditActor } from "../audit-actor";
+
 type ReserveResult = Result<ReserveOfferV2Result>;
 
 export interface ConformanceScenario {
@@ -78,7 +80,13 @@ export interface ConformanceAuditEntry {
   command: string;
   at: string;
   actorUserId: string | null;
-  installationId: string | null;
+  /**
+   * The one way reference an implementation records for the buyer
+   * installation behind a command, never the raw installation id. Both
+   * implementations derive it the same way, see
+   * lib/test-kit/audit-actor.ts.
+   */
+  installationRef: string | null;
 }
 
 export interface ConformanceOutboxEvent {
@@ -631,12 +639,19 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
         const outbox = harness.listOutboxEvents();
         expect(audit.length).toBe(auditBefore + 1);
         expect(outbox.length).toBe(outboxBefore + 1);
-        expect(audit[audit.length - 1]).toMatchObject({
+        // The audit row identifies the caller by a one way reference, never by
+        // the installation id itself. That id is a bearer secret and an audit
+        // row outlives the reservation it describes.
+        const lastAudit = audit[audit.length - 1];
+        expect(lastAudit).toMatchObject({
           command: "reserveOfferV2",
           storeId: harness.scenario.storeId,
-          installationId: harness.scenario.installationA,
+          installationRef: installationAuditActor(harness.scenario.installationA),
           at: harness.scenario.now,
         });
+        expect(lastAudit.installationRef).not.toContain(
+          harness.scenario.installationA
+        );
         expect(outbox[outbox.length - 1].name).toBe("reservation_held");
       });
     });

@@ -477,9 +477,10 @@ d("Supabase facades against the local stack", () => {
         command: COMMAND_NAMES[row.command] ?? row.command,
         at: new Date(row.created_at).toISOString(),
         actorUserId: row.actor.startsWith("installation:") ? null : row.actor,
-        installationId: row.actor.startsWith("installation:")
-          ? row.actor.slice("installation:".length)
-          : null,
+        // The stored actor already IS the one way reference for a buyer
+        // command, so it is passed through whole rather than unwrapped. The
+        // raw installation id is never in this column.
+        installationRef: row.actor.startsWith("installation:") ? row.actor : null,
       }));
 
       outboxEvents = (

@@ -63,14 +63,35 @@ export function reservationCodeFallbackKey(reservationId: string) {
   )}`;
 }
 
+/**
+ * The unencrypted AsyncStorage copy of a v1 pickup code is not a general
+ * fallback. It exists only for entitlement-less simulator and e2e builds, and
+ * only when EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE is set to "1", the
+ * same escape hatch lib/buyer/secure-pickup-code.ts uses for v2. Without the
+ * flag a SecureStore failure fails closed, the code stays in memory for this
+ * session and nothing is written in plaintext. A pickup code is what a
+ * stranger needs to collect somebody else's bag.
+ */
+function insecureCodeStoreAllowed(): boolean {
+  return process.env.EXPO_PUBLIC_LASTBITE_ALLOW_INSECURE_CODE_STORE === "1";
+}
+
 async function persistPickupCode(reservationId: string, pickupCode: string) {
   try {
     await SecureStore.setItemAsync(reservationCodeKey(reservationId), pickupCode);
   } catch {
-    await AsyncStorage.setItem(
-      reservationCodeFallbackKey(reservationId),
-      pickupCode
-    );
+    if (!insecureCodeStoreAllowed()) {
+      return;
+    }
+    try {
+      await AsyncStorage.setItem(
+        reservationCodeFallbackKey(reservationId),
+        pickupCode
+      );
+    } catch {
+      // Nothing is stored. The reservation itself is unaffected, only the
+      // recovery of its raw code after a restart.
+    }
   }
 }
 
@@ -85,6 +106,13 @@ async function loadPickupCode(reservationId: string) {
     }
   } catch {
     // SecureStore can be unavailable in entitlement-less simulator builds.
+  }
+
+  if (!insecureCodeStoreAllowed()) {
+    // A build without the escape hatch never wrote an unencrypted copy and
+    // never reads one either, including a leftover from a build that had the
+    // hatch on. No code is the honest answer here.
+    return null;
   }
 
   return AsyncStorage.getItem(reservationCodeFallbackKey(reservationId));

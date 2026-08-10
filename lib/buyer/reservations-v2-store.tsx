@@ -48,6 +48,29 @@ function isTerminalReservation(reservation: BuyerReservationV2): boolean {
   return TERMINAL_RESERVATION_STATUSES.has(reservation.status);
 }
 
+/**
+ * Offers with a reserve request in flight right now, shared by every mounted
+ * useReserveOfferV2 instance.
+ *
+ * A per hook ref only stopped one component from double sending. Two mounted
+ * hooks looking at the same offer, an offer detail screen and a card sheet for
+ * instance, each had their own ref and could both dispatch, which is two
+ * reservations for one intent. The guard has to be as wide as the thing it
+ * protects, and the thing it protects is one offer's pending client id, which
+ * is global to the app.
+ *
+ * An entry is only ever removed by the finally block of the call that added
+ * it. abandon() deliberately does not clear it, otherwise abandoning during a
+ * request would open the door for a duplicate to be sent while the first is
+ * still outstanding.
+ */
+const inFlightReserveOfferIds = new Set<string>();
+
+/** Test seam. Drops any leaked in flight marks between suites. */
+export function resetReserveInFlightForTests(): void {
+  inFlightReserveOfferIds.clear();
+}
+
 export type ReserveActionStatus = "idle" | "in-flight" | "held" | "error";
 
 export interface UseReserveOfferV2Options {
@@ -101,49 +124,74 @@ export function useReserveOfferV2(
   const [error, setError] = useState<CommandError | null>(null);
   const [storageDegraded, setStorageDegraded] = useState(false);
 
-  const clientReservationIdRef = useRef<string | null>(null);
-  const inFlightRef = useRef(false);
+  /**
+   * The pending client reservation id this hook is holding, tagged with the
+   * offer it was minted for. The tag is the point. An untagged ref survived a
+   * failed attempt on one offer and was then sent as the client id for a
+   * reserve on a different offer, which is a stranger's idempotency key from
+   * the server's point of view and could replay somebody else's outcome.
+   */
+  const pendingIdRef = useRef<{ offerId: string; clientReservationId: string } | null>(
+    null
+  );
 
   const reserve = useCallback(
     async (offer: MarketplaceOfferV2): Promise<Result<ReserveOfferV2Result> | null> => {
-      if (!api || !isPilot || !installationId || inFlightRef.current) {
+      if (!api || !isPilot || !installationId) {
         return null;
       }
+      // Claimed before the first await, so two hooks racing the same offer
+      // cannot both get past this line.
+      if (inFlightReserveOfferIds.has(offer.id)) {
+        return null;
+      }
+      inFlightReserveOfferIds.add(offer.id);
 
-      inFlightRef.current = true;
       try {
-        if (!clientReservationIdRef.current) {
-          const pending = await loadPendingClientReservationId(offer.id);
-          if (pending) {
-            clientReservationIdRef.current = pending;
+        // Atomic claim of the pending id for THIS offer: read what is already
+        // persisted, mint only when there is nothing, persist before the
+        // request leaves. A request dispatched before the id is written could
+        // crash in between and retry under a fresh id, which is a second
+        // reservation for one intent.
+        let clientReservationId =
+          pendingIdRef.current?.offerId === offer.id
+            ? pendingIdRef.current.clientReservationId
+            : null;
+        if (!clientReservationId) {
+          const persisted = await loadPendingClientReservationId(offer.id);
+          if (persisted) {
+            clientReservationId = persisted;
           } else {
-            clientReservationIdRef.current = generateOpaqueId("reserve");
-            await savePendingClientReservationId(offer.id, clientReservationIdRef.current);
+            clientReservationId = generateOpaqueId("reserve");
+            await savePendingClientReservationId(offer.id, clientReservationId);
           }
+          pendingIdRef.current = { offerId: offer.id, clientReservationId };
         }
         setStatus("in-flight");
         setError(null);
         setStorageDegraded(false);
 
-        const send = (clientReservationId: string) =>
+        const send = (id: string) =>
           api.reserveOfferV2({
             offerId: offer.id,
             quantity: 1,
-            clientReservationId,
+            clientReservationId: id,
             installationId,
             expectedOfferVersion: offer.version,
           });
 
-        let result = await send(clientReservationIdRef.current);
+        let result = await send(clientReservationId);
 
         if (result.ok && isTerminalReservation(result.value.reservation)) {
           // The id we reused belongs to an action that already finished, its
           // cleanup simply never landed. Replaying it can only ever hand back
           // that finished reservation, so the id is discarded and the buyer's
           // actual intent, a new reservation, is sent once with a fresh id.
+          // The replacement is persisted before it is sent, same rule as
+          // above.
           const fresh = generateOpaqueId("reserve");
-          clientReservationIdRef.current = fresh;
           await savePendingClientReservationId(offer.id, fresh);
+          pendingIdRef.current = { offerId: offer.id, clientReservationId: fresh };
           result = await send(fresh);
         }
 
@@ -168,7 +216,7 @@ export function useReserveOfferV2(
           setError(null);
           // The action succeeded, a future reserve call is a new action and
           // earns its own clientReservationId.
-          clientReservationIdRef.current = null;
+          pendingIdRef.current = null;
           await clearPendingClientReservationId(offer.id);
         } else if (result.ok) {
           // Still terminal after the one retry. Nothing is held, and no error
@@ -176,14 +224,14 @@ export function useReserveOfferV2(
           setReservation(null);
           setPickupCode(null);
           setStatus("error");
-          clientReservationIdRef.current = null;
+          pendingIdRef.current = null;
           await clearPendingClientReservationId(offer.id);
         } else {
           setError(result.error);
           setStatus("error");
-          // clientReservationIdRef and its AsyncStorage backed copy both stay
-          // set here on purpose, a retry of this same action, even after a
-          // remount, must reuse this id rather than mint a new one.
+          // pendingIdRef and its AsyncStorage backed copy both stay set here
+          // on purpose, a retry of this same action, even after a remount,
+          // must reuse this id rather than mint a new one.
           if (OFFER_CHANGED_ERROR_CODES.has(result.error.code)) {
             onOfferChanged?.();
           }
@@ -191,15 +239,18 @@ export function useReserveOfferV2(
 
         return result;
       } finally {
-        inFlightRef.current = false;
+        inFlightReserveOfferIds.delete(offer.id);
       }
     },
     [api, installationId, isPilot, onOfferChanged]
   );
 
   const abandon = useCallback((offerId?: string) => {
-    clientReservationIdRef.current = null;
-    inFlightRef.current = false;
+    // The in flight registry is untouched on purpose. Only the call that
+    // claimed an offer releases it, in its finally block. Clearing it here
+    // would let a second request go out while the first is still outstanding,
+    // which is the duplicate reservation this whole guard exists to prevent.
+    pendingIdRef.current = null;
     setStatus("idle");
     setReservation(null);
     setPickupCode(null);

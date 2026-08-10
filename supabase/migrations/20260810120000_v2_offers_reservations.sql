@@ -723,7 +723,14 @@ begin
   insert into public.audit_entries (store_id, actor, command, detail)
   values (
     v_offer.store_id,
-    'installation' || chr(58) || p_installation_id,
+    -- The installation id is a bearer secret, anyone holding it can read and
+    -- cancel that installation's reservations. An audit row outlives the
+    -- reservation it describes, so storing the id verbatim turned the audit
+    -- trail into a credential store. A one way reference answers the only
+    -- question an audit reader has, was this the same caller as that other
+    -- row. Kept identical to installationAuditActor in
+    -- lib/test-kit/audit-actor.ts so the fake and this backend agree.
+    'installation' || chr(58) || substr(encode(extensions.digest(p_installation_id, 'sha256'), 'hex'), 1, 12),
     'reserve_offer_v2',
     jsonb_build_object('offerId', v_offer.id, 'reservationId', v_reservation.id)
   );
@@ -887,7 +894,14 @@ begin
   insert into public.audit_entries (store_id, actor, command, detail)
   values (
     v_offer.store_id,
-    'installation' || chr(58) || p_installation_id,
+    -- The installation id is a bearer secret, anyone holding it can read and
+    -- cancel that installation's reservations. An audit row outlives the
+    -- reservation it describes, so storing the id verbatim turned the audit
+    -- trail into a credential store. A one way reference answers the only
+    -- question an audit reader has, was this the same caller as that other
+    -- row. Kept identical to installationAuditActor in
+    -- lib/test-kit/audit-actor.ts so the fake and this backend agree.
+    'installation' || chr(58) || substr(encode(extensions.digest(p_installation_id, 'sha256'), 'hex'), 1, 12),
     'cancel_reservation_v2',
     jsonb_build_object('reservationId', v_reservation.id)
   );

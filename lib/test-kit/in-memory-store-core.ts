@@ -46,6 +46,8 @@ import {
   type StoreRole,
 } from "@/lib/contracts";
 
+import { installationAuditActor } from "./audit-actor";
+
 export const DEFAULT_NOW = "2026-08-10T09:00:00.000Z";
 
 const MANAGER_ROLES: readonly StoreRole[] = ["manager", "owner"];
@@ -87,7 +89,14 @@ export interface AuditEntryV2 {
   command: string;
   at: string;
   actorUserId: string | null;
-  installationId: string | null;
+  /**
+   * A one way reference to the buyer installation behind a buyer command,
+   * never the raw installation id. The id is a bearer secret, an audit row is
+   * long lived, and the only question an audit reader has is whether two rows
+   * came from the same caller. See lib/test-kit/audit-actor.ts, and
+   * reserve_offer_v2 in SQL, which computes the identical string.
+   */
+  installationRef: string | null;
 }
 
 export interface OutboxEventV2 {
@@ -442,7 +451,7 @@ export class InMemoryStoreCore {
       storeId: offer.storeId,
       command: "reserveOfferV2",
       actorUserId: null,
-      installationId: input.installationId,
+      installationRef: installationAuditActor(input.installationId),
     });
     this.appendOutbox("reservation_held", offer.storeId, {
       reservationId: record.id,
@@ -516,7 +525,7 @@ export class InMemoryStoreCore {
       storeId: reservation.storeId,
       command: "cancelReservationV2",
       actorUserId: null,
-      installationId: input.installationId,
+      installationRef: installationAuditActor(input.installationId),
     });
     this.appendOutbox("reservation_cancelled", reservation.storeId, {
       reservationId: reservation.id,
@@ -700,7 +709,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "recordInventoryCountV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
 
     const result = ok(created);
@@ -803,7 +812,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "approveStockAdjustmentV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
     this.appendOutbox("stock_adjustment_decided", input.storeId, {
       proposalId: proposal.id,
@@ -948,7 +957,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "approveAndPublishOfferV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
     this.appendOutbox("offer_published", input.storeId, {
       offerId: offer.id,
@@ -1012,7 +1021,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "pauseOfferV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
     this.appendOutbox("offer_paused", input.storeId, { offerId: offer.id });
 
@@ -1139,7 +1148,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "fulfillReservationV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
     this.appendOutbox("reservation_fulfilled", input.storeId, {
       reservationId: reservation.id,
@@ -1227,7 +1236,7 @@ export class InMemoryStoreCore {
       storeId: input.storeId,
       command: "reportStockMismatchV2",
       actorUserId: userId,
-      installationId: null,
+      installationRef: null,
     });
     this.appendOutbox("offer_stock_mismatch", input.storeId, {
       offerId: offer.id,

@@ -206,6 +206,136 @@ describe("useReserveOfferV2", () => {
     expect(result.current.status).toBe("held");
   });
 
+  it("makes exactly one reservation call when two mounted hooks race the same offer", async () => {
+    // Two surfaces can be showing the same offer at once, a detail screen and
+    // a card sheet for instance. A guard living in one hook's ref cannot see
+    // the other hook, so both used to dispatch and the buyer ended up with two
+    // reservations for one intent.
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+
+    let callCount = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const realApi = core.buyerApi();
+    const gatedBuyerApi: BuyerMarketplaceApiV2 = {
+      ...realApi,
+      reserveOfferV2: async (input) => {
+        callCount += 1;
+        await gate;
+        return realApi.reserveOfferV2(input);
+      },
+    };
+    const wrapper = makeWrapper(gatedBuyerApi, core, scenario);
+
+    const first = renderHook(() => useReserveOfferV2("installation-a"), { wrapper });
+    const second = renderHook(() => useReserveOfferV2("installation-a"), { wrapper });
+    await waitFor(() => expect(first.result.current.isPilot).toBe(true));
+    await waitFor(() => expect(second.result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      const a = first.result.current.reserve(offer);
+      const b = second.result.current.reserve(offer);
+      release();
+      await Promise.all([a, b]);
+    });
+
+    expect(callCount).toBe(1);
+  });
+
+  it("never sends an id minted for one offer as the client id of another", async () => {
+    // A failed attempt on offer A leaves its pending id in place on purpose,
+    // so a retry of that same attempt stays idempotent. That id belongs to
+    // offer A. Sending it as the client id for a reserve on offer B is
+    // somebody else's idempotency key from the server's point of view.
+    const { core, scenario, seller } = makeWorld();
+    const offerA = await publishOffer(core, scenario, seller);
+    const offerB = await publishOffer(core, scenario, seller, {
+      idempotencyKey: "publish-key-2",
+      title: "Second rescue box",
+    });
+
+    const sentByOffer = new Map<string, string>();
+    const realApi = core.buyerApi();
+    const trackingApi: BuyerMarketplaceApiV2 = {
+      ...realApi,
+      reserveOfferV2: async (input) => {
+        sentByOffer.set(input.offerId, input.clientReservationId);
+        if (input.offerId === offerA.id) {
+          return {
+            ok: false,
+            error: { code: "network_error", message: "offline", retryable: true },
+          };
+        }
+        return realApi.reserveOfferV2(input);
+      },
+    };
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(trackingApi, core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      await result.current.reserve(offerA);
+    });
+    expect(result.current.status).toBe("error");
+
+    await act(async () => {
+      await result.current.reserve(offerB);
+    });
+
+    const idForA = sentByOffer.get(offerA.id) as string;
+    const idForB = sentByOffer.get(offerB.id) as string;
+    expect(idForB).not.toBe(idForA);
+    // Each id is the one persisted against its own offer, written before the
+    // request went out rather than after it came back.
+    expect(await loadPendingClientReservationId(offerA.id)).toBe(idForA);
+    expect(result.current.status).toBe("held");
+  });
+
+  it("does not let abandon open the door to a duplicate while a request is still in flight", async () => {
+    const { core, scenario, seller } = makeWorld();
+    const offer = await publishOffer(core, scenario, seller);
+
+    let callCount = 0;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const realApi = core.buyerApi();
+    const gatedBuyerApi: BuyerMarketplaceApiV2 = {
+      ...realApi,
+      reserveOfferV2: async (input) => {
+        callCount += 1;
+        await gate;
+        return realApi.reserveOfferV2(input);
+      },
+    };
+
+    const { result } = renderHook(() => useReserveOfferV2("installation-a"), {
+      wrapper: makeWrapper(gatedBuyerApi, core, scenario),
+    });
+    await waitFor(() => expect(result.current.isPilot).toBe(true));
+
+    await act(async () => {
+      const inFlight = result.current.reserve(offer);
+      // The buyer backs out while the request is on the wire. Clearing the in
+      // flight mark here would send a second reservation for the same offer
+      // while the first one is still outstanding, and the server would honour
+      // both.
+      result.current.abandon(offer.id);
+      const duplicate = result.current.reserve(offer);
+      release();
+      const [, duplicateResult] = await Promise.all([inFlight, duplicate]);
+      expect(duplicateResult).toBeNull();
+    });
+
+    expect(callCount).toBe(1);
+  });
+
   it("reuses the same clientReservationId across a retry after a retryable network failure", async () => {
     const { core, scenario, seller } = makeWorld();
     const offer = await publishOffer(core, scenario, seller);
