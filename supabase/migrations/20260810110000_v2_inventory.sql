@@ -4,6 +4,15 @@
 -- idempotency keys table. Sorts after the stores, memberships, roles, and
 -- app flags migration, which this file depends on for
 -- public.fn_current_store_role and public.stores.
+--
+-- Fix round 1 (review response): reordered the version and status checks
+-- in approve_stock_adjustment_v2 to match the fake, added a fingerprint
+-- column and a claim then fill in idempotency pattern to close a
+-- concurrent duplicate key race, added a row lock plus an explicit non
+-- negative check before applying a delta, added statement level truncate
+-- triggers next to the existing row level ones, and changed the count
+-- line ownership error from validation_failed to not_found to match the
+-- fake. Each change is called out in place below.
 
 create table if not exists public.store_products (
   id uuid primary key default gen_random_uuid(),
@@ -91,15 +100,32 @@ create table if not exists public.outbox_events (
 -- Shared by mutation RPCs that need idempotent replay of a command outcome,
 -- starting with approve_stock_adjustment_v2 here. Scoped per store and per
 -- command so two different commands, or the same command in two different
--- stores, can never collide on a caller supplied key.
+-- stores, can never collide on a caller supplied key. fingerprint and a
+-- nullable outcome exist for the claim then fill in pattern used by
+-- approve_stock_adjustment_v2, see Fix round 1 above, a caller claims the
+-- key with a null outcome first, then updates it once the command actually
+-- finishes, closing the race where two concurrent callers with the same
+-- key both pass a plain select and then both try to insert.
 create table if not exists public.idempotency_keys (
   store_id uuid not null references public.stores (id) on delete cascade,
   command text not null,
   key text not null,
-  outcome jsonb not null,
+  fingerprint text,
+  outcome jsonb,
   created_at timestamptz not null default timezone('utc', now()),
   primary key (store_id, command, key)
 );
+
+-- Backfill safe in case a database somewhere already ran an earlier
+-- version of this migration, before the fingerprint column and the
+-- nullable outcome existed. A fresh supabase db reset creates the table
+-- with both already in place, these two statements are then a clean no op
+-- against that fresh table.
+alter table if exists public.idempotency_keys
+  add column if not exists fingerprint text;
+
+alter table if exists public.idempotency_keys
+  alter column outcome drop not null;
 
 alter table public.store_products enable row level security;
 alter table public.count_sessions enable row level security;
@@ -167,8 +193,14 @@ create policy "offer_allocations_select_members"
 
 -- Append only enforcement, belt and braces on top of the missing update and
 -- delete policies above. Even the service role, which bypasses row level
--- security, cannot get past this trigger, since triggers fire regardless of
--- who owns the statement.
+-- security, cannot get past these triggers, since triggers fire regardless
+-- of who owns the statement. Two trigger levels on purpose. Row level
+-- triggers (before update or delete, for each row) catch ordinary
+-- statements. They do NOT fire for TRUNCATE, Postgres skips row level
+-- triggers entirely for that command, so a separate statement level
+-- trigger (before truncate, for each statement) is required to close that
+-- gap, added in Fix round 1 after review caught the original comment here
+-- overclaiming truncate was already covered.
 create or replace function public.fn_reject_mutation()
 returns trigger
 language plpgsql
@@ -184,11 +216,23 @@ create trigger stock_movements_append_only
   before update or delete on public.stock_movements
   for each row execute function public.fn_reject_mutation();
 
+drop trigger if exists stock_movements_reject_truncate on public.stock_movements;
+
+create trigger stock_movements_reject_truncate
+  before truncate on public.stock_movements
+  for each statement execute function public.fn_reject_mutation();
+
 drop trigger if exists audit_entries_append_only on public.audit_entries;
 
 create trigger audit_entries_append_only
   before update or delete on public.audit_entries
   for each row execute function public.fn_reject_mutation();
+
+drop trigger if exists audit_entries_reject_truncate on public.audit_entries;
+
+create trigger audit_entries_reject_truncate
+  before truncate on public.audit_entries
+  for each statement execute function public.fn_reject_mutation();
 
 -- Deterministic confidence read model. The brief calls for an immutable
 -- function, but it reads now(), and Postgres rejects immutable for anything
@@ -276,7 +320,11 @@ begin
         and store_id = p_store_id;
 
     if not found then
-      raise exception 'validation_failed: product % does not belong to store %', v_store_product_id, p_store_id;
+      -- Fix round 1: this used to be validation_failed. The fake, the
+      -- behavioral oracle for this RPC, raises not_found for a count line
+      -- whose product is not in the store, review ruled the fake wins,
+      -- matching it here.
+      raise exception 'not_found: product % does not belong to store %', v_store_product_id, p_store_id;
     end if;
 
     if v_observed_quantity <> v_current_quantity then
@@ -334,11 +382,49 @@ $$;
 grant execute on function public.record_inventory_count_v2(uuid, uuid, jsonb) to authenticated;
 
 -- Approves or rejects a pending proposal. Manager or owner only, staff gets
--- forbidden. Idempotent through idempotency_keys, the same key replays the
--- stored outcome no matter the proposal's current status, a fresh key
--- against an already decided proposal raises invalid_state instead of
--- silently redeciding it. A stale expected_version against a still pending
--- proposal raises version_conflict.
+-- forbidden.
+--
+-- Fix round 1 rewrote most of this function after review:
+--
+-- 1. Idempotency is now a claim then fill in pattern instead of select then
+--    insert. This function first tries to insert a row with a null outcome,
+--    on conflict do nothing. Winning that insert means this call does the
+--    real work and fills the outcome in at the end. Losing it means either
+--    a concurrent duplicate is still in flight, in which case this call
+--    waits briefly and polls for the outcome, or an earlier call already
+--    finished, in which case the wait resolves immediately. This closes a
+--    race where two concurrent callers with the same key both passed a
+--    plain select finding nothing, both did the real work, and the second
+--    one to insert its result hit a raw duplicate key error instead of a
+--    contracted one.
+-- 2. A fingerprint computed from (proposal_id, decision) is stored with the
+--    claim. A caller reusing a key with a different fingerprint has reused
+--    it for different input, not retried the same command, and gets
+--    idempotency_conflict rather than a wrong replay or a silent redo.
+-- 3. Expected version is now checked before status, matching the fake. A
+--    stale expected_version against an already decided proposal reports
+--    version_conflict, not invalid_state, since the caller's real problem
+--    is that they were looking at an old version, the status is beside the
+--    point in that case. A fresh, correct expected_version against an
+--    already decided proposal still reports invalid_state, both proposal
+--    reads below are locked with for update, closing the found bug where
+--    two concurrent approvals on the very same proposal under different
+--    idempotency keys could both pass their status and version checks
+--    before either committed, then both apply, double counting the delta.
+--    That specific race was not named in the review findings, it shares
+--    the same root cause as the on hand race below, checking a value
+--    before locking the row that value lives on, so it is closed here as
+--    part of the same fix rather than left half done.
+-- 4. Before applying an approved delta, the product row is locked with for
+--    update and the resulting on_hand_quantity is checked against zero in
+--    application code. Two pending proposals against the same product,
+--    both computed before either was reviewed, can together drive on hand
+--    negative even though neither alone would. Without the lock and the
+--    check, the second approval would hit the raw on_hand_quantity check
+--    constraint and leak a raw Postgres error instead of the contracted
+--    validation_failed shape. The lock makes the second approval wait for
+--    the first to finish and read the true current value instead of a
+--    stale one, so the check is accurate rather than racy.
 create or replace function public.approve_stock_adjustment_v2(
   p_store_id uuid,
   p_proposal_id uuid,
@@ -353,8 +439,13 @@ set search_path = public
 as $$
 declare
   v_role text;
+  v_fingerprint text;
+  v_claimed_key text;
+  v_existing_fingerprint text;
+  v_existing_outcome jsonb;
+  v_wait_attempt int;
   v_proposal public.stock_adjustment_proposals%rowtype;
-  v_stored_outcome jsonb;
+  v_current_on_hand int;
   v_result public.stock_adjustment_proposals%rowtype;
 begin
   set local row_security = off;
@@ -368,15 +459,48 @@ begin
     raise exception 'validation_failed: decision must be approve or reject';
   end if;
 
-  select outcome
-    into v_stored_outcome
-    from public.idempotency_keys
-    where store_id = p_store_id
-      and command = 'approve_stock_adjustment_v2'
-      and key = p_idempotency_key;
+  v_fingerprint := p_proposal_id::text || '::' || p_decision;
 
-  if found then
-    v_result := jsonb_populate_record(null::public.stock_adjustment_proposals, v_stored_outcome);
+  -- Claim step. Only one caller can win this insert for a given
+  -- (store_id, command, key), on conflict do nothing means a raced
+  -- concurrent duplicate never sees a raw unique violation, it falls into
+  -- the losing branch below instead.
+  insert into public.idempotency_keys (store_id, command, key, fingerprint, outcome)
+  values (p_store_id, 'approve_stock_adjustment_v2', p_idempotency_key, v_fingerprint, null)
+  on conflict (store_id, command, key) do nothing
+  returning key into v_claimed_key;
+
+  if v_claimed_key is null then
+    select fingerprint
+      into v_existing_fingerprint
+      from public.idempotency_keys
+      where store_id = p_store_id
+        and command = 'approve_stock_adjustment_v2'
+        and key = p_idempotency_key;
+
+    if v_existing_fingerprint is distinct from v_fingerprint then
+      raise exception 'idempotency_conflict: key reused with different input';
+    end if;
+
+    v_existing_outcome := null;
+    for v_wait_attempt in 1..50 loop
+      select outcome
+        into v_existing_outcome
+        from public.idempotency_keys
+        where store_id = p_store_id
+          and command = 'approve_stock_adjustment_v2'
+          and key = p_idempotency_key;
+
+      exit when v_existing_outcome is not null;
+
+      perform pg_sleep(0.1);
+    end loop;
+
+    if v_existing_outcome is null then
+      raise exception 'idempotency_conflict: concurrent duplicate still in flight';
+    end if;
+
+    v_result := jsonb_populate_record(null::public.stock_adjustment_proposals, v_existing_outcome);
     return v_result;
   end if;
 
@@ -384,14 +508,11 @@ begin
     into v_proposal
     from public.stock_adjustment_proposals
     where id = p_proposal_id
-      and store_id = p_store_id;
+      and store_id = p_store_id
+    for update;
 
   if not found then
     raise exception 'not_found: proposal % not found', p_proposal_id;
-  end if;
-
-  if v_proposal.status <> 'pending' then
-    raise exception 'invalid_state: proposal % is already %', p_proposal_id, v_proposal.status;
   end if;
 
   if v_proposal.version <> p_expected_version then
@@ -399,7 +520,21 @@ begin
       p_proposal_id, p_expected_version, v_proposal.version;
   end if;
 
+  if v_proposal.status <> 'pending' then
+    raise exception 'invalid_state: proposal % is already %', p_proposal_id, v_proposal.status;
+  end if;
+
   if p_decision = 'approve' then
+    select on_hand_quantity
+      into v_current_on_hand
+      from public.store_products
+      where id = v_proposal.store_product_id
+      for update;
+
+    if v_current_on_hand + v_proposal.delta < 0 then
+      raise exception 'validation_failed: adjustment would make stock negative';
+    end if;
+
     update public.store_products
       set on_hand_quantity = on_hand_quantity + v_proposal.delta,
           version = version + 1
@@ -421,8 +556,11 @@ begin
       returning * into v_result;
   end if;
 
-  insert into public.idempotency_keys (store_id, command, key, outcome)
-  values (p_store_id, 'approve_stock_adjustment_v2', p_idempotency_key, to_jsonb(v_result));
+  update public.idempotency_keys
+    set outcome = to_jsonb(v_result)
+    where store_id = p_store_id
+      and command = 'approve_stock_adjustment_v2'
+      and key = p_idempotency_key;
 
   insert into public.audit_entries (store_id, actor, command, detail)
   values (
