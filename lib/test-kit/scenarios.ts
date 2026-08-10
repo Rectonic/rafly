@@ -36,6 +36,7 @@ export interface DefaultScenario {
   expiredProductId: string;
   pickupStart: string;
   pickupEnd: string;
+  timezone: "Asia/Tashkent";
   installationA: string;
   installationB: string;
 }
@@ -117,6 +118,7 @@ export function makeDefaultScenario(core: InMemoryStoreCore): DefaultScenario {
     expiredProductId,
     pickupStart: DEFAULT_PICKUP_START,
     pickupEnd: DEFAULT_PICKUP_END,
+    timezone: "Asia/Tashkent",
     installationA: "installation-a",
     installationB: "installation-b",
   };

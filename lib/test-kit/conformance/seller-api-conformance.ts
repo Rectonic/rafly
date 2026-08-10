@@ -400,7 +400,7 @@ export function runSellerApiConformance(
         expect(offer.quantityAvailable).toBe(2);
         expect(offer.storeId).toBe(harness.scenario.storeId);
         expect(offer.storeName).toBe(harness.scenario.storeName);
-        expect(offer.timezone).toBe("Asia/Tashkent");
+        expect(offer.timezone).toBe(harness.scenario.timezone);
       });
 
       it("refuses publication by staff with forbidden", async () => {
@@ -580,6 +580,50 @@ export function runSellerApiConformance(
         expect(after.allocatedQuantity).toBe(2);
         expect(after.maxOfferableQuantity).toBe(before.maxOfferableQuantity - 2);
         expect(after.onHandQuantity).toBe(before.onHandQuantity);
+      });
+
+      it("aggregates the allocations of every live offer on the same product", async () => {
+        const before = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        await publishOffer(harness, {
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: 2,
+            physicallySetAside: false,
+          },
+        });
+        await publishOffer(harness, {
+          idempotencyKey: "publish-key-2",
+          title: "Second rescue box",
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: 3,
+            physicallySetAside: false,
+          },
+        });
+
+        const after = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(after.allocatedQuantity).toBe(5);
+        expect(after.maxOfferableQuantity).toBe(before.onHandQuantity - 5);
+        expectErrorCode(
+          await manager.approveAndPublishOfferV2(
+            buildPublishInput(harness, {
+              idempotencyKey: "publish-key-3",
+              allocation: {
+                storeProductId: harness.scenario.highConfidenceProductId,
+                quantity: after.maxOfferableQuantity + 1,
+                physicallySetAside: false,
+              },
+            })
+          ),
+          "allocation_exceeded"
+        );
       });
 
       it("appends an audit entry and an offer_published outbox event", async () => {
@@ -836,24 +880,47 @@ export function runSellerApiConformance(
     });
 
     describe("reportStockMismatchV2", () => {
-      async function publishAndHold(): Promise<{
+      const ALLOCATED = 3;
+
+      /**
+       * Publishes one offer for three units of the high confidence product and
+       * holds two of them from two different installations, so a mismatch has to
+       * fail more than a single reservation row and one unit is left unsold.
+       */
+      async function publishAndHoldTwo(): Promise<{
         offerId: string;
         offerVersion: number;
-        reservationId: string;
+        reservationIds: string[];
       }> {
-        const offer = await publishOffer(harness);
-        const held = expectOk(
-          await harness.buyerApi().reserveOfferV2(buildReserveInput(harness, offer))
+        const offer = await publishOffer(harness, {
+          allocation: {
+            storeProductId: harness.scenario.highConfidenceProductId,
+            quantity: ALLOCATED,
+            physicallySetAside: false,
+          },
+        });
+        const buyer = harness.buyerApi();
+        const first = expectOk(
+          await buyer.reserveOfferV2(buildReserveInput(harness, offer))
+        );
+        const second = expectOk(
+          await buyer.reserveOfferV2(
+            buildReserveInput(harness, offer, {
+              clientReservationId: "client-reservation-2",
+              installationId: harness.scenario.installationB,
+              expectedOfferVersion: offer.version + 1,
+            })
+          )
         );
         return {
           offerId: offer.id,
-          offerVersion: offer.version + 1,
-          reservationId: held.reservation.id,
+          offerVersion: offer.version + 2,
+          reservationIds: [first.reservation.id, second.reservation.id],
         };
       }
 
-      it("pauses the offer and fails held reservations without releasing units", async () => {
-        const context = await publishAndHold();
+      it("pauses the offer and fails every held reservation without releasing units", async () => {
+        const context = await publishAndHoldTwo();
 
         const result = expectOk(
           await manager.reportStockMismatchV2({
@@ -871,11 +938,55 @@ export function runSellerApiConformance(
         const pickups = expectOk(
           await manager.listSellerPickupsV2(harness.scenario.storeId)
         );
-        expect(pickups[0].status).toBe("failed_stock_mismatch");
+        const statusById = new Map(
+          pickups.map((pickup) => [pickup.reservationId, pickup.status])
+        );
+        expect(statusById.get(context.reservationIds[0])).toBe(
+          "failed_stock_mismatch"
+        );
+        expect(statusById.get(context.reservationIds[1])).toBe(
+          "failed_stock_mismatch"
+        );
+        expect(
+          pickups.filter((pickup) => pickup.status === "failed_stock_mismatch")
+        ).toHaveLength(2);
+      });
+
+      it("keeps the mismatched units allocated so the offerable pool does not grow", async () => {
+        const before = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        const context = await publishAndHoldTwo();
+        const during = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+
+        expectOk(
+          await manager.reportStockMismatchV2({
+            storeId: harness.scenario.storeId,
+            offerId: context.offerId,
+            observedQuantity: 0,
+            reason: "shelf was empty",
+            idempotencyKey: "mismatch-key-1",
+          })
+        );
+
+        const after = findSummary(
+          expectOk(await manager.listStoreInventoryV2(harness.scenario.storeId)),
+          harness.scenario.highConfidenceProductId
+        );
+        expect(during.allocatedQuantity).toBe(ALLOCATED);
+        expect(during.maxOfferableQuantity).toBe(
+          before.onHandQuantity - ALLOCATED
+        );
+        expect(after.allocatedQuantity).toBe(during.allocatedQuantity);
+        expect(after.maxOfferableQuantity).toBe(during.maxOfferableQuantity);
       });
 
       it("opens a stock_mismatch exception and flags the product as having open exceptions", async () => {
-        const context = await publishAndHold();
+        const context = await publishAndHoldTwo();
 
         const result = expectOk(
           await manager.reportStockMismatchV2({
@@ -909,7 +1020,7 @@ export function runSellerApiConformance(
       });
 
       it("replays the same mismatch result for a repeated idempotencyKey", async () => {
-        const context = await publishAndHold();
+        const context = await publishAndHoldTwo();
         const input = {
           storeId: harness.scenario.storeId,
           offerId: context.offerId,
@@ -930,7 +1041,7 @@ export function runSellerApiConformance(
       });
 
       it("refuses stock mismatch reporting by staff with forbidden", async () => {
-        const context = await publishAndHold();
+        const context = await publishAndHoldTwo();
 
         expectErrorCode(
           await staff.reportStockMismatchV2({
@@ -945,7 +1056,7 @@ export function runSellerApiConformance(
       });
 
       it("appends an audit entry and an offer_stock_mismatch outbox event", async () => {
-        const context = await publishAndHold();
+        const context = await publishAndHoldTwo();
         const auditBefore = harness.listAuditEntries().length;
         const outboxBefore = harness.listOutboxEvents().length;
 

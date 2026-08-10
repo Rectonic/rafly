@@ -189,6 +189,15 @@ function padSequence(value: number, width: number): string {
   return String(value).padStart(width, "0");
 }
 
+/**
+ * Structural clone of a stored command result. Every payload is a plain DTO of
+ * strings, numbers, booleans, nulls, arrays and nested objects, so a JSON round
+ * trip is enough and keeps the fake free of extra dependencies.
+ */
+function cloneResult(result: Result<unknown>): Result<unknown> {
+  return JSON.parse(JSON.stringify(result)) as Result<unknown>;
+}
+
 export class InMemoryStoreCore {
   private now: string = DEFAULT_NOW;
 
@@ -1161,27 +1170,55 @@ export class InMemoryStoreCore {
     }
   }
 
-  private heldCountFor(offerId: string): number {
-    let held = 0;
-    for (const reservation of this.reservations.values()) {
-      if (reservation.offerId === offerId && reservation.status === "held") {
-        held += 1;
+  private hasOpenMismatchFor(offerId: string): boolean {
+    for (const exception of this.exceptions.values()) {
+      if (
+        exception.status === "open" &&
+        exception.kind === "stock_mismatch" &&
+        exception.relatedOfferId === offerId
+      ) {
+        return true;
       }
     }
-    return held;
+    return false;
+  }
+
+  /**
+   * Reservations that still tie up a unit of an offer. Held reservations always
+   * do. Reservations failed by a stock mismatch keep their unit encumbered while
+   * the mismatch exception is open, because the physical truth of those units is
+   * unknown until somebody resolves the exception. Without that rule a mismatch
+   * would hand the missing units straight back to the offerable pool.
+   */
+  private encumberedCountFor(offerId: string): number {
+    const mismatchOpen = this.hasOpenMismatchFor(offerId);
+    let encumbered = 0;
+    for (const reservation of this.reservations.values()) {
+      if (reservation.offerId !== offerId) continue;
+      if (reservation.status === "held") {
+        encumbered += 1;
+        continue;
+      }
+      if (mismatchOpen && reservation.status === "failed_stock_mismatch") {
+        encumbered += 1;
+      }
+    }
+    return encumbered;
   }
 
   /**
    * Units still tied up by non terminal offers of a product. Units that are on
-   * the shelf for an offer and units held by a buyer both count, so fulfilment
-   * releases the allocation at the same moment it removes the unit from stock.
+   * the shelf for an offer and units encumbered by a reservation both count, so
+   * fulfilment releases the allocation at the same moment it removes the unit
+   * from stock. Every non terminal offer on the product contributes, so two live
+   * offers on one product consume the pool together.
    */
   private activeAllocatedFor(storeProductId: string): number {
     let allocated = 0;
     for (const offer of this.offers.values()) {
       if (offer.allocation.storeProductId !== storeProductId) continue;
       if (TERMINAL_OFFER_STATUSES.includes(offer.status)) continue;
-      allocated += offer.quantityAvailable + this.heldCountFor(offer.id);
+      allocated += offer.quantityAvailable + this.encumberedCountFor(offer.id);
     }
     return allocated;
   }
@@ -1204,6 +1241,11 @@ export class InMemoryStoreCore {
    * never replay another caller stored result. Only successful results are
    * stored, which leaves a failed command free to be retried once the caller
    * has fixed whatever was wrong.
+   *
+   * Stored results are cloned on the way in and on the way out, so a replay is
+   * equal in content to the first response without handing every caller the same
+   * mutable object. A replayed reservation therefore carries the same raw pickup
+   * code value even though it is a different object.
    */
   private readIdempotent<T>(
     command: string,
@@ -1219,7 +1261,7 @@ export class InMemoryStoreCore {
         `${command} key ${key} was already used with different input`
       );
     }
-    return stored.result as Result<T>;
+    return cloneResult(stored.result) as Result<T>;
   }
 
   private writeIdempotent(
@@ -1230,7 +1272,10 @@ export class InMemoryStoreCore {
     result: Result<unknown>
   ): void {
     if (!result.ok) return;
-    this.idempotency.set(`${command}::${scope}::${key}`, { fingerprint, result });
+    this.idempotency.set(`${command}::${scope}::${key}`, {
+      fingerprint,
+      result: cloneResult(result),
+    });
   }
 
   private appendAudit(entry: Omit<AuditEntryV2, "id" | "at">): void {

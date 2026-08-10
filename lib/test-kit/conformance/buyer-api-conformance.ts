@@ -64,6 +64,7 @@ export interface ConformanceScenario {
   expiredProductId: string;
   pickupStart: string;
   pickupEnd: string;
+  timezone: MarketplaceOfferV2["timezone"];
   installationA: string;
   installationB: string;
 }
@@ -243,6 +244,22 @@ export function runBuyerApiConformance(makeHarness: MakeConformanceHarness): voi
     });
 
     describe("reserveOfferV2", () => {
+      it("rejects a reservation for more than one unit with validation_failed", async () => {
+        const offer = await publishOffer(harness);
+        // The contract pins quantity to the literal 1, so the only way to reach
+        // the runtime guard is to widen the field for this call.
+        const input: ReserveOfferV2Input = {
+          ...buildReserveInput(harness, offer),
+          quantity: 2 as unknown as ReserveOfferV2Input["quantity"],
+        };
+
+        expectErrorCode(await buyer.reserveOfferV2(input), "validation_failed");
+
+        const after = expectOk(await buyer.getMarketplaceOfferV2(offer.id));
+        expect(after.quantityAvailable).toBe(offer.quantityAvailable);
+        expect(after.version).toBe(offer.version);
+      });
+
       it("rejects a reservation on an offer that is not live with offer_not_live", async () => {
         const offer = await publishOffer(harness);
         const seller = harness.sellerApi({
