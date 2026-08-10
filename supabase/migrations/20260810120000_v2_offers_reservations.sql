@@ -87,6 +87,16 @@ create table if not exists public.store_exceptions (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+-- At most one open stock mismatch per offer. The encumbrance arithmetic in
+-- publish_offer_v2 asks whether an open mismatch exists for an offer, a
+-- question that only has a sane answer while there is exactly one such row.
+-- Two open rows would also leave the resolution flow guessing which one a
+-- member just closed. related_offer_id is nullable and nulls are distinct
+-- in a unique index, so exceptions not tied to an offer are unaffected.
+create unique index if not exists store_exceptions_open_stock_mismatch_idx
+  on public.store_exceptions (related_offer_id)
+  where kind = 'stock_mismatch' and status = 'open';
+
 do $$
 begin
   if not exists (
@@ -159,44 +169,94 @@ where o.status in ('live', 'sold_out')
 revoke all on table public.marketplace_offers_v2_public from public;
 grant select on table public.marketplace_offers_v2_public to anon, authenticated;
 
-create or replace function public.fn_apply_offer_reservation_expiry_v2()
+-- The zero argument form is dropped so a database that already ran an
+-- earlier version of this migration does not keep a stale overload around
+-- next to the scoped one below. A fresh reset never has it, so the drop is
+-- a no op there.
+drop function if exists public.fn_apply_offer_reservation_expiry_v2();
+
+-- Lazy expiry sweep. p_offer_id null keeps the original global behaviour,
+-- used by the two list RPCs whose result sets are global anyway. Every
+-- single offer RPC passes its own offer id, which turns a whole table scan
+-- that touched arbitrary offers in arbitrary order into a scan bounded by
+-- one offer. That matters for lock ordering, a global sweep called from
+-- seven entry points takes row locks on whatever happens to be expired at
+-- that moment, in whatever order the plan produces, which is exactly the
+-- shape that deadlocks under concurrency.
+--
+-- publish_offer_v2 is the one mutation that stays global, on purpose. It
+-- has no offer id yet, and its allocation ceiling sums over every sibling
+-- offer of the same product, so a stale held reservation on any of those
+-- siblings would inflate the encumbrance and reject a legitimate publish.
+-- Correct ceiling arithmetic wins over a narrower sweep on what is a low
+-- frequency seller action.
+create or replace function public.fn_apply_offer_reservation_expiry_v2(
+  p_offer_id uuid default null
+)
 returns void
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_reservation record;
+  v_expired record;
+  v_release record;
 begin
   set local row_security = off;
 
-  update public.offers_v2
-    set status = 'expired'
-    where status in ('live', 'sold_out', 'paused')
-      and pickup_end <= now();
+  for v_expired in
+    update public.offers_v2
+      set status = 'expired'
+      where status in ('live', 'sold_out', 'paused')
+        and pickup_end <= now()
+        and (p_offer_id is null or id = p_offer_id)
+      returning id
+  loop
+    -- An offer that leaves the live or sold out pool no longer encumbers
+    -- its product, so the allocation row must not stay active forever.
+    update public.offer_allocations
+      set status = 'released'
+      where offer_id = v_expired.id
+        and status = 'active';
+  end loop;
 
-  for v_reservation in
-    update public.reservations_v2
-      set status = 'expired_no_show',
-          version = version + 1,
-          updated_at = now()
-      where status = 'held'
-        and hold_expires_at <= now()
-      returning offer_id
+  -- Releases are grouped per offer and applied in offer id order. The
+  -- end state is identical to releasing one unit at a time, one version
+  -- bump and one unit per expired hold, but the offer rows are now locked
+  -- in a fixed order rather than in whatever order the expired holds came
+  -- back in.
+  for v_release in
+    with expired_holds as (
+      update public.reservations_v2
+        set status = 'expired_no_show',
+            version = version + 1,
+            updated_at = now()
+        where status = 'held'
+          and hold_expires_at <= now()
+          and (p_offer_id is null or offer_id = p_offer_id)
+        returning offer_id
+    )
+    select offer_id, count(*)::int as released
+      from expired_holds
+      group by offer_id
+      order by offer_id
   loop
     update public.offers_v2
-      set quantity_available = quantity_available + 1,
-          version = version + 1,
+      set quantity_available = least(
+            quantity_available + v_release.released,
+            quantity_total
+          ),
+          version = version + v_release.released,
           status = case
             when status = 'sold_out' and pickup_end > now() then 'live'
             else status
           end
-      where id = v_reservation.offer_id;
+      where id = v_release.offer_id;
   end loop;
 end;
 $$;
 
-revoke execute on function public.fn_apply_offer_reservation_expiry_v2() from public;
+revoke execute on function public.fn_apply_offer_reservation_expiry_v2(uuid) from public;
 
 create or replace function public.publish_offer_v2(
   p_store_id uuid,
@@ -279,7 +339,9 @@ begin
     return v_outcome;
   end if;
 
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  -- Global on purpose, see the sweep definition. The allocation ceiling
+  -- below reads every sibling offer of this product.
+  perform public.fn_apply_offer_reservation_expiry_v2(null::uuid);
 
   begin
     v_store_product_id := (p_input -> 'allocation' ->> 'storeProductId')::uuid;
@@ -326,9 +388,14 @@ begin
     raise exception 'not_found: product % is not in store %', v_store_product_id, p_store_id;
   end if;
 
+  -- Food safety rule. The comparison is against the end of the pickup
+  -- window, not against today. A product that expires while the window is
+  -- still open would otherwise be handed over after its expiry date, so a
+  -- product must outlast the last moment a buyer can collect it.
   if v_product.expiry_date is not null
-     and v_product.expiry_date < (now() at time zone 'UTC')::date then
-    raise exception 'validation_failed: product % expired on %', v_product.id, v_product.expiry_date;
+     and v_product.expiry_date < (v_pickup_end at time zone 'UTC')::date then
+    raise exception 'validation_failed: product % expires on % before pickup ends %',
+      v_product.id, v_product.expiry_date, v_pickup_end;
   end if;
 
   select coalesce(sum(
@@ -492,10 +559,30 @@ begin
     raise exception 'validation_failed: pickup code hash does not match plaintext code';
   end if;
 
-  perform pg_advisory_xact_lock(hashtextextended(
-    p_installation_id || chr(58) || p_client_reservation_id,
-    0
-  ));
+  -- Bounded advisory lock, same shape as the claim steps in the seller
+  -- RPCs. This lock serialises duplicates of one command key, so a caller
+  -- that stalls mid transaction would otherwise pin every retry behind it
+  -- for as long as the stall lasts. Four seconds is far above the time an
+  -- honest duplicate needs and turns a hung connection into the contracted
+  -- idempotency_conflict shape.
+  begin
+    set local lock_timeout = '4s';
+
+    perform pg_advisory_xact_lock(hashtextextended(
+      p_installation_id || chr(58) || p_client_reservation_id,
+      0
+    ));
+
+    set local lock_timeout = default;
+  exception when lock_not_available then
+    raise exception 'idempotency_conflict: concurrent duplicate command still in flight';
+  end;
+
+  -- The sweep runs before the replay lookup, not after it. A client that
+  -- replays a reservation whose hold has already lapsed has to read
+  -- expired_no_show, and it can only do that if the sweep has already
+  -- moved the row. Reading first would hand back a stale held.
+  perform public.fn_apply_offer_reservation_expiry_v2(p_offer_id);
 
   select *
     into v_existing
@@ -513,8 +600,6 @@ begin
       'replayed', true
     );
   end if;
-
-  perform public.fn_apply_offer_reservation_expiry_v2();
 
   update public.offers_v2
     set quantity_available = quantity_available - 1,
@@ -550,8 +635,24 @@ begin
     where r.offer_id = p_offer_id
       and sm.kind in ('reservation_hold', 'reservation_release');
 
-  if p_expected_offer_version <> v_offer.version - 1
-     and p_expected_offer_version <> v_offer.version - 1 - v_reservation_change_count then
+  -- Monotonic version rule. v_offer.version - 1 is the version this offer
+  -- carried when the caller's own reserve landed, so it is the newest
+  -- version any honest caller can claim to have read. Anything above that
+  -- is a client reporting a version that never existed. Below it, the
+  -- caller is stale by exactly the number of bumps it missed, and that gap
+  -- is acceptable only while every missed bump can be explained by
+  -- reservation traffic, holds and releases, which never change the terms
+  -- of the offer the buyer agreed to. A pause, a price edit, or any other
+  -- seller change bumps the version without leaving a reservation
+  -- movement behind, so it pushes the gap past what the movements explain
+  -- and the stale caller is rejected.
+  --
+  -- The earlier rule accepted only two exact versions, the current one and
+  -- the publish era one, which rejected every version in between. That was
+  -- not monotonic, a fresher client could be rejected while a staler one
+  -- sailed through. An inequality fixes the ordering.
+  if p_expected_offer_version > v_offer.version - 1
+     or v_offer.version - 1 - p_expected_offer_version > v_reservation_change_count then
     raise exception 'version_conflict: offer % expected version % but found %',
       p_offer_id, p_expected_offer_version, v_offer.version - 1;
   end if;
@@ -636,6 +737,7 @@ declare
   v_outcome jsonb;
   v_reservation public.reservations_v2%rowtype;
   v_offer public.offers_v2%rowtype;
+  v_sweep_offer_id uuid;
 begin
   set local row_security = off;
 
@@ -677,7 +779,18 @@ begin
     return v_outcome;
   end if;
 
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  -- Resolve the offer first so the sweep can be scoped to it. A reservation
+  -- id that matches nothing skips the sweep entirely, the select below
+  -- raises not_found for that case anyway and a bogus id is no reason to
+  -- scan every offer in the table.
+  select offer_id
+    into v_sweep_offer_id
+    from public.reservations_v2
+    where id = p_reservation_id;
+
+  if v_sweep_offer_id is not null then
+    perform public.fn_apply_offer_reservation_expiry_v2(v_sweep_offer_id);
+  end if;
 
   select *
     into v_reservation
@@ -769,7 +882,8 @@ begin
   if coalesce(p_installation_id, '') = '' then
     raise exception 'validation_failed: installation id is required';
   end if;
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  -- Global, this read is not scoped to one offer either.
+  perform public.fn_apply_offer_reservation_expiry_v2(null::uuid);
   return query
     select
       r.id,
@@ -848,7 +962,7 @@ begin
     return v_outcome;
   end if;
 
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  perform public.fn_apply_offer_reservation_expiry_v2(p_offer_id);
   select * into v_offer
     from public.offers_v2
     where id = p_offer_id and store_id = p_store_id
@@ -868,6 +982,14 @@ begin
     set status = 'paused', version = version + 1
     where id = p_offer_id
     returning * into v_offer;
+
+  -- A paused offer is out of the live and sold out pool, so it stops
+  -- encumbering its product and the allocation row is released.
+  update public.offer_allocations
+    set status = 'released'
+    where offer_id = p_offer_id
+      and status = 'active';
+
   v_outcome := to_jsonb(v_offer);
   update public.idempotency_keys set outcome = v_outcome
     where store_id = p_store_id and command = 'pause_offer_v2' and key = p_idempotency_key;
@@ -1077,7 +1199,7 @@ begin
     return v_outcome;
   end if;
 
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  perform public.fn_apply_offer_reservation_expiry_v2(p_offer_id);
   select * into v_offer
     from public.offers_v2
     where id = p_offer_id and store_id = p_store_id
@@ -1093,16 +1215,39 @@ begin
     set status = 'paused', version = version + 1
     where id = p_offer_id
     returning * into v_offer;
-  insert into public.store_exceptions (
-    store_id, kind, message, status, related_offer_id, related_store_product_id
-  ) values (
-    p_store_id,
-    'stock_mismatch',
-    p_reason || ' (observed ' || p_observed_quantity || ')',
-    'open',
-    p_offer_id,
-    v_offer.store_product_id
-  ) returning * into v_exception;
+
+  -- A mismatch pauses the offer, so it leaves the live and sold out pool
+  -- and its allocation row is released along with it.
+  update public.offer_allocations
+    set status = 'released'
+    where offer_id = p_offer_id
+      and status = 'active';
+
+  -- One open stock mismatch per offer, enforced by a partial unique index.
+  -- A second report on the same offer under a different idempotency key is
+  -- a real case, a member reporting again after finding one more bag
+  -- missing, and it must not surface as a raw unique violation. The open
+  -- exception is reused, and every other effect here, the pause and the
+  -- failing of held reservations, is already idempotent.
+  select * into v_exception
+    from public.store_exceptions
+    where related_offer_id = p_offer_id
+      and kind = 'stock_mismatch'
+      and status = 'open'
+    for update;
+
+  if not found then
+    insert into public.store_exceptions (
+      store_id, kind, message, status, related_offer_id, related_store_product_id
+    ) values (
+      p_store_id,
+      'stock_mismatch',
+      p_reason || ' (observed ' || p_observed_quantity || ')',
+      'open',
+      p_offer_id,
+      v_offer.store_product_id
+    ) returning * into v_exception;
+  end if;
 
   for v_failed in
     update public.reservations_v2
@@ -1168,7 +1313,8 @@ begin
   if v_role is null then
     raise exception 'forbidden: caller is not a member of store %', p_store_id;
   end if;
-  perform public.fn_apply_offer_reservation_expiry_v2();
+  -- Global, this read is not scoped to one offer either.
+  perform public.fn_apply_offer_reservation_expiry_v2(null::uuid);
   return query
     select
       r.id,

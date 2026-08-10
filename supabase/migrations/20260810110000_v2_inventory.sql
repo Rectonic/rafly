@@ -67,6 +67,13 @@ create table if not exists public.stock_movements (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+-- ref_id points at whatever caused the movement, a proposal, a reservation,
+-- or a fulfillment. reserve_offer_v2 joins reservations to this column on
+-- every reserve to count reservation traffic, which is a sequential scan
+-- without an index here.
+create index if not exists stock_movements_ref_id_idx
+  on public.stock_movements (ref_id);
+
 -- Scaffold for Task 6. offer_id stays a bare uuid with no foreign key for
 -- now, offers_v2 does not exist until the next migration, Task 6 can add
 -- the constraint additively once that table lands.

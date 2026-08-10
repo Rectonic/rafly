@@ -47,6 +47,13 @@ function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+// A calendar day in UTC, offset from now. store_products.expiry_date is a
+// bare date, and the database compares it in UTC, so the test has to build
+// its dates the same way rather than in the runner's local zone.
+function utcDay(offsetMs: number): string {
+  return new Date(Date.now() + offsetMs).toISOString().slice(0, 10);
+}
+
 function requireRow<T>(
   result: { data: T | null; error: { message: string } | null },
   context: string
@@ -266,9 +273,7 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     });
     expect(badReference.error?.message).toMatch(/^validation_failed:/);
 
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
-      .toISOString()
-      .slice(0, 10);
+    const yesterday = utcDay(-24 * 60 * 60 * 1000);
     const expired = await createProduct({ expiryDate: yesterday });
     const expiredAttempt = await owner.rpc("publish_offer_v2", {
       p_store_id: storeId,
@@ -278,6 +283,40 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
       p_idempotency_key: randomUUID(),
     });
     expect(expiredAttempt.error?.message).toMatch(/^validation_failed:/);
+  });
+
+  it("refuses a product that expires before the pickup window ends", async () => {
+    // Food safety. The expiry test is against the end of the pickup window,
+    // not against today, so a product that goes off while buyers can still
+    // collect it never reaches the feed. This product is fine right now and
+    // still gets rejected, because the window runs past its expiry date.
+    const tomorrowStart = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const tomorrowEnd = new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString();
+    const expiringToday = await createProduct({ expiryDate: utcDay(0) });
+    const expiresMidWindow = await owner.rpc("publish_offer_v2", {
+      p_store_id: storeId,
+      p_input: offerInput(expiringToday.id, {
+        allocation: {
+          storeProductId: expiringToday.id,
+          quantity: 1,
+          physicallySetAside: false,
+        },
+        pickupStart: tomorrowStart,
+        pickupEnd: tomorrowEnd,
+      }),
+      p_idempotency_key: randomUUID(),
+    });
+    expect(expiresMidWindow.error?.message).toMatch(/^validation_failed:/);
+
+    const expiringLater = await createProduct({
+      expiryDate: utcDay(5 * 24 * 60 * 60 * 1000),
+    });
+    const outlastsWindow = await publish(owner, expiringLater.id, {
+      allocation: { storeProductId: expiringLater.id, quantity: 1, physicallySetAside: false },
+      pickupStart: tomorrowStart,
+      pickupEnd: tomorrowEnd,
+    });
+    expect(outlastsWindow.status).toBe("live");
   });
 
   it("exposes the exact redacted public projection while base tables remain private", async () => {
@@ -543,9 +582,243 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     expect(reloaded.quantity_available).toBe(2);
   });
 
+  it("replays a lapsed hold as expired_no_show and caps the unit it releases", async () => {
+    // A hold that lapsed while the client was away replays as
+    // expired_no_show, never as a stale held. That only holds if the expiry
+    // sweep runs before the replay lookup rather than after it.
+    const lapsedProduct = await createProduct();
+    const lapsedOffer = await publish(owner, lapsedProduct.id, {
+      allocation: { storeProductId: lapsedProduct.id, quantity: 1, physicallySetAside: false },
+    });
+    const lapsedInstallation = `installation-${randomUUID()}`;
+    const lapsedClientId = randomUUID();
+    const lapsedCode = `LB-${randomUUID().slice(0, 8)}`;
+    const lapsed = await reserve(
+      lapsedOffer.id,
+      lapsedOffer.version,
+      lapsedInstallation,
+      lapsedClientId,
+      lapsedCode
+    );
+    expect(lapsed.reservation.status).toBe("held");
+    await service
+      .from("reservations_v2")
+      .update({ hold_expires_at: new Date(Date.now() - 60 * 1000).toISOString() })
+      .eq("id", lapsed.reservation.id);
+    // Drift the count back up to the total first. The sweep releases the
+    // lapsed unit on top of that, and the release is capped so the offer
+    // can never advertise more units than it was published with.
+    await service
+      .from("offers_v2")
+      .update({ quantity_available: 1 })
+      .eq("id", lapsedOffer.id);
+
+    const lapsedReplay = await reserve(
+      lapsedOffer.id,
+      lapsedOffer.version,
+      lapsedInstallation,
+      lapsedClientId,
+      lapsedCode
+    );
+    expect(lapsedReplay.replayed).toBe(true);
+    expect(lapsedReplay.reservation.id).toBe(lapsed.reservation.id);
+    expect(lapsedReplay.reservation.status).toBe("expired_no_show");
+    expect(lapsedReplay.pickup_code).toBeNull();
+
+    const capped = requireRow<{ quantity_available: number; quantity_total: number }>(
+      await service
+        .from("offers_v2")
+        .select("quantity_available, quantity_total")
+        .eq("id", lapsedOffer.id)
+        .single(),
+      "reload offer after lapsed replay"
+    );
+    expect(capped).toEqual({ quantity_available: 1, quantity_total: 1 });
+  });
+
+  it("accepts every offer version reservation traffic explains and rejects the rest", async () => {
+    const product = await createProduct({ quantity: 6 });
+    const offer = await publish(owner, product.id, {
+      allocation: { storeProductId: product.id, quantity: 3, physicallySetAside: false },
+    });
+    expect(offer.version).toBe(1);
+
+    const installation = `monotonic-${randomUUID()}`;
+    const held = await reserve(offer.id, offer.version, installation);
+    const cancelled = await anon.rpc("cancel_reservation_v2", {
+      p_reservation_id: held.reservation.id,
+      p_installation_id: installation,
+      p_idempotency_key: randomUUID(),
+    });
+    expect(cancelled.error).toBeNull();
+
+    const afterCancel = requireRow<{ version: number }>(
+      await service.from("offers_v2").select("version").eq("id", offer.id).single(),
+      "reload offer after cancel"
+    );
+    expect(afterCancel.version).toBe(3);
+
+    // Version 2 sits between the published version and the current one. The
+    // old rule accepted only those two exact numbers and rejected everything
+    // in between, which meant a fresher client could be turned away while a
+    // staler one was let through. Both bumps here came from a hold and its
+    // release, neither of which changes the terms the buyer agreed to, so
+    // the caller is stale in a way that does not matter.
+    const intermediate = await reserve(offer.id, 2, `monotonic-mid-${randomUUID()}`);
+    expect(intermediate.replayed).toBe(false);
+    expect(intermediate.reservation.status).toBe("held");
+
+    // A version the offer has never carried is not a stale read, it is a
+    // client reporting something that never happened.
+    const aheadCode = "LB-ahead-77";
+    const ahead = await anon.rpc("reserve_offer_v2", {
+      p_offer_id: offer.id,
+      p_client_reservation_id: randomUUID(),
+      p_installation_id: `monotonic-ahead-${randomUUID()}`,
+      p_expected_offer_version: 9,
+      p_pickup_code: aheadCode,
+      p_pickup_code_hash: sha256(aheadCode),
+      p_pickup_code_hint: "77",
+    });
+    expect(ahead.error?.message).toMatch(/^version_conflict:/);
+
+    // A seller side bump leaves no reservation movement behind, so it can
+    // never be explained away and a caller from before it is rejected.
+    const pausedProduct = await createProduct({ quantity: 2 });
+    const pausedOffer = await publish(owner, pausedProduct.id, {
+      allocation: { storeProductId: pausedProduct.id, quantity: 2, physicallySetAside: false },
+    });
+    const pause = await owner.rpc("pause_offer_v2", {
+      p_store_id: storeId,
+      p_offer_id: pausedOffer.id,
+      p_idempotency_key: randomUUID(),
+      p_expected_version: pausedOffer.version,
+    });
+    expect(pause.error).toBeNull();
+    // Put it back on sale without touching the version, the way a resume
+    // would, so the reserve below is judged on the version rule and not on
+    // the paused status.
+    await service.from("offers_v2").update({ status: "live" }).eq("id", pausedOffer.id);
+
+    const prePauseCode = "LB-prepause-88";
+    const prePause = await anon.rpc("reserve_offer_v2", {
+      p_offer_id: pausedOffer.id,
+      p_client_reservation_id: randomUUID(),
+      p_installation_id: `monotonic-prepause-${randomUUID()}`,
+      p_expected_offer_version: pausedOffer.version,
+      p_pickup_code: prePauseCode,
+      p_pickup_code_hash: sha256(prePauseCode),
+      p_pickup_code_hint: "88",
+    });
+    expect(prePause.error?.message).toMatch(/^version_conflict:/);
+
+    // Every rejection above rolled back, so no unit was quietly taken.
+    const untouched = requireRow<{ quantity_available: number }>(
+      await service
+        .from("offers_v2")
+        .select("quantity_available")
+        .eq("id", pausedOffer.id)
+        .single(),
+      "reload offer after rejected reserve"
+    );
+    expect(untouched.quantity_available).toBe(2);
+  });
+
+  it("refuses anon callers on every seller RPC and keeps internal tables unreadable", async () => {
+    const product = await createProduct();
+    const offer = await publish(owner, product.id, {
+      allocation: { storeProductId: product.id, quantity: 1, physicallySetAside: false },
+    });
+
+    const sellerCalls: [string, Record<string, unknown>][] = [
+      [
+        "publish_offer_v2",
+        {
+          p_store_id: storeId,
+          p_input: offerInput(product.id, {
+            allocation: { storeProductId: product.id, quantity: 1, physicallySetAside: false },
+          }),
+          p_idempotency_key: randomUUID(),
+        },
+      ],
+      [
+        "pause_offer_v2",
+        {
+          p_store_id: storeId,
+          p_offer_id: offer.id,
+          p_idempotency_key: randomUUID(),
+          p_expected_version: offer.version,
+        },
+      ],
+      [
+        "fulfill_reservation_v2",
+        { p_store_id: storeId, p_pickup_code: "LB-anon-99", p_idempotency_key: randomUUID() },
+      ],
+      [
+        "report_stock_mismatch_v2",
+        {
+          p_store_id: storeId,
+          p_offer_id: offer.id,
+          p_observed_quantity: 0,
+          p_reason: "anon probe",
+          p_idempotency_key: randomUUID(),
+        },
+      ],
+      ["list_seller_pickups_v2", { p_store_id: storeId }],
+    ];
+
+    for (const [name, args] of sellerCalls) {
+      const result = await anon.rpc(name, args);
+      // Refused at the grant, before any body runs. The label keeps a
+      // failure readable, otherwise the assertion says only that some call
+      // in the list came back clean.
+      expect(`${name}:${result.error === null}`).toBe(`${name}:false`);
+      expect(result.data).toBeNull();
+    }
+
+    // The offer the probes named is exactly where it was.
+    const untouched = requireRow<{ status: string; version: number }>(
+      await service.from("offers_v2").select("status, version").eq("id", offer.id).single(),
+      "reload offer after anon probes"
+    );
+    expect(untouched).toEqual({ status: "live", version: offer.version });
+  });
+
+  it("keeps store exceptions and buyer idempotency keys unreadable by any client", async () => {
+    // store_exceptions and buyer_idempotency_keys carry seller incident
+    // detail and buyer command history. Neither anon nor a signed in member
+    // of the store may read a single row of either.
+    const readers: [string, SupabaseClient][] = [
+      ["anon", anon],
+      ["staff", staff],
+      ["owner", owner],
+    ];
+    for (const table of ["store_exceptions", "buyer_idempotency_keys"]) {
+      for (const [label, client] of readers) {
+        const result = await client.from(table).select("*");
+        const rows = result.data ?? [];
+        expect(`${label}:${table}:${result.error !== null || rows.length === 0}`).toBe(
+          `${label}:${table}:true`
+        );
+        expect(rows).toHaveLength(0);
+      }
+    }
+  });
+
   it("checks pause version before status and fingerprints idempotency keys", async () => {
     const product = await createProduct();
     const offer = await publish(manager, product.id);
+
+    const beforePause = requireRow<{ status: string }>(
+      await service
+        .from("offer_allocations")
+        .select("status")
+        .eq("offer_id", offer.id)
+        .single(),
+      "read allocation before pause"
+    );
+    expect(beforePause.status).toBe("active");
+
     const key = randomUUID();
     const paused = await manager.rpc("pause_offer_v2", {
       p_store_id: storeId,
@@ -555,6 +828,19 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     });
     expect(paused.error).toBeNull();
     expect(paused.data.status).toBe("paused");
+
+    // A paused offer is out of the pool, so it stops encumbering its
+    // product. An allocation row left active forever would keep the stock
+    // reserved against an offer nobody can buy.
+    const afterPause = requireRow<{ status: string }>(
+      await service
+        .from("offer_allocations")
+        .select("status")
+        .eq("offer_id", offer.id)
+        .single(),
+      "read allocation after pause"
+    );
+    expect(afterPause.status).toBe("released");
 
     const replay = await manager.rpc("pause_offer_v2", {
       p_store_id: storeId,
@@ -733,6 +1019,17 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
     });
     expect(keyConflict.error?.message).toMatch(/^idempotency_conflict:/);
 
+    // A mismatch pauses the offer, so its allocation is released with it.
+    const mismatchAllocation = requireRow<{ status: string }>(
+      await service
+        .from("offer_allocations")
+        .select("status")
+        .eq("offer_id", offer.id)
+        .single(),
+      "read allocation after mismatch"
+    );
+    expect(mismatchAllocation.status).toBe("released");
+
     const overPublish = await owner.rpc("publish_offer_v2", {
       p_store_id: storeId,
       p_input: offerInput(product.id, {
@@ -762,6 +1059,53 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
       .select("kind")
       .eq("store_product_id", product.id);
     expect(movementRows.data?.filter((row) => row.kind === "reservation_release")).toHaveLength(0);
+  });
+
+  it("reuses the open exception when a second mismatch lands under a fresh key", async () => {
+    const product = await createProduct({ quantity: 3 });
+    const offer = await publish(owner, product.id);
+    await reserve(offer.id, offer.version, `second-mismatch-${randomUUID()}`);
+
+    const first = await manager.rpc("report_stock_mismatch_v2", {
+      p_store_id: storeId,
+      p_offer_id: offer.id,
+      p_observed_quantity: 1,
+      p_reason: "one bag could not be found",
+      p_idempotency_key: randomUUID(),
+    });
+    expect(first.error).toBeNull();
+
+    // Reporting again under a fresh key is a real case, a member who finds
+    // one more bag missing after the first report. Only one mismatch may be
+    // open per offer, so the second report has to reuse the exception that
+    // is already open rather than collide with the index enforcing that.
+    const second = await manager.rpc("report_stock_mismatch_v2", {
+      p_store_id: storeId,
+      p_offer_id: offer.id,
+      p_observed_quantity: 0,
+      p_reason: "the last bag is gone too",
+      p_idempotency_key: randomUUID(),
+    });
+    expect(second.error).toBeNull();
+    expect(second.data.exception.id).toBe(first.data.exception.id);
+    expect(second.data.offer.status).toBe("paused");
+    expect(second.data.offer.version).toBeGreaterThan(first.data.offer.version);
+
+    const openExceptions = await service
+      .from("store_exceptions")
+      .select("id")
+      .eq("related_offer_id", offer.id)
+      .eq("kind", "stock_mismatch")
+      .eq("status", "open");
+    expect(openExceptions.error).toBeNull();
+    expect(openExceptions.data).toHaveLength(1);
+
+    const reservationRows = await service
+      .from("reservations_v2")
+      .select("status")
+      .eq("offer_id", offer.id);
+    expect(reservationRows.data).toHaveLength(1);
+    expect(reservationRows.data?.[0].status).toBe("failed_stock_mismatch");
   });
 
   it("lazily expires no-shows in both buyer and seller reads and never fulfills an expired hold", async () => {
@@ -834,6 +1178,18 @@ d("v2 offers, reservations, projection, and lifecycle RPCs", () => {
       "reload expired offer"
     );
     expect(reloadedOffer).toEqual({ quantity_available: 1, status: "expired" });
+
+    // The sweep also releases the allocation. An expired offer encumbers
+    // nothing, and nothing will ever come along later to clean the row up.
+    const expiredAllocation = requireRow<{ status: string }>(
+      await service
+        .from("offer_allocations")
+        .select("status")
+        .eq("offer_id", offer.id)
+        .single(),
+      "read allocation after expiry"
+    );
+    expect(expiredAllocation.status).toBe("released");
   });
 
   it("writes the required audit and outbox records without exposing pickup plaintext", async () => {
