@@ -108,6 +108,10 @@ const SKIPPED_BLOCKS: ReadonlyMap<string, string> = new Map([
     "appends an audit entry and an offer_stock_mismatch outbox event",
     "divergence, not a clock problem. The fake emits one offer_stock_mismatch event, report_stock_mismatch_v2 emits offer_paused plus one reservation_failed_stock_mismatch per failed hold",
   ],
+  [
+    "keeps mismatch encumbrance alive after offer expiry when the lazy sweep runs",
+    "needs setNow to move past the pickup end. The encumbrance survival itself is pinned against real SQL by the B3 guard tests in inventory.integration.test.ts and the mismatch tests in offers-reservations.integration.test.ts",
+  ],
 ]);
 
 /**
