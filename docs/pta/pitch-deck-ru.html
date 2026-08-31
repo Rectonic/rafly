@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Rafly | President Tech Award 2026</title>
+  <style>
+    :root {
+      --teal: #16C79A;
+      --deep: #0E8A6C;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --white: #FFFFFF;
+      --warm: #FF8C42;
+      --alert: #FF6B6B;
+      --muted: #65706B;
+      --line: rgba(16, 20, 24, .15);
+      --soft: rgba(22, 199, 154, .10);
+      --display: "Arial Narrow", "Avenir Next Condensed", "Roboto Condensed", system-ui, sans-serif;
+      --body: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #080B0D;
+      color: var(--ink);
+      font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+    }
+
+    .deck {
+      position: relative;
+      width: min(100vw, 177.7778vh);
+      height: min(100vh, 56.25vw);
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      container-type: size;
+      background: var(--paper);
+      box-shadow: 0 2rem 6rem rgba(0, 0, 0, .42);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 2.2cqh;
+      padding: 5.4cqh 5.2cqw 4.2cqh;
+      overflow: hidden;
+      background:
+        linear-gradient(90deg, transparent 0 5.15cqw, rgba(16,20,24,.035) 5.15cqw 5.22cqw, transparent 5.22cqw),
+        var(--paper);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(1.5%);
+      transition: opacity 180ms ease, transform 220ms ease, visibility 0s linear 220ms;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(0);
+      transition-delay: 0s;
+    }
+
+    .slide.dark {
+      color: var(--white);
+      background:
+        radial-gradient(circle at 78% 22%, rgba(22,199,154,.22), transparent 28%),
+        linear-gradient(135deg, #101418 0%, #0B2420 100%);
+    }
+
+    .slide.warm {
+      background:
+        linear-gradient(115deg, rgba(255,140,66,.13), transparent 42%),
+        var(--paper);
+    }
+
+    .topline, .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2cqw;
+      position: relative;
+      z-index: 4;
+    }
+
+    .eyebrow, .source, .counter, .keyhint, .label {
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .11em;
+    }
+
+    .eyebrow { font-size: 1.03cqw; color: var(--deep); font-weight: 800; }
+    .dark .eyebrow { color: var(--teal); }
+    .section-no { color: var(--muted); font: 700 1.02cqw/1 var(--mono); }
+    .dark .section-no { color: rgba(255,255,255,.55); }
+
+    .content { min-height: 0; position: relative; z-index: 2; }
+    h1, h2, h3, p, ul, ol, figure { margin: 0; }
+    h1, h2 { font-family: var(--display); letter-spacing: -.035em; }
+    h1 { font-size: 6.2cqw; line-height: .9; font-weight: 900; }
+    h2 { font-size: 3.05cqw; line-height: 1; font-weight: 850; max-width: 24ch; }
+    h3 { font-size: 1.42cqw; line-height: 1.12; }
+    p, li { font-size: 1.23cqw; line-height: 1.38; }
+    .lead { font-size: 1.72cqw; line-height: 1.28; max-width: 43ch; color: #34413B; }
+    .dark .lead { color: rgba(255,255,255,.76); }
+    .small { font-size: .96cqw; line-height: 1.35; color: var(--muted); }
+    .dark .small { color: rgba(255,255,255,.58); }
+    .mono { font-family: var(--mono); }
+    .teal { color: var(--deep); }
+    .warm-text { color: #B95717; }
+    .alert-text { color: #BE3535; }
+
+    .footer { align-self: end; }
+    .source { max-width: 77%; font-size: .68cqw; line-height: 1.35; color: #738079; letter-spacing: .055em; text-transform: none; }
+    .dark .source { color: rgba(255,255,255,.48); }
+    .counter { font-size: .82cqw; color: var(--muted); }
+    .dark .counter { color: rgba(255,255,255,.58); }
+    .keyhint { position: absolute; right: 1.3cqw; bottom: 1.4cqh; z-index: 10; font-size: .66cqw; color: rgba(16,20,24,.42); pointer-events: none; }
+    .dark .keyhint { color: rgba(255,255,255,.7); }
+    .progress { position: absolute; left: 0; bottom: 0; z-index: 11; height: .55cqh; width: 0; background: var(--teal); transition: width 180ms ease; }
+
+    .title-grid { height: 100%; display: grid; grid-template-columns: 1.22fr .78fr; align-items: end; gap: 7cqw; padding-bottom: 2cqh; }
+    .title-copy { display: grid; gap: 2.2cqh; }
+    .title-position { max-width: 37ch; font-size: 1.52cqw; line-height: 1.3; color: rgba(255,255,255,.74); }
+    .title-meta { border-top: 1px solid rgba(255,255,255,.26); padding-top: 2.2cqh; display: grid; gap: 1.4cqh; align-self: end; }
+    .title-meta strong { font-size: 1.18cqw; }
+    .title-meta span { font: 500 .95cqw/1.35 var(--mono); color: rgba(255,255,255,.62); }
+    .stock-mark { width: 16cqw; color: var(--teal); }
+
+    .split { height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 5cqw; align-items: center; }
+    .split.narrow-right { grid-template-columns: 1.16fr .84fr; }
+    .stack { display: grid; gap: 2.1cqh; align-content: center; }
+    .stack.tight { gap: 1.25cqh; }
+    .quote-line { border-left: .32cqw solid var(--teal); padding-left: 1.5cqw; font-size: 1.38cqw; line-height: 1.35; }
+    .evidence-tag { display: inline-flex; align-items: center; width: fit-content; gap: .65cqw; padding: .55cqh .85cqw; border: 1px solid var(--line); border-radius: 999px; font: 750 .78cqw/1 var(--mono); color: var(--muted); background: rgba(255,255,255,.55); }
+    .evidence-tag::before { content: ""; width: .48cqw; height: .48cqw; border-radius: 50%; background: var(--warm); }
+
+    .problem-visual { width: 100%; height: 38cqh; }
+    .problem-points { display: grid; gap: 1.4cqh; }
+    .problem-point { display: grid; grid-template-columns: 2.2cqw 1fr; gap: 1cqw; align-items: start; }
+    .problem-point b { font: 800 1.38cqw/1 var(--mono); color: var(--deep); }
+
+    .cards-3 { height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5cqw; align-items: center; }
+    .answer { min-height: 43cqh; padding: 2.4cqw 2cqw; border-top: .38cqw solid var(--ink); background: rgba(255,255,255,.65); display: grid; align-content: space-between; gap: 1.6cqh; }
+    .answer:nth-child(2) { border-color: var(--warm); }
+    .answer:nth-child(3) { border-color: var(--teal); }
+    .answer .assumption { font: 800 .78cqw/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .answer .breaks { color: #49554F; }
+
+    .insight { height: 100%; display: grid; place-items: center; text-align: center; }
+    .insight blockquote { display: grid; gap: 2.7cqh; max-width: 76cqw; }
+    .insight .big { font-family: var(--display); font-size: 4.8cqw; line-height: .98; letter-spacing: -.04em; font-weight: 900; }
+    .insight .consequence { font-size: 1.66cqw; color: rgba(255,255,255,.72); }
+
+    .diagram-wrap { height: 100%; display: grid; grid-template-rows: auto 1fr; gap: 2cqh; }
+    .engine-svg { width: 100%; height: 45cqh; }
+
+    .sprint { height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 2cqh; }
+    .timeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.1cqw; align-items: stretch; align-self: center; }
+    .phase { position: relative; padding: 2.1cqh 1.15cqw 1.5cqh; border-top: .28cqw solid var(--line); }
+    .phase::before { content: ""; position: absolute; top: -.52cqw; left: 0; width: .82cqw; height: .82cqw; border-radius: 50%; background: var(--teal); border: .2cqw solid var(--paper); box-shadow: 0 0 0 1px var(--deep); }
+    .phase b { display: block; font: 900 1.05cqw/1.1 var(--mono); color: var(--deep); margin-bottom: 1cqh; }
+    .phase p { font-size: .94cqw; line-height: 1.35; }
+    .keeps { display: grid; grid-template-columns: auto 1fr; gap: 1.4cqw; align-items: center; padding: 1.5cqh 1.3cqw; background: var(--ink); color: var(--white); }
+    .keeps strong { font: 800 .85cqw/1 var(--mono); color: var(--teal); text-transform: uppercase; letter-spacing: .08em; }
+    .keeps span { font-size: 1.05cqw; }
+
+    .screens { height: 100%; display: grid; grid-template-rows: auto 1fr; gap: 1.5cqh; }
+    .screens-svg { width: 100%; height: 47cqh; align-self: center; }
+
+    .honesty { height: 100%; display: grid; grid-template-columns: 1.15fr .85fr; gap: 4cqw; align-items: center; }
+    .audit-flow { display: grid; grid-template-columns: repeat(4, 1fr); align-items: stretch; gap: .8cqw; margin-top: 2.2cqh; }
+    .audit-step { min-height: 16cqh; padding: 1.4cqh .95cqw; border: 1px solid rgba(255,255,255,.23); display: grid; align-content: space-between; position: relative; }
+    .audit-step:not(:last-child)::after { content: "→"; position: absolute; right: -1.05cqw; top: 43%; z-index: 3; font-size: 1.2cqw; color: var(--teal); }
+    .audit-step b { font: 800 .83cqw/1.2 var(--mono); color: var(--teal); text-transform: uppercase; }
+    .audit-step span { font-size: .91cqw; line-height: 1.32; color: rgba(255,255,255,.74); }
+    .honesty-rule { padding: 2.2cqw; border: 1px solid rgba(255,255,255,.23); background: rgba(255,255,255,.04); display: grid; gap: 1.5cqh; }
+    .honesty-rule .never { font: 850 1.56cqw/1.18 var(--display); }
+    .honesty-rule ul { display: grid; gap: 1.2cqh; padding-left: 1.2cqw; }
+    .honesty-rule li { font-size: 1cqw; color: rgba(255,255,255,.72); }
+    .honesty-rule li::marker { color: var(--teal); }
+
+    .matrix { width: 100%; border-collapse: collapse; margin-top: 1.8cqh; }
+    .matrix th, .matrix td { padding: 1.08cqh 1cqw; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    .matrix th { font: 800 .72cqw/1.2 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .matrix td { font-size: 1.03cqw; }
+    .matrix td:first-child { font-weight: 750; }
+    .pass { display: inline-flex; align-items: center; gap: .5cqw; color: var(--deep); font: 800 .82cqw/1 var(--mono); white-space: nowrap; }
+    .pass::before { content: "✓"; display: grid; place-items: center; width: 1.3cqw; height: 1.3cqw; border-radius: 50%; color: var(--white); background: var(--deep); }
+
+    .market { height: 100%; display: grid; grid-template-columns: .76fr 1.24fr; gap: 4cqw; align-items: center; }
+    .beachhead { padding: 2.2cqw; background: var(--ink); color: var(--white); display: grid; gap: 1.4cqh; }
+    .beachhead .label { font-size: .74cqw; color: var(--teal); }
+    .beachhead strong { font: 850 1.68cqw/1.18 var(--display); }
+    .beachhead p { font-size: 1.02cqw; color: rgba(255,255,255,.67); }
+    .method { display: grid; gap: 1.25cqh; }
+    .formula { display: grid; grid-template-columns: 5.4cqw 1fr; gap: 1.1cqw; align-items: center; padding: 1.15cqh 0; border-bottom: 1px solid var(--line); }
+    .formula b { font: 900 1.18cqw/1 var(--mono); color: var(--deep); }
+    .formula span { font-size: 1cqw; }
+    .placeholder { display: inline-block; padding: .38cqh .45cqw; border: 1px dashed #B95717; background: rgba(255,140,66,.11); color: #97440F; font: 750 .72cqw/1.3 var(--mono); }
+
+    .economics { height: 100%; display: grid; grid-template-columns: .72fr 1.28fr; gap: 4cqw; align-items: center; }
+    .revenue-stack { display: grid; gap: 1.2cqh; }
+    .revenue-line { padding: 1.25cqh 0; border-bottom: 1px solid var(--line); }
+    .revenue-line b { display: block; font-size: 1.25cqw; margin-bottom: .45cqh; }
+    .revenue-line span { font-size: .96cqw; color: var(--muted); }
+    .math-card { padding: 2.2cqw; background: var(--white); border: 1px solid var(--line); display: grid; gap: 1.3cqh; box-shadow: .7cqw .7cqw 0 var(--soft); }
+    .math-card .eq { font: 750 1.02cqw/1.5 var(--mono); }
+    .math-card .total { border-top: .25cqw solid var(--ink); padding-top: 1.4cqh; font: 900 1.22cqw/1.4 var(--mono); }
+
+    .competition { height: 100%; display: grid; grid-template-columns: .72fr 1.28fr; gap: 3cqw; align-items: center; }
+    .position { display: grid; gap: 2cqh; }
+    .position-line { padding-left: 1.2cqw; border-left: .32cqw solid var(--teal); font-size: 1.28cqw; font-weight: 720; }
+    .map-svg { width: 100%; height: 47cqh; }
+
+    .traction { height: 100%; display: grid; grid-template-columns: .86fr 1.14fr; gap: 4cqw; align-items: center; }
+    .now { display: grid; gap: 1.05cqh; }
+    .now-line { display: grid; grid-template-columns: 1.3cqw 1fr; gap: .8cqw; align-items: start; font-size: 1.03cqw; }
+    .now-line::before { content: "✓"; color: var(--deep); font-weight: 900; }
+    .now-line.zero::before { content: "0"; font: 900 .9cqw/1.4 var(--mono); color: var(--alert); }
+    .milestones { display: grid; gap: .4cqh; }
+    .milestone { display: grid; grid-template-columns: 7.5cqw 1fr; gap: 1cqw; padding: 1.35cqh 0; border-bottom: 1px solid var(--line); }
+    .milestone time { font: 850 .85cqw/1.4 var(--mono); color: var(--deep); }
+    .milestone p { font-size: .98cqw; }
+
+    .team { height: 100%; display: grid; grid-template-rows: auto 1fr auto; gap: 1.5cqh; }
+    .team-table { width: 100%; border-collapse: collapse; }
+    .team-table th, .team-table td { border-bottom: 1px solid var(--line); padding: .92cqh .75cqw; text-align: left; }
+    .team-table th { font: 800 .7cqw/1.2 var(--mono); color: var(--muted); text-transform: uppercase; }
+    .team-table td { font-size: .91cqw; }
+    .team-table td:first-child { font-weight: 750; width: 25%; }
+    .fill { color: #A34C16; font-family: var(--mono); }
+    .warning { padding: 1.15cqh 1.1cqw; display: flex; gap: 1cqw; align-items: center; background: rgba(255,107,107,.12); border: 1px solid rgba(190,53,53,.35); }
+    .warning b { font: 900 .82cqw/1.2 var(--mono); color: #A22525; text-transform: uppercase; }
+    .warning span { font-size: .98cqw; }
+
+    .funds { height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6cqw; align-items: center; }
+    .tranche { min-height: 40cqh; padding: 2.1cqw 1.65cqw; background: rgba(255,255,255,.7); border-top: .35cqw solid var(--teal); display: grid; align-content: space-between; gap: 1.4cqh; }
+    .tranche:nth-child(2) { border-color: var(--warm); }
+    .tranche:nth-child(3) { border-color: var(--ink); }
+    .tranche .num { font: 900 1cqw/1 var(--mono); color: var(--muted); }
+    .tranche h3 { font-size: 1.42cqw; }
+    .tranche p { font-size: .98cqw; color: #49554F; }
+    .unlock { padding-top: 1.2cqh; border-top: 1px solid var(--line); font-size: .92cqw; }
+    .unlock b { color: var(--deep); }
+
+    .closing { height: 100%; display: grid; grid-template-columns: 1.25fr .75fr; gap: 5cqw; align-items: end; padding-bottom: 3cqh; }
+    .closing-line { font-family: var(--display); font-weight: 900; letter-spacing: -.04em; font-size: 4.6cqw; line-height: .98; }
+    .contact { display: grid; gap: 1.1cqh; padding-top: 2cqh; border-top: 1px solid rgba(255,255,255,.28); }
+    .contact b { color: var(--teal); font: 800 .83cqw/1 var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+    .contact span { font: 500 1cqw/1.5 var(--mono); color: rgba(255,255,255,.7); }
+
+    svg text { font-family: var(--body); }
+    svg text:not([fill]) { fill: currentColor; }
+    svg .mono-svg { font-family: var(--mono); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .slide, .progress { transition: none; }
+    }
+
+    @media print {
+      @page { size: A4 landscape; margin: 0; }
+      html, body { display: block; width: auto; height: auto; overflow: visible; background: white; }
+      .deck { display: block; width: auto; height: auto; aspect-ratio: auto; overflow: visible; box-shadow: none; background: white; container-type: normal; }
+      .slide {
+        position: relative;
+        display: grid;
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+        width: 297mm;
+        height: 167.0625mm;
+        padding: 9.02mm 15.44mm 7.02mm;
+        gap: 3.68mm;
+        margin: 21.46875mm 0;
+        container-type: size;
+        break-after: page;
+        page-break-after: always;
+        break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .slide:last-of-type { break-after: auto; page-break-after: auto; }
+      .keyhint, .progress { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck" tabindex="0" aria-label="Презентация Rafly, 17 слайдов">
+    <section class="slide dark active" aria-label="Слайд 1, титульный">
+      <div class="topline"><span class="eyebrow">President Tech Award 2026</span><span class="section-no">01</span></div>
+      <div class="content title-grid">
+        <div class="title-copy">
+          <svg class="stock-mark" viewBox="0 0 240 68" aria-hidden="true">
+            <path d="M5 12h230M5 34h230M5 56h230" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+            <path d="M25 5v58M98 5v58M172 5v58M220 5v58" stroke="currentColor" stroke-width="3" opacity=".48"/>
+          </svg>
+          <h1>Rafly</h1>
+          <p class="title-position">Создаём достоверный товарный остаток в независимом магазине, затем превращаем подтверждённый излишек в продажу.</p>
+        </div>
+        <div class="title-meta">
+          <strong>Best Startup Project</strong>
+          <span>Корпоративные решения</span>
+          <span>Ташкент, Узбекистан</span>
+          <span>31 августа 2026</span>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Rafly, контроль товарных запасов для физической розницы</span><span class="counter">01 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 2, проблема">
+      <div class="topline"><span class="eyebrow">Проблема начинается не с отходов</span><span class="section-no">02</span></div>
+      <div class="content split narrow-right">
+        <div class="stack">
+          <h2>Магазин теряет деньги, когда остаток живёт в голове.</h2>
+          <div class="problem-points">
+            <div class="problem-point"><b>01</b><p>Товарная правда живёт в голове владельца, продавца или в тетради.</p></div>
+            <div class="problem-point"><b>02</b><p>Сроки и расхождения замечают поздно, а потери поглощаются без измерения.</p></div>
+            <div class="problem-point"><b>03</b><p>Закрыть магазин ради наведения порядка нельзя, покупатели уйдут к соседям.</p></div>
+          </div>
+          <span class="evidence-tag">50 магазинов в стартовой когорте</span>
+        </div>
+        <div class="stack tight">
+          <svg class="problem-visual" viewBox="0 0 620 380" role="img" aria-label="Полка, тетрадь и один человек как единственный источник остатка">
+            <rect x="16" y="28" width="360" height="310" rx="10" fill="#fff" stroke="#101418" stroke-width="3"/>
+            <path d="M42 108h308M42 188h308M42 268h308" stroke="#101418" stroke-width="5"/>
+            <g fill="#16C79A">
+              <rect x="54" y="66" width="34" height="42"/><rect x="99" y="54" width="52" height="54"/><rect x="164" y="75" width="28" height="33"/>
+              <rect x="51" y="151" width="56" height="37"/><rect x="119" y="137" width="30" height="51"/><rect x="162" y="144" width="64" height="44"/>
+            </g>
+            <g fill="#FF8C42"><rect x="238" y="66" width="38" height="42"/><rect x="287" y="58" width="45" height="50"/><rect x="238" y="143" width="76" height="45"/></g>
+            <g fill="#CBD2CE"><rect x="52" y="230" width="44" height="38"/><rect x="109" y="215" width="58" height="53"/><rect x="180" y="228" width="36" height="40"/><rect x="232" y="218" width="91" height="50"/></g>
+            <circle cx="491" cy="92" r="46" fill="#101418"/>
+            <path d="M424 250c0-63 25-112 67-112s67 49 67 112" fill="#101418"/>
+            <path d="M394 68c28-43 115-55 153 0" fill="none" stroke="#16C79A" stroke-width="5" stroke-dasharray="8 8"/>
+            <text x="470" y="46" font-size="18" font-weight="800" text-anchor="middle" class="mono-svg">ОСТАТОК?</text>
+            <rect x="404" y="260" width="174" height="84" rx="7" fill="#F4F6F5" stroke="#101418" stroke-width="3" transform="rotate(-4 491 302)"/>
+            <path d="M425 283l124-9M424 302l104-7M422 321l131-9" stroke="#65706B" stroke-width="3" transform="rotate(-4 491 302)"/>
+          </svg>
+          <p class="quote-line">Стартовая когорта Rafly охватывает 50 магазинов. Им нужен быстрый полный учёт, мониторинг запасов и аналитика без зависимости от POS.</p>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Источник: соглашения с 50 магазинами, стартовая когорта Rafly на 31.08.2026.</span><span class="counter">02 / 17</span></div>
+    </section>
+
+    <section class="slide warm" aria-label="Слайд 3, почему существующие решения не работают">
+      <div class="topline"><span class="eyebrow">Три ответа, три сломанных предположения</span><span class="section-no">03</span></div>
+      <div class="content cards-3">
+        <article class="answer">
+          <div><span class="assumption">POS предполагает</span><h3>Каталог и движения поддерживаются каждый день</h3></div>
+          <p class="breaks">В сегменте нет владельца процесса. Неполная настройка быстро превращает цифру в декорацию.</p>
+          <span class="small mono">Сбой: внедрение и дисциплина</span>
+        </article>
+        <article class="answer">
+          <div><span class="assumption">Таблица предполагает</span><h3>Кто-то обновляет файл и разбирает расхождения</h3></div>
+          <p class="breaks">Ответственность не закреплена, решения не оставляют следа, версии расходятся.</p>
+          <span class="small mono">Сбой: владелец данных и аудит</span>
+        </article>
+        <article class="answer">
+          <div><span class="assumption">Маркетплейс предполагает</span><h3>Магазин уже знает, что и сколько можно продать</h3></div>
+          <p class="breaks">Если излишек не виден и не отложен физически, публичное предложение ненадёжно.</p>
+          <span class="small mono">Сбой: достоверный остаток</span>
+        </article>
+      </div>
+      <div class="footer"><span class="source">Rafly запускает магазин под ключ и создаёт рабочий контур контроля независимо от исходной системы.</span><span class="counter">03 / 17</span></div>
+    </section>
+
+    <section class="slide dark" aria-label="Слайд 4, ключевой инсайт">
+      <div class="topline"><span class="eyebrow">Инсайт</span><span class="section-no">04</span></div>
+      <div class="content insight">
+        <blockquote>
+          <p class="big">Нельзя продать излишек, которого не видно.</p>
+          <p class="consequence"><strong style="color:var(--teal)">Товарная правда</strong> и есть продукт. Маркетплейс является её следствием.</p>
+        </blockquote>
+      </div>
+      <div class="footer"><span class="source">Продуктовая теза Rafly</span><span class="counter">04 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 5, что такое Rafly">
+      <div class="topline"><span class="eyebrow">Две поверхности, один двигатель</span><span class="section-no">05</span></div>
+      <div class="content diagram-wrap">
+        <div><h2>Control создаёт остаток. Market продаёт только одобренное.</h2></div>
+        <svg class="engine-svg" viewBox="0 0 1200 500" role="img" aria-label="Rafly Control и Rafly Market на одном движке товарной правды">
+          <defs>
+            <marker id="arrowRu" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0l10 5-10 5z" fill="#0E8A6C"/></marker>
+          </defs>
+          <path d="M365 183C470 183 475 250 555 250M835 183C735 183 730 250 650 250" fill="none" stroke="#0E8A6C" stroke-width="5" marker-end="url(#arrowRu)"/>
+          <rect x="45" y="75" width="335" height="225" rx="24" fill="#fff" stroke="#101418" stroke-width="3"/>
+          <text x="82" y="122" font-size="30" font-weight="850">Rafly Control</text>
+          <text x="82" y="158" font-size="18" fill="#65706B">Рабочее место магазина</text>
+          <text x="82" y="202" font-size="20">Каталог → пересчёт → сроки</text>
+          <text x="82" y="236" font-size="20">исключения → сводка владельца</text>
+          <rect x="815" y="75" width="340" height="225" rx="24" fill="#101418"/>
+          <text x="852" y="122" font-size="30" font-weight="850" fill="#fff">Rafly Market</text>
+          <text x="852" y="158" font-size="18" fill="#AAB6B0">Публичная витрина</text>
+          <text x="852" y="202" font-size="20" fill="#fff">Одобренные офферы → бронь</text>
+          <text x="852" y="236" font-size="20" fill="#fff">окно выдачи → код самовывоза</text>
+          <rect x="330" y="325" width="540" height="120" rx="18" fill="#16C79A"/>
+          <text x="600" y="371" font-size="28" font-weight="900" text-anchor="middle">ОДИН ДВИГАТЕЛЬ ТОВАРНОЙ ПРАВДЫ</text>
+          <text x="600" y="410" font-size="18" text-anchor="middle">идентичность товара · Postgres + RLS · решение человека · аудит</text>
+          <path d="M600 325V275" stroke="#0E8A6C" stroke-width="5" marker-end="url(#arrowRu)"/>
+        </svg>
+      </div>
+      <div class="footer"><span class="source">Текущая архитектура продукта Rafly</span><span class="counter">05 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 6, Store Control Sprint">
+      <div class="topline"><span class="eyebrow">Как магазин начинает</span><span class="section-no">06</span></div>
+      <div class="content sprint">
+        <div><h2>Store Control Sprint: платный запуск под ключ за 7-10 дней</h2><p class="lead" style="margin-top:1.1cqh">Оператор восстанавливает товарный контур без остановки торговли и передаёт ежедневный цикл команде.</p></div>
+        <div class="timeline">
+          <div class="phase"><b>ДНИ 0-1</b><p>Скоуп, роли, зоны полок, исходные данные и правила доступа.</p></div>
+          <div class="phase"><b>ДНИ 2-4</b><p>Каталог с ревью. Быстрая полная инвентаризация всех товарных зон.</p></div>
+          <div class="phase"><b>ДНИ 5-6</b><p>Сроки, просрочка, действия по поставщикам и открытые исключения.</p></div>
+          <div class="phase"><b>ДНИ 7-8</b><p>Физический резерв. Менеджер одобряет первый проверенный оффер.</p></div>
+          <div class="phase"><b>ДНИ 9-10</b><p>Сводка владельца, обучение, приёмка и следующая дата контроля.</p></div>
+        </div>
+        <div class="keeps"><strong>Магазин сохраняет</strong><span>Живой каталог, базовый пересчёт, очередь сроков и исключений, роли, журнал решений, сводку владельца и готовый процесс публикации.</span></div>
+      </div>
+      <div class="footer"><span class="source">Источник: Store Control Sprint Playbook, версия на 31.08.2026. Платный формат запуска для стартовой когорты.</span><span class="counter">06 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 7, продукт по экранам">
+      <div class="topline"><span class="eyebrow">Рабочий продукт</span><span class="section-no">07</span></div>
+      <div class="content screens">
+        <div><h2>Контроль строится из пяти человеческих решений</h2><p class="small" style="margin-top:.8cqh">Тексты из текущего русского интерфейса. Значения внутри макетов демонстрационные.</p></div>
+        <svg class="screens-svg" viewBox="0 0 1240 480" role="img" aria-label="Пять экранов продукта: импорт, сроки, пересчёт, исключения и сводка">
+          <g transform="translate(10,18)">
+            <rect width="224" height="405" rx="28" fill="#101418"/><rect x="9" y="9" width="206" height="387" rx="22" fill="#fff"/><rect x="82" y="18" width="60" height="8" rx="4" fill="#CBD2CE"/>
+            <text x="24" y="57" font-size="20" font-weight="850">Импорт CSV</text><text x="24" y="82" font-size="11" fill="#65706B">Строки на проверке</text>
+            <rect x="22" y="103" width="180" height="94" rx="12" fill="#F4F6F5"/><text x="34" y="128" font-size="13" font-weight="750">Молоко 1 л</text><text x="34" y="151" font-size="10" fill="#65706B">Неоднозначное совпадение</text><text x="34" y="175" font-size="10">Штрих-код: 478...</text>
+            <rect x="22" y="213" width="180" height="38" rx="10" fill="#16C79A"/><text x="112" y="237" font-size="11" font-weight="800" text-anchor="middle">Одобрить выбранный товар</text>
+            <rect x="22" y="261" width="180" height="38" rx="10" fill="#fff" stroke="#101418"/><text x="112" y="285" font-size="11" font-weight="700" text-anchor="middle">Одобрить как новый товар</text>
+            <text x="22" y="340" font-size="10" fill="#65706B">Решение принимает</text><text x="22" y="357" font-size="10" fill="#65706B">менеджер или владелец</text>
+          </g>
+          <g transform="translate(258,18)">
+            <rect width="224" height="405" rx="28" fill="#101418"/><rect x="9" y="9" width="206" height="387" rx="22" fill="#fff"/><rect x="82" y="18" width="60" height="8" rx="4" fill="#CBD2CE"/>
+            <text x="24" y="57" font-size="18" font-weight="850">Контроль сроков</text><text x="24" y="81" font-size="11" fill="#65706B">2 товара требуют внимания</text>
+            <rect x="22" y="103" width="180" height="143" rx="12" fill="#FFF4E9"/><text x="34" y="129" font-size="13" font-weight="750">Йогурт</text><text x="34" y="153" font-size="17" font-weight="850" fill="#B95717">Осталось 2 дня</text><text x="34" y="177" font-size="10">Срок годности: 02.09.2026</text><text x="34" y="197" font-size="10">В наличии: 8</text><rect x="34" y="211" width="130" height="23" rx="11" fill="#fff"/><text x="99" y="227" font-size="10" text-anchor="middle">пересчитать сначала</text>
+            <rect x="22" y="264" width="180" height="38" rx="10" fill="#16C79A"/><text x="112" y="288" font-size="11" font-weight="800" text-anchor="middle">Открыть создание оффера</text>
+          </g>
+          <g transform="translate(506,18)">
+            <rect width="224" height="405" rx="28" fill="#101418"/><rect x="9" y="9" width="206" height="387" rx="22" fill="#fff"/><rect x="82" y="18" width="60" height="8" rx="4" fill="#CBD2CE"/>
+            <text x="24" y="57" font-size="19" font-weight="850">Сессия пересчёта</text><text x="24" y="82" font-size="11" fill="#65706B">Фактическое количество</text>
+            <rect x="22" y="103" width="180" height="70" rx="12" fill="#F4F6F5"/><text x="34" y="131" font-size="13" font-weight="750">Молоко 1 л</text><text x="34" y="154" font-size="11">12 по учёту, 10 по пересчёту</text>
+            <text x="22" y="205" font-size="11" font-weight="750">Предложения по корректировке</text><rect x="22" y="219" width="180" height="56" rx="10" fill="#FFF4E9"/><text x="34" y="244" font-size="11">Ожидает решения менеджера</text><text x="34" y="263" font-size="10" fill="#65706B">Остаток ещё не изменён</text>
+            <rect x="22" y="292" width="84" height="36" rx="10" fill="#16C79A"/><text x="64" y="315" font-size="11" font-weight="800" text-anchor="middle">Одобрить</text><rect x="118" y="292" width="84" height="36" rx="10" fill="#fff" stroke="#101418"/><text x="160" y="315" font-size="11" font-weight="700" text-anchor="middle">Отклонить</text>
+          </g>
+          <g transform="translate(754,18)">
+            <rect width="224" height="405" rx="28" fill="#101418"/><rect x="9" y="9" width="206" height="387" rx="22" fill="#fff"/><rect x="82" y="18" width="60" height="8" rx="4" fill="#CBD2CE"/>
+            <text x="24" y="57" font-size="16" font-weight="850">Исключения магазина</text><text x="24" y="81" font-size="11" fill="#65706B">Расхождение остатков</text>
+            <rect x="22" y="103" width="180" height="86" rx="12" fill="#FFECEC"/><text x="34" y="130" font-size="13" font-weight="750">Открыто</text><text x="34" y="153" font-size="10">На полке меньше товара</text><text x="34" y="172" font-size="10" fill="#65706B">Единицы заблокированы</text>
+            <text x="22" y="220" font-size="11" font-weight="750">Комментарий к решению</text><rect x="22" y="232" width="180" height="58" rx="10" fill="#F4F6F5"/><text x="34" y="257" font-size="10">Опишите, что проверили</text><text x="34" y="275" font-size="10">и как устранили расхождение</text>
+            <rect x="22" y="307" width="180" height="38" rx="10" fill="#16C79A"/><text x="112" y="331" font-size="11" font-weight="800" text-anchor="middle">Закрыть исключение</text>
+          </g>
+          <g transform="translate(1002,18)">
+            <rect width="224" height="405" rx="28" fill="#101418"/><rect x="9" y="9" width="206" height="387" rx="22" fill="#fff"/><rect x="82" y="18" width="60" height="8" rx="4" fill="#CBD2CE"/>
+            <text x="24" y="57" font-size="19" font-weight="850">Сводка владельца</text><text x="24" y="81" font-size="10" fill="#65706B">Текущие задачи и фактические</text><text x="24" y="96" font-size="10" fill="#65706B">показатели за семь дней</text>
+            <rect x="22" y="118" width="180" height="183" rx="12" fill="#F4F6F5"/><text x="34" y="144" font-size="11" font-weight="800">Сводка дня</text><text x="34" y="169" font-size="10">Давно не проверялось</text><text x="34" y="188" font-size="10">01. Молоко 1 л</text><text x="34" y="216" font-size="10">Открытые исключения</text><text x="34" y="235" font-size="10">01. расхождение стока</text><text x="34" y="263" font-size="10">Пересчёты за 7 дней</text><text x="34" y="282" font-size="10">дней с пересчётом: 3 из 7</text>
+            <rect x="22" y="317" width="180" height="38" rx="10" fill="#16C79A"/><text x="112" y="341" font-size="11" font-weight="800" text-anchor="middle">Открыть сводку дня</text>
+          </g>
+          <text x="122" y="462" text-anchor="middle" font-size="12" font-weight="800" class="mono-svg">1. КАТАЛОГ</text><text x="370" y="462" text-anchor="middle" font-size="12" font-weight="800" class="mono-svg">2. СРОКИ</text><text x="618" y="462" text-anchor="middle" font-size="12" font-weight="800" class="mono-svg">3. ПЕРЕСЧЁТ</text><text x="866" y="462" text-anchor="middle" font-size="12" font-weight="800" class="mono-svg">4. ИСКЛЮЧЕНИЯ</text><text x="1114" y="462" text-anchor="middle" font-size="12" font-weight="800" class="mono-svg">5. СВОДКА</text>
+        </svg>
+      </div>
+      <div class="footer"><span class="source">Источник интерфейсных строк: i18n/seller.ts и тест formatDigestRu в текущем репозитории.</span><span class="counter">07 / 17</span></div>
+    </section>
+
+    <section class="slide warm" aria-label="Слайд 8, результат первых десяти дней">
+      <div class="topline"><span class="eyebrow">Результат для магазина</span><span class="section-no">08</span></div>
+      <div class="content sprint">
+        <div><h2>Через десять дней магазин видит весь запас и управляет им ежедневно.</h2><p class="lead" style="margin-top:1.1cqh">Rafly берёт запуск на себя и оставляет владельцу работающую систему.</p></div>
+        <div class="timeline">
+          <div class="phase"><b>01</b><p><strong>Каталог восстановлен.</strong> Товары собраны из любых исходных данных магазина.</p></div>
+          <div class="phase"><b>02</b><p><strong>Полный учёт проведён.</strong> Все товарные зоны прошли быструю инвентаризацию.</p></div>
+          <div class="phase"><b>03</b><p><strong>Мониторинг работает.</strong> Остатки, сроки и исключения видны в одном контуре.</p></div>
+          <div class="phase"><b>04</b><p><strong>Аналитика включена.</strong> Владелец получает ежедневную сводку и приоритеты.</p></div>
+          <div class="phase"><b>05</b><p><strong>Команда обучена.</strong> Роли, решения и следующий контроль закреплены.</p></div>
+        </div>
+        <div class="keeps"><strong>Итог спринта</strong><span>Рабочий контроль запасов, который запускается с любым POS или без POS и поддерживается командой Rafly под ключ.</span></div>
+      </div>
+      <div class="footer"><span class="source">Store Control Sprint, платное внедрение Rafly за 7-10 дней.</span><span class="counter">08 / 17</span></div>
+    </section>
+
+    <section class="slide dark" aria-label="Слайд 9, архитектура ответственности">
+      <div class="topline"><span class="eyebrow">Ответственность встроена в продукт</span><span class="section-no">09</span></div>
+      <div class="content honesty">
+        <div class="stack">
+          <h2>Владелец покупает контроль с автором каждого решения.</h2>
+          <div class="audit-flow">
+            <div class="audit-step"><b>1. Сигнал</b><span>CSV, фото, OCR, POS или наблюдение формируют исходные данные.</span></div>
+            <div class="audit-step"><b>2. Действие</b><span>Rafly поднимает совпадение, риск, расхождение или задачу.</span></div>
+            <div class="audit-step"><b>3. Решение</b><span>Именованный сотрудник принимает действие и отвечает за него.</span></div>
+            <div class="audit-step"><b>4. Аудит</b><span>Остаток и оффер получают автора, время, количество и историю.</span></div>
+          </div>
+        </div>
+        <aside class="honesty-rule">
+          <p class="never">Прослеживаемость превращает цифру в управляемый актив.</p>
+          <ul>
+            <li>Каждый пересчёт, исключение и оффер закреплены за конкретным сотрудником.</li>
+            <li>Владелец видит исходный сигнал, решение, время и текущее состояние.</li>
+            <li>Покупатель получает только одобренный оффер с подтверждённым количеством.</li>
+          </ul>
+        </aside>
+      </div>
+      <div class="footer"><span class="source">Архитектура Rafly: именованное решение и полный аудиторский след от полки до покупателя.</span><span class="counter">09 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 10, инженерные доказательства">
+      <div class="topline"><span class="eyebrow">Это система, а не только слайды</span><span class="section-no">10</span></div>
+      <div class="content">
+        <h2>Последний зафиксированный прогон проверяет продукт от интерфейса до Postgres.</h2>
+        <table class="matrix" aria-label="Матрица инженерной проверки">
+          <thead><tr><th>Контур</th><th>Что проверено</th><th>Результат</th></tr></thead>
+          <tbody>
+            <tr><td>Backend</td><td>195 интеграционных тестов против реального локального Supabase</td><td><span class="pass">пройдено</span></td></tr>
+            <tr><td>Frontend</td><td>693 теста</td><td><span class="pass">пройдено</span></td></tr>
+            <tr><td>Типы</td><td>Строгая проверка TypeScript</td><td><span class="pass">чисто</span></td></tr>
+            <tr><td>Линт</td><td>Статический анализ кода</td><td><span class="pass">чисто</span></td></tr>
+            <tr><td>База с нуля</td><td><code>supabase db reset</code> и 11 добавочных миграций</td><td><span class="pass">чисто</span></td></tr>
+            <tr><td>Соответствие</td><td>Одни и те же наборы без изменений против in-memory fake и реального Postgres</td><td><span class="pass">пройдено</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="footer"><span class="source">Источник: verification matrix Rafly, последний зафиксированный прогон до 31.08.2026.</span><span class="counter">10 / 17</span></div>
+    </section>
+
+    <section class="slide warm" aria-label="Слайд 11, рынок">
+      <div class="topline"><span class="eyebrow">Большой рынок, точный первый сегмент</span><span class="section-no">11</span></div>
+      <div class="content market">
+        <aside class="beachhead">
+          <span class="label">ОФИЦИАЛЬНАЯ БАЗА, 2024</span>
+          <strong>227 910 организаций розничной торговли</strong>
+          <p>По Узбекистану. В городе Ташкенте 40 619. Rafly начинает с независимых продуктовых магазинов и магазинов у дома.</p>
+        </aside>
+        <div class="method">
+          <h3>Базовый план после фильтров сегмента</h3>
+          <div class="formula"><b>TAM</b><span><strong>47 462 магазина</strong>, 387,3 млрд UZS годовой повторяющейся выручки. План.</span></div>
+          <div class="formula"><b>SAM</b><span><strong>8 459 магазинов</strong> в Ташкенте, 69,0 млрд UZS годовой повторяющейся выручки. План.</span></div>
+          <div class="formula"><b>SOM</b><span><strong>346,7 активного магазина</strong> через 24 месяца, 2,829 млрд UZS годовой повторяющейся выручки. План мощности.</span></div>
+          <p class="small">Фильтры базового плана: 35% продуктовый формат, 85% независимые точки, 70% без поддерживаемого цифрового остатка.</p>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Источник базы: Национальный комитет Республики Узбекистан по статистике, SIAT 1.07.02.0030, данные за 2024 год, обновлено 08.07.2025. TAM, SAM и SOM: базовый план Rafly.</span><span class="counter">11 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 12, бизнес модель">
+      <div class="topline"><span class="eyebrow">Три дохода, одна экономика магазина</span><span class="section-no">12</span></div>
+      <div class="content economics">
+        <div class="revenue-stack">
+          <div class="revenue-line"><b>1. Store Control Sprint</b><span>Разовый платёж за внедрение, пересчёт, обучение и передачу процесса.</span></div>
+          <div class="revenue-line"><b>2. Control</b><span>Ежемесячная подписка за рабочее место, сводку и поддержку цикла.</span></div>
+          <div class="revenue-line"><b>3. Market</b><span>Комиссия только с завершённой продажи подтверждённого оффера.</span></div>
+        </div>
+        <div class="math-card">
+          <h3>Базовый план вклада одного магазина</h3>
+          <div class="eq">Sprint: 1 500 000 − 560 000 работа оператора − 150 000 выезд и материалы − 200 000 привлечение = <strong>590 000 UZS</strong></div>
+          <div class="eq">Control: 500 000 − 70 000 поддержка − 50 000 инфраструктура = <strong>380 000 UZS в месяц</strong></div>
+          <div class="eq">Market: 3 000 000 GMV × 10% − 2% GMV переменных затрат = <strong>240 000 UZS в месяц</strong></div>
+          <div class="total">Вклад первого месяца с Market = 1 210 000 UZS, план</div>
+          <p class="small">Store Control Sprint продаётся как платное внедрение. Control и Market масштабируют отношения с магазином.</p>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Источник: финансовая модель Rafly на 31.08.2026. Все суммы на слайде являются базовым планом.</span><span class="counter">12 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 13, конкуренция">
+      <div class="topline"><span class="eyebrow">Конкуренция</span><span class="section-no">13</span></div>
+      <div class="content competition">
+        <div class="position">
+          <h2>Мы занимаем слой под маркетплейсом.</h2>
+          <p class="position-line">Защищаемая позиция Rafly: создаём прослеживаемую товарную правду до того, как излишек становится публичным.</p>
+          <p class="small">POS хранит данные. Маркетплейс публикует предложение. Rafly создаёт достоверный остаток, ответственность и канал продажи на одном ядре.</p>
+        </div>
+        <svg class="map-svg" viewBox="0 0 700 500" role="img" aria-label="Карта конкуренции по достоверности остатка и человеческой ответственности">
+          <defs><marker id="axisRu" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0l10 5-10 5z" fill="#101418"/></marker></defs>
+          <path d="M90 420H650M90 420V55" stroke="#101418" stroke-width="3" marker-end="url(#axisRu)"/>
+          <text x="370" y="475" font-size="16" font-weight="800" text-anchor="middle" class="mono-svg">ДОСТОВЕРНОСТЬ ОСТАТКА →</text>
+          <text x="25" y="245" font-size="16" font-weight="800" text-anchor="middle" transform="rotate(-90 25 245)" class="mono-svg">ОТВЕТСТВЕННОСТЬ ЧЕЛОВЕКА →</text>
+          <circle cx="210" cy="360" r="9" fill="#65706B"/><text x="225" y="365" font-size="17">Таблица</text>
+          <circle cx="438" cy="300" r="9" fill="#FF8C42"/><text x="453" y="305" font-size="17">POS, если поддерживается</text>
+          <circle cx="260" cy="235" r="9" fill="#FF6B6B"/><text x="275" y="225" font-size="17">Маркетплейс</text><text x="275" y="247" font-size="15" fill="#65706B">сюрприз-пакетов</text>
+          <circle cx="565" cy="115" r="18" fill="#16C79A" stroke="#0E8A6C" stroke-width="4"/><text x="538" y="88" font-size="24" font-weight="900" text-anchor="middle">Rafly</text>
+          <path d="M115 375H625M135 400V75" stroke="#CBD2CE" stroke-width="1" stroke-dasharray="6 8"/>
+        </svg>
+      </div>
+      <div class="footer"><span class="source">Стратегическая карта категорий по достоверности остатка и ответственности за решение.</span><span class="counter">13 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 14, стартовая когорта">
+      <div class="topline"><span class="eyebrow">Стартовая когорта</span><span class="section-no">14</span></div>
+      <div class="content traction">
+        <div class="stack">
+          <h2><span style="color:var(--deep);font-size:1.35em">50 магазинов</span><br>согласовали запуск с Rafly.</h2>
+          <div class="now">
+            <p class="now-line"><span><strong>Запускаемся сейчас.</strong> Эти магазины формируют первую рабочую когорту.</span></p>
+            <p class="now-line">Пилот охватывает мониторинг запасов и аналитику запасов.</p>
+            <p class="now-line">Коммерческий вход, платный Store Control Sprint на 7-10 дней.</p>
+          </div>
+        </div>
+        <div class="stack tight">
+          <h3>Что получает каждый магазин</h3>
+          <div class="milestones">
+            <div class="milestone"><time>ЛЮБОЙ POS</time><p>Rafly работает с тем, что уже есть у магазина, включая запуск без POS.</p></div>
+            <div class="milestone"><time>ПОЛНЫЙ УЧЁТ</time><p>Быстрая инвентаризация всего запаса входит в запуск.</p></div>
+            <div class="milestone"><time>МОНИТОРИНГ</time><p>Остатки, сроки и исключения переходят в ежедневный рабочий цикл.</p></div>
+            <div class="milestone"><time>ПОД КЛЮЧ</time><p>Rafly восстанавливает каталог, обучает сотрудников и ведёт запуск end to end.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Источник: соглашения с 50 магазинами и условия пилотного запуска, подтверждено основателем 31.08.2026.</span><span class="counter">14 / 17</span></div>
+    </section>
+
+    <section class="slide" aria-label="Слайд 15, команда">
+      <div class="topline"><span class="eyebrow">Команда</span><span class="section-no">15</span></div>
+      <div class="content team">
+        <div><h2>Команда соединяет продажи, инженерию и запуск магазинов.</h2></div>
+        <table class="team-table" aria-label="Шаблон команды для заполнения основателем">
+          <thead><tr><th>Необходимая ответственность</th><th>Имя и роль</th><th>Одна строка релевантного опыта</th></tr></thead>
+          <tbody>
+            <tr><td>Founder / CEO</td><td class="fill">[ФИО, реальная роль]</td><td class="fill">[Опыт, связанный с запуском и ритейлом]</td></tr>
+            <tr><td>Product + Engineering</td><td class="fill">[ФИО, реальная роль]</td><td class="fill">[Что именно построил в Rafly]</td></tr>
+            <tr><td>Pilot Operations</td><td class="fill">[ФИО, реальная роль]</td><td class="fill">[Полевые внедрения, обучение, процессы]</td></tr>
+            <tr><td>Retail / Commercial</td><td class="fill">[ФИО или объединить с ролью выше]</td><td class="fill">[Связи и опыт в независимой рознице]</td></tr>
+            <tr><td>Finance / Legal</td><td class="fill">[ФИО или объединить с founder]</td><td class="fill">[Финмодель, договоры, комплаенс]</td></tr>
+          </tbody>
+        </table>
+        <div class="warning"><b>Формат трека</b><span>Best Startup Project требует команду от 3 до 8 человек. Юридическое лицо Rafly зарегистрировано.</span></div>
+      </div>
+      <div class="footer"><span class="source">Источник требований: awards.gov.uz, President Tech Award 2026. Основатель подтверждает зарегистрированное юридическое лицо.</span><span class="counter">15 / 17</span></div>
+    </section>
+
+    <section class="slide warm" aria-label="Слайд 16, запрос и использование средств">
+      <div class="topline"><span class="eyebrow">Запрос</span><span class="section-no">16</span></div>
+      <div class="content funds">
+        <article class="tranche">
+          <div class="stack tight"><span class="num">ТРАНШ 01</span><h3>Запуск магазинов</h3><span class="placeholder">35% ПЛАНА</span><p>Инвентаризация, выезды, материалы, обучение и контроль качества Store Control Sprint.</p></div>
+          <p class="unlock"><b>Открывает:</b> быстрый запуск первой волны из когорты 50 магазинов.</p>
+        </article>
+        <article class="tranche">
+          <div class="stack tight"><span class="num">ТРАНШ 02</span><h3>Инженерия</h3><span class="placeholder">35% ПЛАНА</span><p>Надёжность, наблюдаемость, восстановление, безопасность и скорость работы полевого контура.</p></div>
+          <p class="unlock"><b>Открывает:</b> устойчивую платформу для одновременного запуска магазинов.</p>
+        </article>
+        <article class="tranche">
+          <div class="stack tight"><span class="num">ТРАНШ 03</span><h3>Полевая команда и готовность</h3><span class="placeholder">30% ПЛАНА</span><p>Операторы, поддержка, продажи, договоры и операционная готовность к масштабированию.</p></div>
+          <p class="unlock"><b>Открывает:</b> повторяемый запуск под ключ с единым стандартом качества.</p>
+        </article>
+      </div>
+      <div class="footer"><span class="source">Фонд трека: 2,5 млн USD. Призы: 125 000, 75 000 и 50 000 USD. Источник: awards.gov.uz, President Tech Award 2026. Распределение Rafly является планом.</span><span class="counter">16 / 17</span></div>
+    </section>
+
+    <section class="slide dark" aria-label="Слайд 17, завершение">
+      <div class="topline"><span class="eyebrow">Rafly</span><span class="section-no">17</span></div>
+      <div class="content closing">
+        <p class="closing-line">50 магазинов запускаются сейчас. Rafly превращает их остатки в управляемый актив.</p>
+        <div class="contact">
+          <b>Контакты</b>
+          <span>[Имя основателя]<br>[Телефон]<br>[Email]<br>[Сайт или Telegram]</span>
+        </div>
+      </div>
+      <div class="footer"><span class="source">Корпоративные решения · Rafly, Ташкент, 2026</span><span class="counter">17 / 17</span></div>
+    </section>
+
+    <div class="keyhint" aria-hidden="true">← → для навигации</div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+  </main>
+
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const deck = document.getElementById('deck');
+      const progress = document.getElementById('progress');
+      let index = Math.max(0, Math.min(slides.length - 1, Number(location.hash.replace('#', '')) - 1 || 0));
+
+      function show(next, updateHash = true) {
+        index = Math.max(0, Math.min(slides.length - 1, next));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+        progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+        if (updateHash) history.replaceState(null, '', `#${index + 1}`);
+        document.title = `Rafly | ${index + 1}/${slides.length}`;
+      }
+
+      function onKey(event) {
+        if (['ArrowRight', 'ArrowDown', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); show(index + 1); }
+        if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key)) { event.preventDefault(); show(index - 1); }
+        if (event.key === 'Home') { event.preventDefault(); show(0); }
+        if (event.key === 'End') { event.preventDefault(); show(slides.length - 1); }
+      }
+
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('hashchange', () => show(Number(location.hash.replace('#', '')) - 1 || 0, false));
+      deck.addEventListener('click', (event) => show(index + (event.clientX > innerWidth / 2 ? 1 : -1)));
+      show(index, false);
+      deck.focus({ preventScroll: true });
+    })();
+  </script>
+</body>
+</html>

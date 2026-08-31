@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Rafly | Demo video cover</title>
+  <!-- Screenshot at exactly 1920 x 1080 pixels. -->
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --warm: #FF8C42;
+      --deep-teal: #0E8A6C;
+      --line: #C9D3CF;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 1920px; height: 1080px; margin: 0; overflow: hidden; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--body); }
+    .cover { position: relative; width: 1920px; height: 1080px; padding: 82px 94px 72px; display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 96px; overflow: hidden; }
+    .cover::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 26px;
+      background: repeating-linear-gradient(to right, var(--teal) 0 130px, var(--ink) 130px 148px, var(--paper) 148px 194px);
+    }
+    .left { display: grid; grid-template-rows: auto 1fr auto; }
+    .brand { display: flex; align-items: center; gap: 22px; }
+    .brand svg { width: 66px; height: 66px; display: block; }
+    .wordmark { font: 900 48px/1 var(--display); letter-spacing: -0.06em; }
+    .title { align-self: center; }
+    .kicker { margin: 0 0 30px; color: var(--deep-teal); font: 900 20px/1.2 var(--mono); letter-spacing: 0.1em; }
+    h1 { margin: 0; max-width: 1120px; font: 900 104px/0.95 var(--display); letter-spacing: -0.065em; }
+    h1 span { color: var(--deep-teal); }
+    .meta { display: flex; gap: 42px; align-items: center; font: 800 17px/1.2 var(--mono); }
+    .meta strong { color: var(--deep-teal); }
+    .right { display: grid; align-content: center; }
+    .frame { position: relative; height: 780px; border: 3px solid var(--ink); padding: 52px; display: grid; align-content: center; }
+    .frame::after { content: ""; position: absolute; right: -3px; top: -3px; width: 34px; height: 240px; background: var(--warm); border: 3px solid var(--ink); }
+    .label { min-height: 154px; padding: 34px 38px; border: 4px solid var(--ink); }
+    .label + .label { margin-top: -4px; }
+    .label:nth-child(1) { background: var(--teal); transform: translateX(-34px); }
+    .label:nth-child(2) { background: var(--ink); color: var(--paper); transform: translateX(30px); }
+    .label:nth-child(3) { background: #FFE6D4; border-color: var(--warm); }
+    .label b { display: block; margin-bottom: 12px; font: 900 17px/1.2 var(--mono); }
+    .label span { font: 900 42px/1 var(--display); letter-spacing: -0.04em; }
+    .status { position: absolute; right: 94px; bottom: 72px; width: 640px; padding-top: 22px; border-top: 3px solid var(--ink); font: 800 17px/1.4 var(--mono); text-align: right; }
+  </style>
+</head>
+<body>
+  <main class="cover">
+    <section class="left">
+      <header class="brand">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+        <span class="wordmark">Rafly</span>
+      </header>
+      <div class="title">
+        <p class="kicker">50 МАГАЗИНОВ · СТАРТОВАЯ КОГОРТА</p>
+        <h1>Запускаем контроль запасов <span>под ключ.</span></h1>
+      </div>
+      <div class="meta"><strong>RAFLY CONTROL</strong><span>RAFLY MARKET</span></div>
+    </section>
+    <section class="right" aria-label="Сценарий демонстрации">
+      <div class="frame">
+        <div class="label"><b>КАТАЛОГ</b><span>Восстановлен</span></div>
+        <div class="label"><b>ЗАПАС</b><span>Учтён полностью</span></div>
+        <div class="label"><b>КОНТРОЛЬ</b><span>Работает ежедневно</span></div>
+      </div>
+    </section>
+    <p class="status">Любой POS или без POS · мониторинг и аналитика · запуск за 7-10 дней</p>
+  </main>
+</body>
+</html>

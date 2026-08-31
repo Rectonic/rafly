@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rafly | Кратко о продукте</title>
+  <meta name="description" content="Rafly: контроль запасов магазина и маркетплейс проверенных офферов.">
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --deep-teal: #0E8A6C;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --white: #FCFDFC;
+      --warm: #FF8C42;
+      --alert: #FF6B6B;
+      --muted: #52605C;
+      --line: #C9D3CF;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #D9DEDC; color: var(--ink); }
+    body { font-family: var(--body); }
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 11mm 12mm 9mm;
+      overflow: hidden;
+      background: var(--paper);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 6mm;
+      page-break-after: avoid;
+      position: relative;
+    }
+    .sheet::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 4mm;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, var(--teal) 0 8mm, var(--ink) 8mm 9mm, var(--paper) 9mm 13mm);
+    }
+    .topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10mm;
+    }
+    .brand { display: flex; align-items: center; gap: 4mm; }
+    .brand svg { width: 14mm; height: 14mm; display: block; flex: 0 0 auto; }
+    .brand-name {
+      margin: 0;
+      font: 900 27pt/0.92 var(--display);
+      letter-spacing: -0.06em;
+    }
+    .meta {
+      margin: 1mm 0 0;
+      text-align: right;
+      font: 700 7.5pt/1.45 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--deep-teal);
+    }
+    .positioning {
+      margin: 0;
+      max-width: 165mm;
+      font: 800 20pt/1.08 var(--display);
+      letter-spacing: -0.035em;
+    }
+    .positioning strong { color: var(--deep-teal); }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 7mm;
+      min-height: 0;
+    }
+    .column { display: flex; flex-direction: column; gap: 5mm; min-width: 0; }
+    section {
+      border-top: 0.45mm solid var(--ink);
+      padding-top: 2.4mm;
+    }
+    section.accent { border-top-color: var(--teal); border-top-width: 1.2mm; }
+    h2 {
+      margin: 0 0 1.8mm;
+      font: 800 9.2pt/1.1 var(--display);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    p { margin: 0; font-size: 8.55pt; line-height: 1.36; }
+    .problem p { font-size: 10.1pt; line-height: 1.38; }
+    .products { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+    .product {
+      min-height: 38mm;
+      padding: 3.4mm;
+      background: var(--white);
+      border: 0.35mm solid var(--line);
+    }
+    .product:first-child { border-top: 2mm solid var(--teal); }
+    .product:last-child { border-top: 2mm solid var(--warm); }
+    .product h3 {
+      margin: 0 0 2mm;
+      font: 800 11pt/1 var(--display);
+    }
+    .sprint {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 4mm;
+      border-top: 0;
+    }
+    .sprint h2 { color: var(--teal); }
+    .sprint .days {
+      float: right;
+      margin: 0 0 2mm 4mm;
+      font: 900 19pt/1 var(--mono);
+      color: var(--warm);
+    }
+    ul { margin: 0; padding: 0; list-style: none; }
+    .trust li {
+      position: relative;
+      padding: 0 0 0 6mm;
+      margin: 0 0 2.5mm;
+      font-size: 8.4pt;
+      line-height: 1.34;
+    }
+    .trust li:last-child { margin-bottom: 0; }
+    .trust li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: -0.3mm;
+      width: 4mm;
+      height: 4mm;
+      background: var(--teal);
+      color: var(--ink);
+      font: 900 8pt/4mm var(--mono);
+      text-align: center;
+    }
+    .status {
+      padding: 3.6mm;
+      background: #DDF4EC;
+      border: 0.4mm solid var(--deep-teal);
+    }
+    .status h2 { color: var(--deep-teal); }
+    .status-line {
+      margin-top: 2.2mm;
+      font: 700 7.7pt/1.4 var(--mono);
+    }
+    .model li {
+      display: grid;
+      grid-template-columns: 24mm 1fr;
+      gap: 2.5mm;
+      padding: 1.8mm 0;
+      border-bottom: 0.25mm solid var(--line);
+      font-size: 8pt;
+      line-height: 1.3;
+    }
+    .model li:last-child { border-bottom: 0; }
+    .model b { font-family: var(--mono); color: var(--deep-teal); }
+    .ask {
+      padding: 3.8mm;
+      background: #FFE6D4;
+      border: 0.4mm solid var(--warm);
+    }
+    .footer {
+      display: grid;
+      grid-template-columns: 35mm 1fr 1fr;
+      align-items: end;
+      gap: 5mm;
+      padding-top: 3mm;
+      border-top: 1.2mm solid var(--ink);
+    }
+    .footer .label {
+      font: 900 9pt/1.15 var(--display);
+      text-transform: uppercase;
+    }
+    .contact { font: 700 7.7pt/1.55 var(--mono); }
+    .contact span { display: block; }
+    .page-note { color: var(--muted); font: 600 6.7pt/1.4 var(--mono); text-align: right; }
+    @media print {
+      html, body { width: 210mm; height: 297mm; background: var(--paper); }
+      .sheet { margin: 0; }
+    }
+    @page{size:A4 portrait;margin:0}
+  </style>
+</head>
+<body>
+  <article class="sheet">
+    <header class="topline">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+        <h1 class="brand-name">Rafly</h1>
+      </div>
+      <p class="meta">Корпоративные решения<br>Ташкент, 2026</p>
+    </header>
+
+    <p class="positioning">Rafly наводит порядок в остатках магазина и превращает <strong>проверенный излишек</strong> в офферы со скидкой.</p>
+
+    <main class="layout">
+      <div class="column">
+        <section class="problem accent">
+          <h2>Проблема</h2>
+          <p>В независимом магазине остатки часто живут в голове сотрудника, а ошибки каталога и потери от сроков остаются незаметными. Маркетплейс не исправляет слабые данные, поэтому сначала магазину нужен рабочий контур контроля.</p>
+        </section>
+
+        <section>
+          <h2>Два продукта, один контур</h2>
+          <div class="products">
+            <article class="product">
+              <h3>Control</h3>
+              <p>Рабочее место магазина: импорт каталога, идентификация товара, пересчёт, вахта просрочки, разбор исключений и дайджест владельца.</p>
+            </article>
+            <article class="product">
+              <h3>Market</h3>
+              <p>Витрина покупателя: только одобренные человеком офферы, цена, окно выдачи, доступность, бронь и код получения.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="sprint">
+          <span class="days">7-10 дней</span>
+          <h2>Как магазин начинает</h2>
+          <p>Оператор проводит платный Store Control Sprint: быстро учитывает весь запас, собирает рабочий каталог, настраивает пересчёт и контроль сроков, обучает команду и запускает магазин под ключ.</p>
+        </section>
+
+        <section class="ask">
+          <h2>Запрос</h2>
+          <p>Масштабируем запуск когорты из 50 магазинов. Партнёрам PTA предлагаем ускорить полевое внедрение, дать отраслевую экспертизу и инвестиционную поддержку следующего этапа роста.</p>
+        </section>
+      </div>
+
+      <div class="column">
+        <section class="trust accent">
+          <h2>Контур ответственности</h2>
+          <ul>
+            <li>Камеры и алгоритмы поднимают флаги и ранжируют риск, ответственный сотрудник принимает решение.</li>
+            <li>Покупатель видит оффер после явного одобрения сотрудником магазина.</li>
+            <li>Каждый пересчёт, публикация и исключение сохраняют автора, время и полный след решения.</li>
+          </ul>
+        </section>
+
+        <section class="status">
+          <h2>Запуск: 50 магазинов</h2>
+          <p>Договорённости с 50 магазинами, запуск идёт сейчас. Пилот охватывает мониторинг и аналитику запасов, быстрый полный учёт и поддержку под ключ. Rafly работает с любой POS и без неё: команда извлекает исходные данные и собирает рабочий каталог.</p>
+          <p class="status-line">195 backend integration tests / 693 frontend tests / strict typecheck clean / lint clean</p>
+        </section>
+
+        <section class="model">
+          <h2>Бизнес-модель</h2>
+          <ul>
+            <li><b>Спринт</b><span>Фиксированная оплата за внедрение, цена согласуется по скоупу.</span></li>
+            <li><b>Control</b><span>Ежемесячная подписка и операционная поддержка после Sprint.</span></li>
+            <li><b>Market</b><span>Комиссия с транзакций по одобренным офферам.</span></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="label">Связаться<br>с командой</div>
+      <div class="contact">
+        <span>[Имя и фамилия основателя]</span>
+        <span>[founder@rafly.example]</span>
+        <span>[@telegram]</span>
+      </div>
+      <div class="page-note">
+        <span>[+998 XX XXX XX XX]</span><br>
+        <span>[rafly.example]</span><br>
+        Статус на 31.08.2026
+      </div>
+    </footer>
+  </article>
+</body>
+</html>

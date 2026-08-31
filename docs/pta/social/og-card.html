@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Rafly | OG card</title>
+  <!-- Screenshot at exactly 1200 x 630 pixels. -->
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --warm: #FF8C42;
+      --line: #C9D3CF;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 1200px; height: 630px; margin: 0; overflow: hidden; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--body); }
+    .card { position: relative; width: 1200px; height: 630px; padding: 54px 60px 44px; overflow: hidden; }
+    .card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 24px;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, var(--teal) 0 70px, var(--ink) 70px 82px, var(--paper) 82px 112px);
+    }
+    .top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 18px; }
+    .brand svg { width: 58px; height: 58px; display: block; }
+    .wordmark { font: 900 40px/1 var(--display); letter-spacing: -0.06em; }
+    .meta { font: 800 16px/1.2 var(--mono); letter-spacing: 0.08em; color: #0E8A6C; }
+    .content { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 54px; align-items: end; height: 418px; }
+    h1 { margin: 0; max-width: 760px; font: 900 74px/0.98 var(--display); letter-spacing: -0.06em; }
+    h1 span { color: #0E8A6C; }
+    .labels { align-self: center; }
+    .label { padding: 20px 24px; border: 3px solid var(--ink); font: 900 22px/1.1 var(--mono); }
+    .label:nth-child(1) { background: var(--teal); transform: translateX(-24px); }
+    .label:nth-child(2) { margin-top: -3px; background: var(--ink); color: var(--paper); transform: translateX(20px); }
+    .label:nth-child(3) { margin-top: -3px; background: #FFE6D4; border-color: var(--warm); transform: translateX(-4px); }
+    .footer { display: flex; align-items: center; justify-content: space-between; gap: 32px; border-top: 2px solid var(--ink); padding-top: 20px; }
+    .footer b { font: 900 18px/1.2 var(--mono); }
+    .footer span { font: 700 15px/1.2 var(--mono); color: #52605C; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="top">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+        <span class="wordmark">Rafly</span>
+      </div>
+      <span class="meta">50 МАГАЗИНОВ · СТАРТОВАЯ КОГОРТА</span>
+    </header>
+    <div class="content">
+      <h1>50 магазинов. <span>Запуск начинается сейчас.</span></h1>
+      <div class="labels" aria-label="Логика продукта">
+        <div class="label">ПОЛНЫЙ УЧЁТ</div>
+        <div class="label">МОНИТОРИНГ</div>
+        <div class="label">АНАЛИТИКА</div>
+      </div>
+    </div>
+    <footer class="footer">
+      <b>Store Control Sprint · 7-10 дней</b>
+      <span>Любой POS или без POS. Запуск под ключ.</span>
+    </footer>
+  </main>
+</body>
+</html>

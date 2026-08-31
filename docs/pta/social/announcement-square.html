@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Rafly | Announcement square</title>
+  <!-- Screenshot at exactly 1080 x 1080 pixels. -->
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --warm: #FF8C42;
+      --deep-teal: #0E8A6C;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 1080px; height: 1080px; margin: 0; overflow: hidden; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--body); }
+    .card { position: relative; width: 1080px; height: 1080px; padding: 64px; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 22px;
+      background: repeating-linear-gradient(to right, var(--teal) 0 92px, var(--ink) 92px 106px, var(--warm) 106px 132px);
+    }
+    .top { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 20px; }
+    .brand svg { width: 64px; height: 64px; display: block; }
+    .wordmark { font: 900 46px/1 var(--display); letter-spacing: -0.06em; }
+    .date { font: 800 16px/1.3 var(--mono); text-align: right; color: var(--deep-teal); }
+    .message { align-self: center; }
+    .kicker { margin: 0 0 30px; font: 800 18px/1.2 var(--mono); letter-spacing: 0.1em; color: var(--deep-teal); }
+    h1 { margin: 0; max-width: 930px; font: 900 92px/0.95 var(--display); letter-spacing: -0.065em; }
+    h1 span { display: block; color: var(--deep-teal); }
+    .shelf { display: grid; grid-template-columns: 1fr 1fr; margin-top: 46px; border: 4px solid var(--ink); }
+    .shelf div { min-height: 112px; padding: 26px; display: flex; align-items: center; font: 900 26px/1.1 var(--mono); }
+    .shelf div:first-child { background: var(--teal); border-right: 4px solid var(--ink); }
+    .shelf div:last-child { background: var(--ink); color: var(--paper); }
+    .footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; padding-bottom: 24px; }
+    .footer p { margin: 0; max-width: 650px; font: 700 21px/1.35 var(--body); }
+    .status { padding: 12px 14px; background: #FFE6D4; border: 2px solid var(--warm); font: 800 14px/1.2 var(--mono); text-align: right; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="top">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+        <span class="wordmark">Rafly</span>
+      </div>
+      <span class="date">ТАШКЕНТ<br>2026</span>
+    </header>
+    <section class="message">
+      <p class="kicker">СТАРТОВАЯ КОГОРТА RAFLY</p>
+      <h1>50 магазинов.<span>Запускаемся сейчас.</span></h1>
+      <div class="shelf">
+        <div>МОНИТОРИНГ ЗАПАСОВ</div>
+        <div>АНАЛИТИКА ЗАПАСОВ</div>
+      </div>
+    </section>
+    <footer class="footer">
+      <p>Полная инвентаризация, восстановление каталога и обучение команды входят в запуск.</p>
+      <span class="status">ПОД КЛЮЧ<br>ЗА 7-10 ДНЕЙ</span>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Иконка приложения Rafly</title>
+  <desc id="desc">Знак Rafly в безопасном поле на тёмной квадратной подложке</desc>
+  <rect width="1024" height="1024" rx="224" fill="#101418"/>
+  <g transform="translate(230 230) scale(8.8125)">
+    <path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/>
+    <path fill="#16C79A" d="M25 20h6v6h-6z"/>
+  </g>
+</svg>

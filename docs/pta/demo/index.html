@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Офлайн-демонстрация Rafly Control и Rafly Market на вымышленных данных.">
+  <title>Rafly. Интерактивная демонстрация</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --teal: #16C79A;
+      --deep-teal: #0E8A6C;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --white: #FFFFFF;
+      --warm: #FF8C42;
+      --alert: #FF6B6B;
+      --amber: #D99A2B;
+      --muted: #667078;
+      --line: rgba(16, 20, 24, .12);
+      --soft-line: rgba(16, 20, 24, .07);
+      --shadow: 0 20px 55px rgba(14, 138, 108, .10), 0 3px 12px rgba(16, 20, 24, .05);
+      --display: "Arial Black", "Arial Narrow", system-ui, sans-serif;
+      --body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 300px; background: var(--paper); scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    button:not(:disabled) { cursor: pointer; }
+    a { color: inherit; }
+    h1, h2, h3, p, figure, dl, dd { margin: 0; }
+    [hidden] { display: none !important; }
+    :focus-visible { outline: 3px solid var(--deep-teal); outline-offset: 3px; }
+    .mono { font-family: var(--mono); }
+    .muted { color: var(--muted); }
+    .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    .demo-strip {
+      position: relative;
+      z-index: 30;
+      display: flex;
+      min-height: 36px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 7px 18px;
+      color: var(--white);
+      background: var(--ink);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .demo-strip i { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--warm); }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+      min-height: 78px;
+      align-items: center;
+      gap: 24px;
+      padding: 12px clamp(18px, 3vw, 44px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 246, 245, .94);
+      backdrop-filter: blur(18px) saturate(1.2);
+    }
+    .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-mark { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 12px; color: var(--ink); background: var(--teal); font-family: var(--mono); font-size: 17px; font-weight: 900; box-shadow: inset 0 0 0 1px rgba(16, 20, 24, .08); }
+    .brand-name { font-family: var(--display); font-size: 25px; font-weight: 900; letter-spacing: -.06em; line-height: 1; }
+    .surface-switch { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 5px; background: var(--white); }
+    .surface-chip { border: 0; border-radius: 999px; padding: 8px 13px; color: var(--muted); background: transparent; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
+    .surface-chip.is-active { color: var(--white); background: var(--ink); }
+    .top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+    .step-counter { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+    .reset-button { min-height: 38px; border: 1px solid var(--line); border-radius: 12px; padding: 7px 12px; background: var(--white); font-size: 12px; font-weight: 700; }
+
+    .shell { display: grid; grid-template-columns: 286px minmax(0, 1fr); min-height: calc(100dvh - 114px); }
+    .step-rail { position: sticky; top: 78px; align-self: start; height: calc(100dvh - 78px); overflow: auto; border-right: 1px solid var(--line); padding: 24px 20px 32px; background: #EEF2F0; }
+    .rail-label { margin: 0 10px 13px; color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .step-list { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+    .step-link { position: relative; display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 10px; width: 100%; min-height: 52px; border: 0; border-radius: 15px; padding: 7px 10px; color: #485159; background: transparent; text-align: left; transition: background 160ms ease, color 160ms ease, transform 160ms ease; }
+    .step-link:hover { background: rgba(255, 255, 255, .72); }
+    .step-link:active { transform: scale(.985); }
+    .step-link[aria-current="step"] { color: var(--white); background: var(--ink); }
+    .step-link.is-complete .step-number { color: var(--ink); background: var(--teal); }
+    .step-link[aria-current="step"] .step-number { color: var(--ink); background: var(--teal); }
+    .step-number { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 10px; color: var(--muted); background: rgba(16, 20, 24, .06); font-family: var(--mono); font-size: 10px; font-weight: 900; }
+    .step-name { font-size: 12.5px; font-weight: 700; line-height: 1.25; }
+    .rail-note { margin: 24px 10px 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+    .workspace { min-width: 0; padding: clamp(28px, 4vw, 62px); }
+    .step-panel { width: min(1040px, 100%); margin: 0 auto; animation: panel-in 280ms ease-out; }
+    @keyframes panel-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+    .step-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 28px; margin-bottom: 26px; }
+    .eyebrow { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; color: var(--deep-teal); font-family: var(--mono); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .eyebrow i { width: 18px; height: 2px; background: currentColor; }
+    .step-title { max-width: 800px; font-family: var(--display); font-size: clamp(29px, 4.2vw, 51px); font-weight: 900; letter-spacing: -.055em; line-height: 1.03; }
+    .step-lead { max-width: 68ch; margin-top: 14px; color: #535D64; font-size: clamp(15px, 1.5vw, 18px); line-height: 1.65; }
+    .step-index { color: rgba(16, 20, 24, .08); font-family: var(--display); font-size: clamp(64px, 8vw, 108px); font-weight: 900; letter-spacing: -.08em; line-height: .8; user-select: none; }
+
+    .context-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 11px 14px; background: rgba(255, 255, 255, .65); }
+    .context-shop { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 12px; font-weight: 700; }
+    .context-shop i { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 3px; background: var(--teal); }
+    .sample-badge, .status-badge, .confidence-badge, .danger-badge, .research-badge { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; border-radius: 999px; padding: 5px 9px; font-family: var(--mono); font-size: 9.5px; font-weight: 800; line-height: 1.25; }
+    .sample-badge { color: #7A4715; background: #FFF0E1; }
+    .status-badge { color: var(--deep-teal); background: rgba(22, 199, 154, .12); }
+    .confidence-badge { color: #8A5A0A; background: #FFF3D9; }
+    .danger-badge { color: #923D3D; background: #FFEAEA; }
+    .research-badge { color: #873C3C; border: 1px solid rgba(255, 107, 107, .38); background: #FFF3F3; }
+
+    .card { min-width: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); box-shadow: 0 2px 8px rgba(16, 20, 24, .04); }
+    .card-pad { padding: clamp(20px, 3vw, 30px); }
+    .card-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+    .card-copy { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .stack { display: grid; gap: 14px; }
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin-top: 20px; }
+    label { display: grid; gap: 7px; color: #515B62; font-size: 11px; font-weight: 800; }
+    input, textarea, select { width: 100%; min-height: 48px; border: 1px solid var(--line); border-radius: 13px; padding: 11px 13px; color: var(--ink); background: #FBFCFB; outline: none; }
+    textarea { min-height: 126px; resize: vertical; font-family: var(--mono); font-size: 12px; line-height: 1.55; }
+    input:focus, textarea:focus, select:focus { border-color: var(--deep-teal); box-shadow: 0 0 0 3px rgba(22, 199, 154, .12); }
+    .field-wide { grid-column: 1 / -1; }
+    .notice { display: flex; align-items: flex-start; gap: 10px; border-radius: 15px; padding: 12px 14px; color: #5A4A26; background: #FFF5DF; font-size: 12px; line-height: 1.55; }
+    .notice::before { content: "!"; display: grid; width: 21px; height: 21px; flex: 0 0 21px; place-items: center; border-radius: 7px; color: var(--white); background: var(--amber); font-family: var(--mono); font-size: 11px; font-weight: 900; }
+    .notice.honesty { color: #3E5550; background: #E9F5F1; }
+    .notice.honesty::before { content: "✓"; background: var(--deep-teal); }
+    .notice.danger { color: #713B3B; background: #FFF0F0; }
+    .notice.danger::before { content: "×"; background: var(--alert); }
+
+    .btn { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent; border-radius: 14px; padding: 11px 17px; font-weight: 800; transition: transform 150ms ease, background 150ms ease, border 150ms ease; }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn-primary { color: var(--ink); background: var(--teal); }
+    .btn-primary:hover { background: #1ABF96; }
+    .btn-dark { color: var(--white); background: var(--ink); }
+    .btn-secondary { border-color: var(--line); background: var(--white); }
+    .btn-secondary:hover { border-color: rgba(16, 20, 24, .34); }
+    .btn-danger { color: #7E3030; border-color: rgba(255, 107, 107, .34); background: #FFF1F1; }
+    .btn:disabled { color: #8B9397; border-color: transparent; background: #E9ECEB; cursor: not-allowed; }
+    .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; }
+    .action-result { color: var(--deep-teal); font-family: var(--mono); font-size: 10.5px; font-weight: 800; }
+
+    .metric { min-height: 118px; padding: 18px; border: 1px solid var(--soft-line); border-radius: 18px; background: #F8FAF9; }
+    .metric-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .metric-value { margin-top: 12px; font-family: var(--mono); font-size: 29px; font-weight: 900; letter-spacing: -.06em; line-height: 1; }
+    .metric-note { margin-top: 9px; color: var(--muted); font-size: 10px; }
+
+    .source-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--white); }
+    .source-title { font-size: 14px; font-weight: 800; }
+    .source-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .source-state { font-family: var(--mono); font-size: 11px; font-weight: 800; text-align: right; }
+
+    .csv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+    .review-list { display: grid; gap: 10px; margin-top: 16px; }
+    .review-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(215px, .72fr); gap: 18px; padding: 17px; border: 1px solid var(--line); border-radius: 17px; background: #FBFCFB; }
+    .review-row.is-decided { border-color: rgba(22, 199, 154, .38); background: #F2FBF8; }
+    .raw-name { font-size: 14px; font-weight: 800; }
+    .raw-meta { margin-top: 7px; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+    .candidate { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--soft-line); }
+    .candidate strong { display: block; font-size: 12px; }
+    .candidate span { color: var(--muted); font-size: 10.5px; }
+    .row-actions { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 8px; }
+    .row-actions .btn { min-height: 40px; padding: 8px 10px; font-size: 11px; }
+    .refusal { margin-top: 10px; border-left: 3px solid var(--alert); padding-left: 11px; color: #744141; font-size: 11px; line-height: 1.5; }
+
+    .inventory-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, minmax(100px, auto)); align-items: center; gap: 16px; padding: 17px 0; border-bottom: 1px solid var(--soft-line); }
+    .inventory-row:last-child { border-bottom: 0; }
+    .product-name { font-size: 14px; font-weight: 800; }
+    .product-meta { margin-top: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; }
+    .inventory-cell { font-size: 11px; text-align: right; }
+    .inventory-cell strong { display: block; margin-top: 3px; font-family: var(--mono); font-size: 14px; }
+
+    .confidence-scale { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 16px; }
+    .confidence-scale i { height: 8px; border-radius: 999px; background: #DDE2E0; }
+    .confidence-scale[data-level="low"] i:first-child { background: var(--amber); }
+    .confidence-scale[data-level="high"] i { background: var(--teal); }
+
+    .count-card { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 22px; align-items: end; }
+    .proposal { margin-top: 16px; border: 1px solid rgba(255, 140, 66, .28); border-radius: 17px; padding: 16px; background: #FFF7F0; }
+    .proposal-line { margin-top: 7px; font-family: var(--mono); font-size: 12px; }
+
+    .watch-list { display: grid; gap: 9px; margin-top: 16px; }
+    .watch-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) 120px 220px; align-items: center; gap: 16px; min-height: 72px; padding: 12px 15px; border: 1px solid var(--line); border-radius: 17px; background: var(--white); }
+    .urgency { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 13px; color: #834343; background: #FFE9E9; font-family: var(--mono); font-size: 11px; font-weight: 900; }
+    .urgency.amber { color: #7F550F; background: #FFF0D2; }
+    .urgency.calm { color: var(--deep-teal); background: #E4F6F1; }
+    .watch-date { color: var(--muted); font-family: var(--mono); font-size: 10px; text-align: right; }
+    .suggestion { justify-self: stretch; border: 1px solid var(--line); border-radius: 999px; padding: 7px 10px; background: #F7F9F8; font-family: var(--mono); font-size: 9.5px; font-weight: 800; text-align: center; }
+
+    .form-summary { display: grid; gap: 9px; margin-top: 16px; }
+    .summary-line { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 9px; border-bottom: 1px solid var(--soft-line); color: var(--muted); font-size: 12px; }
+    .summary-line strong { color: var(--ink); font-family: var(--mono); text-align: right; }
+
+    .market-wrap { position: relative; overflow: hidden; padding: clamp(20px, 4vw, 38px); background: linear-gradient(135deg, #E2F6F0 0%, #F8FAF9 55%, #FFF1E6 100%); }
+    .market-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+    .market-brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 18px; font-weight: 900; letter-spacing: -.04em; }
+    .market-card { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: var(--white); box-shadow: var(--shadow); }
+    .product-visual { position: relative; display: grid; min-height: 330px; place-items: center; overflow: hidden; color: var(--white); background: var(--ink); }
+    .product-visual::before { content: "200 г"; display: grid; width: 142px; height: 114px; place-items: center; border: 10px solid #F1D88B; border-radius: 22px 22px 12px 12px; color: var(--ink); background: #E8C85E; font-family: var(--mono); font-size: 17px; font-weight: 900; box-shadow: 0 18px 36px rgba(0, 0, 0, .25); transform: rotate(-4deg); }
+    .product-visual::after { content: "СЫР"; position: absolute; font-family: var(--display); font-size: 32px; font-weight: 900; transform: translateY(-4px) rotate(-4deg); }
+    .market-body { display: flex; flex-direction: column; padding: clamp(22px, 4vw, 36px); }
+    .market-title { margin-top: 12px; font-family: var(--display); font-size: clamp(25px, 3vw, 37px); font-weight: 900; letter-spacing: -.05em; line-height: 1.08; }
+    .market-shop { margin-top: 7px; color: var(--muted); font-size: 12px; }
+    .price-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+    .price { font-family: var(--mono); font-size: 29px; font-weight: 900; letter-spacing: -.06em; }
+    .old-price { color: var(--muted); font-family: var(--mono); font-size: 13px; text-decoration: line-through; }
+    .market-meta { display: grid; gap: 9px; margin-top: 20px; color: #4E595F; font-size: 12px; }
+    .market-action { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: auto; padding-top: 24px; }
+    .pickup-code { margin-top: 18px; border: 1px dashed rgba(16, 20, 24, .35); border-radius: 18px; padding: 17px; background: #F7F9F8; }
+    .pickup-code-value { margin-top: 4px; font-family: var(--mono); font-size: 30px; font-weight: 900; letter-spacing: .12em; }
+
+    .camera-review { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 14px; }
+    .camera-frame { position: relative; min-height: 330px; overflow: hidden; border-radius: var(--radius); color: var(--white); background: #1B2226; }
+    .camera-top { position: absolute; z-index: 3; top: 15px; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 9px; color: rgba(255, 255, 255, .72); }
+    .shelf { position: absolute; inset: 54px 22px 22px; border: 1px solid rgba(255, 255, 255, .15); border-radius: 15px; background: #2A3236; }
+    .shelf::before, .shelf::after { content: ""; position: absolute; left: 0; right: 0; height: 9px; background: #78807F; box-shadow: 0 3px 0 rgba(0, 0, 0, .24); }
+    .shelf::before { top: 42%; }
+    .shelf::after { top: 78%; }
+    .camera-box { position: absolute; left: 42%; top: 25%; width: 33%; height: 46%; border: 2px solid var(--alert); border-radius: 13px; }
+    .camera-box::after { content: "возможное отсутствие"; position: absolute; left: -2px; bottom: -26px; border-radius: 7px; padding: 4px 7px; color: var(--white); background: var(--alert); font-family: var(--mono); font-size: 8px; white-space: nowrap; }
+    .shelf-item { position: absolute; bottom: 58%; width: 15%; height: 24%; border-radius: 6px 6px 3px 3px; background: #B6C1BA; }
+    .shelf-item.a { left: 10%; }
+    .shelf-item.b { left: 28%; background: #D2B36C; }
+    .shelf-item.c { left: 76%; background: #93AAA2; }
+    .camera-caption { position: absolute; left: 22px; bottom: 19px; right: 22px; color: rgba(255, 255, 255, .74); font-size: 10px; line-height: 1.45; }
+    .decision-card { padding: 24px; }
+    .decision-lock { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+    .lock-cell { padding: 12px; border-radius: 13px; background: #F3F6F5; text-align: center; }
+    .lock-cell span { display: block; color: var(--muted); font-size: 9px; }
+    .lock-cell strong { display: block; margin-top: 5px; font-family: var(--mono); font-size: 16px; }
+
+    .exception-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 16px; }
+    .exception-ledger { display: grid; gap: 9px; margin-top: 18px; }
+    .ledger-line { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--soft-line); font-size: 12px; }
+    .ledger-line strong { font-family: var(--mono); }
+    .audit { margin-top: 16px; border-left: 3px solid var(--teal); padding-left: 13px; color: #52615C; font-family: var(--mono); font-size: 10px; line-height: 1.65; }
+
+    .digest { overflow: hidden; border: 1px solid var(--line); border-radius: 22px; background: #DDEBE7; }
+    .digest-head { display: flex; justify-content: space-between; gap: 16px; padding: 15px 18px; color: #445159; font-size: 11px; }
+    .digest-message { margin: 0 18px 18px; border-radius: 18px 18px 5px 18px; padding: clamp(20px, 3vw, 30px); background: var(--white); }
+    .digest-message pre { margin: 0; overflow: auto; color: #293238; font-family: var(--mono); font-size: clamp(10px, 1.2vw, 12px); line-height: 1.62; white-space: pre-wrap; }
+    .facts-only { display: grid; grid-template-columns: auto 1fr; gap: 10px 15px; margin-top: 16px; color: var(--muted); font-size: 11px; }
+    .facts-only strong { color: var(--ink); }
+
+    .step-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .deep-link { color: var(--muted); font-family: var(--mono); font-size: 10px; }
+    .next-button::after { content: "→"; font-family: var(--mono); }
+    .direct-note { margin-bottom: 16px; border: 1px solid rgba(22, 199, 154, .25); border-radius: 14px; padding: 10px 13px; color: #3C6057; background: #EAF7F3; font-size: 11px; }
+    .toast { position: fixed; z-index: 100; right: 22px; bottom: 22px; max-width: min(400px, calc(100% - 44px)); border-radius: 15px; padding: 12px 16px; color: var(--white); background: var(--ink); box-shadow: var(--shadow); font-size: 12px; opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+    .toast.is-visible { opacity: 1; transform: none; }
+
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .step-rail { position: sticky; top: 78px; z-index: 15; height: auto; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 9px 14px; }
+      .rail-label, .rail-note { display: none; }
+      .step-list { display: flex; width: max-content; gap: 6px; }
+      .step-link { grid-template-columns: 30px; width: 44px; min-height: 44px; padding: 7px; }
+      .step-name { display: none; }
+      .workspace { padding-top: 34px; }
+      .watch-row { grid-template-columns: 44px minmax(0, 1fr) 105px; }
+      .suggestion { grid-column: 2 / -1; justify-self: start; }
+    }
+
+    @media (max-width: 720px) {
+      .demo-strip { font-size: 9px; }
+      .topbar { grid-template-columns: 1fr auto; min-height: 68px; gap: 10px; padding: 10px 16px; }
+      .surface-switch { display: none; }
+      .brand-name { font-size: 22px; }
+      .brand-mark { width: 35px; height: 35px; }
+      .step-rail { top: 68px; }
+      .workspace { padding: 28px 16px 44px; }
+      .step-head { grid-template-columns: 1fr; gap: 0; }
+      .step-index { display: none; }
+      .context-bar { align-items: flex-start; flex-direction: column; }
+      .grid-2, .grid-3, .field-grid, .camera-review, .exception-layout { grid-template-columns: 1fr; }
+      .field-wide { grid-column: auto; }
+      .review-row { grid-template-columns: 1fr; }
+      .row-actions { align-items: stretch; }
+      .inventory-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .inventory-cell:first-of-type { display: none; }
+      .count-card { grid-template-columns: 1fr; }
+      .watch-row { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; }
+      .watch-date { text-align: left; }
+      .suggestion { grid-column: 1 / -1; justify-self: stretch; }
+      .market-card { grid-template-columns: 1fr; }
+      .product-visual { min-height: 230px; }
+      .market-action { align-items: stretch; flex-direction: column; }
+      .market-action .btn { width: 100%; }
+      .step-footer { align-items: stretch; flex-direction: column; }
+      .step-footer .btn { width: 100%; }
+      .deep-link { order: 2; text-align: center; }
+    }
+
+    @media (max-width: 430px) {
+      .step-counter { display: none; }
+      .step-title { font-size: 31px; }
+      .button-row { align-items: stretch; flex-direction: column; }
+      .button-row .btn { width: 100%; }
+      .source-card { grid-template-columns: 1fr; }
+      .source-state { text-align: left; }
+      .decision-lock { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+
+    @media print {
+      .demo-strip, .topbar, .step-rail, .step-footer, .toast { display: none !important; }
+      .shell { display: block; }
+      .workspace { padding: 10mm; }
+      .step-panel { break-inside: avoid; }
+      body { background: var(--white); }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-strip"><i></i>Демонстрация на вымышленных данных. Это не живой магазин и не результаты пилота.</div>
+
+  <header class="topbar">
+    <a class="brand" href="#step-1" aria-label="Rafly, начать демонстрацию заново">
+      <span class="brand-mark">R</span>
+      <span class="brand-name">Rafly</span>
+    </a>
+    <div class="surface-switch" aria-label="Поверхность продукта">
+      <span class="surface-chip is-active" id="control-chip">RAFLY CONTROL</span>
+      <span class="surface-chip" id="market-chip">RAFLY MARKET</span>
+    </div>
+    <div class="top-actions">
+      <span class="step-counter" id="step-counter">шаг 01 / 10</span>
+      <button class="reset-button" id="reset-demo" type="button">Сбросить демо</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="step-rail" aria-label="Шаги демонстрации">
+      <p class="rail-label">Сквозной сценарий</p>
+      <ol class="step-list">
+        <li><button class="step-link" data-step-link="1" type="button"><span class="step-number">01</span><span class="step-name">Приём магазина</span></button></li>
+        <li><button class="step-link" data-step-link="2" type="button"><span class="step-number">02</span><span class="step-name">Импорт CSV</span></button></li>
+        <li><button class="step-link" data-step-link="3" type="button"><span class="step-number">03</span><span class="step-name">Низкая уверенность</span></button></li>
+        <li><button class="step-link" data-step-link="4" type="button"><span class="step-number">04</span><span class="step-name">Физический пересчёт</span></button></li>
+        <li><button class="step-link" data-step-link="5" type="button"><span class="step-number">05</span><span class="step-name">Контроль сроков</span></button></li>
+        <li><button class="step-link" data-step-link="6" type="button"><span class="step-number">06</span><span class="step-name">Публикация оффера</span></button></li>
+        <li><button class="step-link" data-step-link="7" type="button"><span class="step-number">07</span><span class="step-name">Бронь в Market</span></button></li>
+        <li><button class="step-link" data-step-link="8" type="button"><span class="step-number">08</span><span class="step-name">Расхождение при выдаче</span></button></li>
+        <li><button class="step-link" data-step-link="9" type="button"><span class="step-number">09</span><span class="step-name">Закрытие исключения</span></button></li>
+        <li><button class="step-link" data-step-link="10" type="button"><span class="step-number">10</span><span class="step-name">Сводка владельца</span></button></li>
+      </ol>
+      <p class="rail-note">Каждый шаг имеет ссылку вида <span class="mono">#step-7</span>. При прямом открытии предыдущие постановочные действия восстанавливаются только в памяти страницы.</p>
+    </aside>
+
+    <main class="workspace" id="workspace">
+      <div class="direct-note" id="direct-note" hidden>Прямой шаг открыт со восстановленным постановочным состоянием. Никакие данные не загружены из сети.</div>
+
+      <section class="step-panel" id="step-1" data-surface="control" tabindex="-1">
+        <header class="step-head">
+          <div>
+            <p class="eyebrow"><i></i>Rafly Control · Store Control Sprint</p>
+            <h1 class="step-title">Сначала фиксируем, что магазин знает на самом деле</h1>
+            <p class="step-lead">Оператор принимает магазин в 7–10-дневный спринт. Здесь нет работающей системы остатков, поэтому стартовое состояние честно записано как неизвестное.</p>
+          </div>
+          <span class="step-index">01</span>
+        </header>
+        <div class="context-bar">
+          <span class="context-shop"><i></i>Магазин «Саховат», Ташкент</span>
+          <span class="sample-badge">ВЫМЫШЛЕННЫЙ МАГАЗИН · ОБРАЗЕЦ</span>
+        </div>
+        <div class="grid-2">
+          <article class="card card-pad">
+            <h2 class="card-title">Анкета магазина</h2>
+            <p class="card-copy">Поля заполнены постановочными данными. В реальном спринте их подтверждает владелец.</p>
+            <div class="field-grid">
+              <label>Название магазина<input value="Магазин «Саховат»" aria-label="Название магазина"></label>
+              <label>Роль собеседника<select aria-label="Роль собеседника"><option>Владелец</option></select></label>
+              <label>Источник каталога<select aria-label="Источник каталога"><option>CSV из старой кассы</option></select></label>
+              <label>Состояние POS<select aria-label="Состояние POS"><option>Есть, остатки не ведутся</option></select></label>
+              <label class="field-wide">Что известно об остатках<textarea aria-label="Что известно об остатках">Количество называют сотрудники по памяти. Последней полной сверки нет. Источник каждого числа нужно подтвердить физически.</textarea></label>
+            </div>
+          </article>
+          <div class="stack">
+            <article class="card card-pad">
+              <h2 class="card-title">Исходное состояние</h2>
+              <div class="grid-3" style="margin-top:16px">
+                <div class="metric"><span class="metric-label">Рабочий учёт</span><strong class="metric-value">нет</strong><span class="metric-note">зафиксировано в анкете</span></div>
+                <div class="metric"><span class="metric-label">Проверенные SKU</span><strong class="metric-value">0</strong><span class="metric-note">до импорта и ревью</span></div>
+                <div class="metric"><span class="metric-label">Офферы</span><strong class="metric-value">0</strong><span class="metric-note">рынок ещё закрыт</span></div>
+              </div>
+            </article>
+            <div class="notice">CSV, фото и POS считаются источниками наблюдений. Они не становятся истиной об остатке без проверки человеком.</div>
+            <button class="btn btn-primary" id="onboard-button" type="button">Принять магазин в спринт</button>
+            <span class="action-result" id="onboard-result" aria-live="polite"></span>
+          </div>
+        </div>
+        <footer class="step-footer">
+          <span class="deep-link">ссылка на шаг: #step-1</span>
+          <button class="btn btn-dark next-button" id="to-import" data-next="2" type="button" disabled>К импорту CSV</button>
+        </footer>
+      </section>
+
+      <section class="step-panel" id="step-2" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head">
+          <div>
+            <p class="eyebrow"><i></i>Rafly Control · Импорт CSV</p>
+            <h1 class="step-title">Неоднозначность не прячем, а отправляем человеку</h1>
+            <p class="step-lead">CSV проходит разбор и стейджинг. Каждая строка получает явное решение менеджера. Похожее название не даёт системе права молча склеить товары.</p>
+          </div>
+          <span class="step-index">02</span>
+        </header>
+        <div class="context-bar">
+          <span class="context-shop"><i></i>Магазин «Саховат» · пакет <span class="mono">catalog-demo.csv</span></span>
+          <span class="sample-badge">ОФЛАЙН · ОБРАЗЕЦ CSV</span>
+        </div>
+        <article class="card card-pad">
+          <div class="notice">Количество из файла сохраняется как наблюдение. Чтобы изменить остаток, проведите пересчёт. После импорта товар нужно пересчитать, прежде чем использовать его для оффера.</div>
+          <div class="field-grid">
+            <label>Имя файла<input id="csv-filename" value="catalog-demo.csv"></label>
+            <label class="field-wide">Содержимое CSV<textarea id="csv-input" spellcheck="false">название,штрихкод,количество,цена
+Сыр голланд 200г,4780012345601,6,24000
+Кефир 1% 1л,4780012345602,4,12000
+Йогурт клубника 180г,4780012345603,7,8000
+Сыр голл. 200 г,,6,24000</textarea></label>
+          </div>
+          <div class="csv-actions">
+            <button class="btn btn-secondary" id="parse-csv" type="button">Проверить CSV</button>
+            <button class="btn btn-primary" id="upload-csv" type="button" disabled>Загрузить пакет</button>
+            <span class="action-result" id="csv-result" aria-live="polite"></span>
+          </div>
+        </article>
+        <section class="card card-pad" id="staged-review" style="margin-top:16px" hidden>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+            <div><h2 class="card-title">Строки на проверке</h2><p class="card-copy">Решения менеджера: <strong id="decision-count">0 из 4</strong></p></div>
+            <span class="confidence-badge">ТРЕБУЕТ ПРОВЕРКИ</span>
+          </div>
+          <div class="review-list">
+            <article class="review-row" data-review-row="0">
+              <div><span class="status-badge">Автоматическое совпадение</span><p class="raw-name">Сыр голланд 200г</p><p class="raw-meta">Штрих-код: 4780012345601 · Количество: 6 · Цена: 24000</p><div class="candidate"><strong>Сыр «Голландский» 200 г</strong><span>Совпадение по штрих-коду</span></div></div>
+              <div class="row-actions"><button class="btn btn-secondary approve-row" type="button">Одобрить выбранный товар</button><span class="action-result row-result"></span></div>
+            </article>
+            <article class="review-row" data-review-row="1">
+              <div><span class="status-badge">Автоматическое совпадение</span><p class="raw-name">Кефир 1% 1л</p><p class="raw-meta">Штрих-код: 4780012345602 · Количество: 4 · Цена: 12000</p><div class="candidate"><strong>Кефир 1% 1 л</strong><span>Совпадение по названию</span></div></div>
+              <div class="row-actions"><button class="btn btn-secondary approve-row" type="button">Одобрить выбранный товар</button><span class="action-result row-result"></span></div>
+            </article>
+            <article class="review-row" data-review-row="2">
+              <div><span class="danger-badge">Совпадений нет</span><p class="raw-name">Йогурт клубника 180г</p><p class="raw-meta">Штрих-код: 4780012345603 · Количество: 7 · Цена: 8000</p><div class="candidate"><strong>Новый канонический товар</strong><span>Система не нашла подтверждённого совпадения</span></div></div>
+              <div class="row-actions"><button class="btn btn-secondary approve-row" type="button">Одобрить как новый товар</button><span class="action-result row-result"></span></div>
+            </article>
+            <article class="review-row" data-review-row="3">
+              <div><span class="danger-badge">Неоднозначное совпадение</span><p class="raw-name">Сыр голл. 200 г</p><p class="raw-meta">Штрих-код: Не указано · Количество: 6 · Цена: 24000</p><p class="refusal"><strong>Автосклейка остановлена.</strong> Подходят «Сыр Голландский 200 г» и «Сыр Голландский 250 г». Система отказывается выбирать без решения человека.</p><div class="candidate"><strong>Сыр «Голландский» 200 г</strong><span>Вариант 1 · Совпадение по названию</span></div></div>
+              <div class="row-actions"><button class="btn btn-secondary choose-candidate" type="button">Выбрать вариант 1</button><button class="btn btn-primary approve-row" type="button" disabled>Одобрить выбранный товар</button><span class="action-result row-result"></span></div>
+            </article>
+          </div>
+          <div class="notice honesty" id="import-complete-note" style="margin-top:14px" hidden>Все четыре строки получили решение человека. Каталог создан, но количество из CSV остаётся наблюдением с низкой уверенностью.</div>
+        </section>
+        <footer class="step-footer">
+          <span class="deep-link">ссылка на шаг: #step-2</span>
+          <button class="btn btn-dark next-button" id="to-catalog" data-next="3" type="button" disabled>Посмотреть каталог</button>
+        </footer>
+      </section>
+
+      <section class="step-panel" id="step-3" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head">
+          <div>
+            <p class="eyebrow"><i></i>Rafly Control · Инвентарь</p>
+            <h1 class="step-title">Каталог живой. Уверенность пока низкая</h1>
+            <p class="step-lead">Идентичность товара уже утверждена, но остаток ещё не подтверждён физически. Поэтому безопасный потолок оффера равен нулю.</p>
+          </div>
+          <span class="step-index">03</span>
+        </header>
+        <div class="context-bar"><span class="context-shop"><i></i>Магазин «Саховат» · 3 товара на учёте</span><span class="sample-badge">ДАННЫЕ ПОСЛЕ ДЕМО-ИМПОРТА</span></div>
+        <article class="card card-pad">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px"><h2 class="card-title">Инвентарь бета-версии для магазинов</h2><button class="btn btn-secondary" data-next="2" type="button">Импортировать CSV</button></div>
+          <div class="inventory-row">
+            <div><p class="product-name">Сыр «Голландский» 200 г</p><p class="product-meta">Штрих-код 4780012345601 · Истекает 01.09.2026</p></div>
+            <div class="inventory-cell">Наблюдение CSV<strong>6</strong></div>
+            <div class="inventory-cell">Уверенность<strong class="confidence-badge">Низкая</strong></div>
+            <div class="inventory-cell">Потолок<strong>0</strong></div>
+          </div>
+          <div class="inventory-row">
+            <div><p class="product-name">Кефир 1% 1 л</p><p class="product-meta">Штрих-код 4780012345602 · Истекает 02.09.2026</p></div>
+            <div class="inventory-cell">Наблюдение CSV<strong>4</strong></div>
+            <div class="inventory-cell">Уверенность<strong class="confidence-badge">Низкая</strong></div>
+            <div class="inventory-cell">Потолок<strong>0</strong></div>
+          </div>
+          <div class="inventory-row">
+            <div><p class="product-name">Йогурт клубника 180 г</p><p class="product-meta">Штрих-код 4780012345603 · Истекает 06.09.2026</p></div>
+            <div class="inventory-cell">Наблюдение CSV<strong>7</strong></div>
+            <div class="inventory-cell">Уверенность<strong class="confidence-badge">Низкая</strong></div>
+            <div class="inventory-cell">Потолок<strong>0</strong></div>
+          </div>
+        </article>
+        <div class="grid-2" style="margin-top:16px">
+          <div class="card card-pad"><span class="confidence-badge">Низкая уверенность</span><div class="confidence-scale" data-level="low"><i></i><i></i><i></i></div><p class="card-copy">Ещё не проверено. Доступно к продаже: 0.</p></div>
+          <div class="notice">Публикация с низкой уверенностью возможна только после явного подтверждения физического резерва. В этом сценарии менеджер сначала делает пересчёт.</div>
+        </div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-3</span><button class="btn btn-dark next-button" data-next="4" type="button">Начать пересчёт</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-4" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Сессия пересчёта</p><h1 class="step-title">Физический факт открывает безопасный потолок</h1><p class="step-lead">Сотрудник считает сыр на полке и в подсобке. Менеджер отдельно одобряет предложение корректировки. Только после этого остаток становится высокоуверенным.</p></div><span class="step-index">04</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>Зона «Холодильник 1» · менеджер</span><span class="sample-badge">УЧЕБНЫЙ ПЕРЕСЧЁТ</span></div>
+        <article class="card card-pad">
+          <h2 class="card-title">Выберите товары, которые вы физически пересчитали</h2>
+          <div class="count-card" style="margin-top:18px">
+            <div class="source-card"><div><p class="source-title">Сыр «Голландский» 200 г</p><p class="source-meta"><span>0 по учёту</span><span>6 как наблюдение CSV</span><span>Ещё не проверено</span></p></div><span class="confidence-badge">Низкая уверенность</span></div>
+            <label>Фактическое количество<input id="count-quantity" type="number" min="0" value="6" inputmode="numeric"></label>
+          </div>
+          <div class="button-row"><button class="btn btn-primary" id="submit-count" type="button">Отправить пересчёт</button><span class="action-result" id="count-result" aria-live="polite"></span></div>
+          <div class="proposal" id="count-proposal" hidden>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><strong>Предложения по корректировке</strong><span class="confidence-badge">Ожидает решения менеджера</span></div>
+            <p class="proposal-line">0 по учёту, 6 по пересчёту</p>
+            <div class="button-row"><button class="btn btn-primary" id="approve-count" type="button">Одобрить</button><button class="btn btn-secondary" id="reject-count" type="button">Отклонить</button><span class="action-result" id="approval-result"></span></div>
+          </div>
+        </article>
+        <div class="grid-3" id="recount-metrics" style="margin-top:16px" hidden>
+          <div class="metric"><span class="metric-label">В наличии</span><strong class="metric-value">6</strong><span class="metric-note">остаток обновлён</span></div>
+          <div class="metric"><span class="metric-label">Уверенность</span><strong class="metric-value" style="font-size:20px">высокая</strong><span class="metric-note">проверено сейчас</span></div>
+          <div class="metric"><span class="metric-label">Доступно к продаже</span><strong class="metric-value">6</strong><span class="metric-note">потолок оффера</span></div>
+        </div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-4</span><button class="btn btn-dark next-button" id="to-expiry" data-next="5" type="button" disabled>Открыть контроль сроков</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-5" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Контроль сроков годности</p><h1 class="step-title">Риск сегодня, сначала самый срочный</h1><p class="step-lead">Список отсортирован по дням до срока. Подсказка рассчитывается детерминированным правилом и не меняет цену автоматически.</p></div><span class="step-index">05</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>31 августа 2026 · 4 товара требуют внимания</span><span class="sample-badge">ПОСТАНОВОЧНЫЕ СРОКИ И КОЛИЧЕСТВА</span></div>
+        <article class="card card-pad">
+          <div class="notice">Подсказка объяснима: сегодня снять с полки, 1 день уценка 50, 2–3 дня уценка 30, 4–7 дней уценка 15 и кандидат в оффер. Менеджер утверждает действие и цену.</div>
+          <div class="watch-list">
+            <div class="watch-row"><span class="urgency">0д</span><div><p class="product-name">Пирожное кремовое</p><p class="product-meta">В наличии: 2 · Срок истекает сегодня</p></div><span class="watch-date">31.08.2026</span><span class="suggestion">снять с полки</span></div>
+            <div class="watch-row"><span class="urgency amber">1д</span><div><p class="product-name">Сыр «Голландский» 200 г</p><p class="product-meta">В наличии: 6 · Высокая уверенность</p></div><span class="watch-date">01.09.2026</span><span class="suggestion">уценка 50</span></div>
+            <div class="watch-row"><span class="urgency amber">2д</span><div><p class="product-name">Кефир 1% 1 л</p><p class="product-meta">Наблюдение CSV: 4 · Низкая уверенность</p></div><span class="watch-date">02.09.2026</span><span class="suggestion">уценка 30 · пересчитать сначала</span></div>
+            <div class="watch-row"><span class="urgency calm">6д</span><div><p class="product-name">Йогурт клубника 180 г</p><p class="product-meta">Наблюдение CSV: 7 · Низкая уверенность</p></div><span class="watch-date">06.09.2026</span><span class="suggestion">уценка 15 + кандидат в оффер · пересчитать сначала</span></div>
+          </div>
+        </article>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-5</span><button class="btn btn-dark next-button" data-next="6" type="button">Открыть создание оффера</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-6" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Новое предложение</p><h1 class="step-title">Менеджер утверждает цену, окно и количество</h1><p class="step-lead">Публикация никогда не запускается подсказкой сама. Карточка выходит в Market только после отдельного экрана проверки и явного одобрения менеджера.</p></div><span class="step-index">06</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>Менеджер · Сыр «Голландский» 200 г</span><span class="sample-badge">УЧЕБНЫЙ ОФФЕР</span></div>
+        <div class="grid-2">
+          <article class="card card-pad">
+            <h2 class="card-title">Новое предложение</h2>
+            <div class="field-grid">
+              <label class="field-wide">Название предложения<input id="offer-title" value="Сыр «Голландский» 200 г"></label>
+              <label>Количество<input id="offer-quantity" type="number" min="1" max="6" value="3" inputmode="numeric"><span class="muted">Доступно без физического резерва: 6</span></label>
+              <label>Категория<input id="offer-category" value="Продукты"></label>
+              <label>Цена предложения, сум<input id="offer-price" type="number" value="12000" inputmode="numeric"></label>
+              <label>Подтверждённая базовая цена, сум, необязательно<input id="reference-price" type="number" value="24000" inputmode="numeric"></label>
+              <label>Начало самовывоза<input id="pickup-start" type="time" value="18:00"></label>
+              <label>Конец самовывоза<input id="pickup-end" type="time" value="21:00"></label>
+            </div>
+            <div class="button-row"><button class="btn btn-primary" id="review-offer" type="button">Проверить перед публикацией</button><span class="action-result" id="offer-form-result"></span></div>
+          </article>
+          <article class="card card-pad" id="offer-review">
+            <span class="status-badge">РЕШЕНИЕ МЕНЕДЖЕРА</span>
+            <h2 class="card-title" style="margin-top:12px">Проверьте перед одобрением</h2>
+            <div class="form-summary">
+              <div class="summary-line"><span>Резерв</span><strong id="review-product">Сыр «Голландский» 200 г</strong></div>
+              <div class="summary-line"><span>Количество</span><strong id="review-quantity-value">3</strong></div>
+              <div class="summary-line"><span>Цена предложения</span><strong id="review-price-value">12 000 сум</strong></div>
+              <div class="summary-line"><span>Базовая цена</span><strong id="review-reference-value">24 000 сум</strong></div>
+              <div class="summary-line"><span>Самовывоз</span><strong id="review-window-value">с 18:00 до 21:00</strong></div>
+              <div class="summary-line"><span>Скидка</span><strong id="review-discount-value">50%</strong></div>
+            </div>
+            <div class="notice honesty" style="margin-top:16px">Остаток подтверждён пересчётом. Физический резерв не требуется, количество не превышает безопасный потолок.</div>
+            <button class="btn btn-dark" id="publish-offer" type="button" style="width:100%;margin-top:16px" disabled>Одобрить и опубликовать</button>
+            <span class="action-result" id="publish-result" style="display:block;margin-top:10px" aria-live="polite"></span>
+          </article>
+        </div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-6</span><button class="btn btn-dark next-button" id="to-market" data-next="7" type="button" disabled>Перейти в Rafly Market</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-7" data-surface="market" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Market · Покупатель</p><h1 class="step-title">В Market попадает только одобренный оффер</h1><p class="step-lead">Покупатель видит публичную цену, окно и доступность. Внутренний остаток магазина, поставщик и данные сотрудника не раскрываются.</p></div><span class="step-index">07</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>Публичная витрина · Ташкент</span><span class="sample-badge">НЕ ЖИВОЕ ПРЕДЛОЖЕНИЕ · ОБРАЗЕЦ</span></div>
+        <article class="card market-wrap">
+          <div class="market-head"><span class="market-brand"><span class="brand-mark">R</span>Rafly Market</span><span class="sample-badge">ДЕМО</span></div>
+          <div class="market-card">
+            <div class="product-visual" role="img" aria-label="Постановочная иллюстрация упаковки сыра"></div>
+            <div class="market-body">
+              <span class="status-badge">Остаток проверен только что</span>
+              <h2 class="market-title">Сыр «Голландский» 200 г</h2>
+              <p class="market-shop">Магазин «Саховат», Ташкент · вымышленный магазин</p>
+              <div class="price-row"><span class="price">12 000 сум</span><span class="old-price">24 000 сум</span><span class="sample-badge">Скидка 50%</span></div>
+              <div class="market-meta"><span>Самовывоз 18:00–21:00</span><strong id="market-quantity">Осталось: 3</strong><span>Оплата в магазине</span></div>
+              <div class="market-action"><span class="muted" style="font-size:11px">Одна бронь выделяет одну единицу.</span><button class="btn btn-primary" id="reserve-offer" type="button">Забронировать</button></div>
+              <div class="pickup-code" id="pickup-code-card" hidden>
+                <span class="muted" style="font-size:10px">Код самовывоза</span><div class="pickup-code-value">7K2M9Q</div><p class="card-copy">Покажите этот код продавцу при самовывозе. В этой офлайн-демонстрации код хранится только в памяти открытой страницы.</p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-7</span><button class="btn btn-dark next-button" id="to-pickup" data-next="8" type="button" disabled>К выдаче по коду</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-8" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Очередь самовывоза</p><h1 class="step-title">Камера замечает. Менеджер проверяет и решает</h1><p class="step-lead">В зоне выдачи товар не найден. Камерный фрагмент является только исследовательским наблюдением. Расхождение открывается после ручной проверки и отправки менеджером.</p></div><span class="step-index">08</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>Выдача по коду · Код заканчивается на 9Q</span><span style="display:flex;flex-wrap:wrap;gap:7px"><span class="sample-badge">ПОСТАНОВОЧНЫЕ ДАННЫЕ</span><span class="research-badge">ИССЛЕДОВАНИЕ, НЕ ФУНКЦИЯ ПРОДУКТА</span></span></div>
+        <div class="camera-review">
+          <figure class="camera-frame">
+            <div class="camera-top"><span>постановочная запись</span><span>зона выдачи · камера 1</span></div>
+            <div class="shelf"><i class="shelf-item a"></i><i class="shelf-item b"></i><i class="shelf-item c"></i><i class="camera-box"></i></div>
+            <figcaption class="camera-caption">Наблюдение: в обозначенной зоне не видна ожидаемая единица. Это не доказательство продажи, оплаты или истинного остатка.</figcaption>
+          </figure>
+          <article class="card decision-card">
+            <span class="danger-badge">ТРЕБУЕТСЯ РЕШЕНИЕ ЧЕЛОВЕКА</span>
+            <h2 class="card-title" style="margin-top:12px">Приостановить доступность из-за расхождения</h2>
+            <p class="card-copy">Менеджер сверяет физический резерв и вводит факт. До отправки наблюдение камеры ничего не меняет.</p>
+            <div class="field-grid">
+              <label>Полный код самовывоза<input value="7K2M9Q" aria-label="Полный код самовывоза"></label>
+              <label>Фактическое количество<input id="mismatch-quantity" type="number" value="0" min="0" inputmode="numeric"></label>
+              <label class="field-wide">Причина расхождения<textarea id="mismatch-reason">Менеджер проверил подписанный резерв. Единица для этой брони не найдена.</textarea></label>
+            </div>
+            <div class="notice danger">После отправки предложение будет приостановлено. Бронь станет невыполненной, а её единица останется обременённой до решения исключения.</div>
+            <button class="btn btn-danger" id="report-mismatch" type="button" style="width:100%;margin-top:16px">Сообщить и приостановить предложение</button>
+            <span class="action-result" id="mismatch-result" style="display:block;margin-top:10px" aria-live="polite"></span>
+            <div class="decision-lock" id="mismatch-ledger" hidden>
+              <div class="lock-cell"><span>Оффер</span><strong>пауза</strong></div>
+              <div class="lock-cell"><span>Бронь</span><strong>не выдана</strong></div>
+              <div class="lock-cell"><span>Обременено</span><strong>1</strong></div>
+            </div>
+          </article>
+        </div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-8</span><button class="btn btn-dark next-button" id="to-exception" data-next="9" type="button" disabled>Открыть исключение</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-9" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Исключения магазина</p><h1 class="step-title">Неизвестная единица остаётся заблокированной до решения</h1><p class="step-lead">Менеджер пересчитывает физический резерв и обязан описать проверку. Пустой комментарий не закрывает исключение.</p></div><span class="step-index">09</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>Расхождение остатков · Открыто</span><span class="sample-badge">УЧЕБНОЕ ИСКЛЮЧЕНИЕ</span></div>
+        <div class="exception-layout">
+          <article class="card card-pad">
+            <span class="danger-badge" id="exception-status">ОТКРЫТО</span>
+            <h2 class="card-title" style="margin-top:12px">Расхождение остатков</h2>
+            <p class="card-copy">Менеджер проверил подписанный резерв. Единица для этой брони не найдена. Фактическое количество: 0.</p>
+            <div class="exception-ledger">
+              <div class="ledger-line"><span>Остаток товара</span><strong>6</strong></div>
+              <div class="ledger-line"><span>Остаток в оффере на паузе</span><strong>2</strong></div>
+              <div class="ledger-line"><span>Невыданная бронь</span><strong id="failed-unit-value">1, обременена</strong></div>
+              <div class="ledger-line"><span>Доступно к продаже</span><strong id="ceiling-before">3</strong></div>
+            </div>
+          </article>
+          <article class="card card-pad">
+            <h2 class="card-title">Закрыть исключение</h2>
+            <p class="card-copy">Опишите, что вы проверили и как устранили расхождение.</p>
+            <label style="margin-top:16px">Комментарий к решению<textarea id="resolution-note" placeholder="Обязательный комментарий"></textarea></label>
+            <button class="btn btn-primary" id="resolve-exception" type="button" style="width:100%;margin-top:14px" disabled>Закрыть и освободить единицы</button>
+            <span class="action-result" id="resolution-result" style="display:block;margin-top:10px" aria-live="polite"></span>
+            <div class="audit" id="resolution-audit" hidden>09:18 · менеджер · исключение закрыто<br>решение сохранено · обременение 1 → 0<br>доступно к продаже 3 → 4 · оффер остаётся на паузе</div>
+          </article>
+        </div>
+        <div class="notice honesty" id="resolution-honesty" style="margin-top:16px" hidden>Единица вернулась в безопасный потолок запасов. Старый оффер не возобновился автоматически, менеджер должен принять отдельное решение о новой публикации.</div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-9</span><button class="btn btn-dark next-button" id="to-digest" data-next="10" type="button" disabled>Сформировать сводку</button></footer>
+      </section>
+
+      <section class="step-panel" id="step-10" data-surface="control" tabindex="-1" hidden>
+        <header class="step-head"><div><p class="eyebrow"><i></i>Rafly Control · Сводка владельца</p><h1 class="step-title">Утром владелец получает факты, а не красивую статистику</h1><p class="step-lead">Сводка собрана из состояния каталога, сроков, исключений, пересчётов, офферов и броней. В ней нет прогноза выручки, предотвращённых потерь или придуманной эффективности.</p></div><span class="step-index">10</span></header>
+        <div class="context-bar"><span class="context-shop"><i></i>1 сентября 2026 · подтверждённый итог 31 августа</span><span class="sample-badge">ПОСТАНОВОЧНАЯ СВОДКА</span></div>
+        <div class="grid-2">
+          <article class="digest">
+            <div class="digest-head"><strong>Rafly Control</strong><span class="mono">01.09 · 06:30</span></div>
+            <div class="digest-message"><pre>Сводка дня: Магазин «Саховат»
+Сформировано: 01.09.2026 06:30 UTC
+
+Давно не проверялось
+01. Кефир 1% 1 л | остаток 0 | не проверялось
+02. Йогурт клубника 180 г | остаток 0 | не проверялось
+
+Срок годности до 3 дней
+01. Пирожное кремовое | 31.08.2026 | -1 дн. | остаток 2
+02. Сыр «Голландский» 200 г | 01.09.2026 | 0 дн. | остаток 6
+03. Кефир 1% 1 л | 02.09.2026 | 1 дн. | остаток 0
+
+Приостановленные офферы
+01. Сыр «Голландский» 200 г | время паузы не хранится
+
+Пересчёты за 7 дней
+дней с пересчётом: 1 из 7
+
+Офферы за 7 дней
+опубликовано: 1
+выдано: 0
+отменено продавцом: 0
+неявка: 0
+не хватило стока: 1
+
+итого: 6 задач на сегодня</pre></div>
+          </article>
+          <article class="card card-pad">
+            <span class="status-badge">ТОЛЬКО ПОДТВЕРЖДЁННЫЕ ФАКТЫ</span>
+            <h2 class="card-title" style="margin-top:12px">Что вошло в сводку</h2>
+            <div class="facts-only"><strong>Каталог</strong><span>Два товара ещё не пересчитаны</span><strong>Сроки</strong><span>Три позиции в окне до трёх дней</span><strong>Исключение</strong><span>Закрыто с обязательным комментарием, поэтому открытых исключений в сводке нет</span><strong>Оффер</strong><span>Остаётся на паузе после расхождения</span><strong>Бронь</strong><span>Одна не выдана из-за расхождения</span></div>
+            <div class="notice" style="margin-top:18px">Сводка не доказывает продажи, выручку или предотвращённые потери. Это список фактов и задач на сегодня.</div>
+            <button class="btn btn-secondary" id="restart-story" type="button" style="width:100%;margin-top:16px">Пройти историю ещё раз</button>
+          </article>
+        </div>
+        <footer class="step-footer"><span class="deep-link">ссылка на шаг: #step-10</span><button class="btn btn-dark" id="copy-step-link" type="button">Скопировать ссылку на этот шаг</button></footer>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript><div class="notice danger" style="margin:24px">Для интерактивных переходов нужен JavaScript. Все данные в этой странице постановочные.</div></noscript>
+
+  <script id="demo-model">
+  (function () {
+    "use strict";
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function initialState() {
+      return {
+        onboarded: false,
+        imported: false,
+        recounted: false,
+        products: {
+          cheese: { onHand: 0, confidence: "low", maxOfferable: 0 }
+        },
+        offer: { status: "draft", quantityAvailable: 0, allocated: 0 },
+        reservation: { status: "none", code: null },
+        failedEncumbered: 0,
+        exception: { status: "none", note: null }
+      };
+    }
+
+    function completeImport(current) {
+      var next = clone(current);
+      next.onboarded = true;
+      next.imported = true;
+      next.products.cheese = { onHand: 0, confidence: "low", maxOfferable: 0 };
+      return next;
+    }
+
+    function completeRecount(current) {
+      var next = completeImport(current);
+      next.recounted = true;
+      next.products.cheese = { onHand: 6, confidence: "high", maxOfferable: 6 };
+      return next;
+    }
+
+    function publishOffer(current) {
+      var next = completeRecount(current);
+      next.offer = { status: "live", quantityAvailable: 3, allocated: 3 };
+      next.products.cheese.maxOfferable = 3;
+      return next;
+    }
+
+    function reserveOffer(current) {
+      var next = current.offer.status === "live" ? clone(current) : publishOffer(current);
+      next.offer.quantityAvailable = 2;
+      next.reservation = { status: "held", code: "7K2M9Q" };
+      return next;
+    }
+
+    function reportMismatch(current) {
+      var next = current.reservation.status === "held" ? clone(current) : reserveOffer(current);
+      next.offer.status = "paused";
+      next.reservation.status = "failed_stock_mismatch";
+      next.failedEncumbered = 1;
+      next.exception = { status: "open", note: null };
+      next.products.cheese.maxOfferable = 3;
+      return next;
+    }
+
+    function resolveException(current, note) {
+      if (!note || !String(note).trim()) throw new Error("resolution_note_required");
+      var next = current.exception.status === "open" ? clone(current) : reportMismatch(current);
+      next.exception = { status: "resolved", note: String(note).trim() };
+      next.failedEncumbered = 0;
+      next.products.cheese.maxOfferable = 4;
+      return next;
+    }
+
+    window.RaflyDemoModel = {
+      initialState: initialState,
+      completeImport: completeImport,
+      completeRecount: completeRecount,
+      publishOffer: publishOffer,
+      reserveOffer: reserveOffer,
+      reportMismatch: reportMismatch,
+      resolveException: resolveException
+    };
+  }());
+  </script>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var model = window.RaflyDemoModel;
+    var state = model.initialState();
+    var currentStep = 1;
+    var importDecisions = [false, false, false, false];
+    var initialHash = window.location.hash;
+    var toastTimer = null;
+
+    var panels = Array.prototype.slice.call(document.querySelectorAll(".step-panel"));
+    var stepLinks = Array.prototype.slice.call(document.querySelectorAll("[data-step-link]"));
+    var stepCounter = document.getElementById("step-counter");
+    var controlChip = document.getElementById("control-chip");
+    var marketChip = document.getElementById("market-chip");
+    var directNote = document.getElementById("direct-note");
+    var toast = document.getElementById("toast");
+
+    function showToast(message) {
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add("is-visible");
+      toastTimer = window.setTimeout(function () { toast.classList.remove("is-visible"); }, 2400);
+    }
+
+    function prerequisitesFor(step) {
+      if (step >= 2) state.onboarded = true;
+      if (step >= 3 && !state.imported) state = model.completeImport(state);
+      if (step >= 5 && !state.recounted) state = model.completeRecount(state);
+      if (step >= 7 && state.offer.status === "draft") state = model.publishOffer(state);
+      if (step >= 8 && state.reservation.status === "none") state = model.reserveOffer(state);
+      if (step >= 9 && state.exception.status === "none") state = model.reportMismatch(state);
+      if (step >= 10 && state.exception.status !== "resolved") state = model.resolveException(state, "Пересчитан физический резерв. Обременение снято после ручной проверки.");
+    }
+
+    function syncUiFromState() {
+      document.getElementById("onboard-result").textContent = state.onboarded ? "Скоуп принят. Каталог и остатки пока не подтверждены." : "";
+      document.getElementById("onboard-button").disabled = state.onboarded;
+      document.getElementById("to-import").disabled = !state.onboarded;
+      document.getElementById("to-catalog").disabled = !state.imported;
+      document.getElementById("to-expiry").disabled = !state.recounted;
+      document.getElementById("to-market").disabled = state.offer.status === "draft";
+      document.getElementById("to-pickup").disabled = state.reservation.status === "none";
+      document.getElementById("to-exception").disabled = state.exception.status === "none";
+      document.getElementById("to-digest").disabled = state.exception.status !== "resolved";
+
+      if (state.imported) {
+        importDecisions = [true, true, true, true];
+        document.getElementById("staged-review").hidden = false;
+        document.getElementById("import-complete-note").hidden = false;
+        document.getElementById("decision-count").textContent = "4 из 4";
+        Array.prototype.forEach.call(document.querySelectorAll("[data-review-row]"), function (row) {
+          row.classList.add("is-decided");
+          Array.prototype.forEach.call(row.querySelectorAll("button"), function (button) { button.disabled = true; });
+          row.querySelector(".row-result").textContent = "Одобрено";
+        });
+      }
+
+      if (state.recounted) {
+        document.getElementById("count-proposal").hidden = false;
+        document.getElementById("recount-metrics").hidden = false;
+        document.getElementById("approve-count").disabled = true;
+        document.getElementById("reject-count").disabled = true;
+        document.getElementById("approval-result").textContent = "Одобрено, остаток обновлён";
+      }
+
+      if (state.offer.status !== "draft") {
+        document.getElementById("publish-offer").disabled = true;
+        document.getElementById("publish-result").textContent = "Предложение опубликовано · Доступно: 3";
+      }
+
+      if (state.reservation.status !== "none") {
+        document.getElementById("reserve-offer").disabled = true;
+        document.getElementById("reserve-offer").textContent = "Забронировано";
+        document.getElementById("pickup-code-card").hidden = false;
+        document.getElementById("market-quantity").textContent = "Осталось: 2";
+      }
+
+      if (state.exception.status !== "none") {
+        document.getElementById("report-mismatch").disabled = true;
+        document.getElementById("mismatch-result").textContent = "Предложение приостановлено после подтверждения расхождения.";
+        document.getElementById("mismatch-ledger").hidden = false;
+      }
+
+      if (state.exception.status === "resolved") {
+        document.getElementById("exception-status").textContent = "ЗАКРЫТО";
+        document.getElementById("exception-status").className = "status-badge";
+        document.getElementById("failed-unit-value").textContent = "0, освобождена";
+        document.getElementById("ceiling-before").textContent = "4";
+        document.getElementById("resolution-result").textContent = "Исключение закрыто.";
+        document.getElementById("resolution-audit").hidden = false;
+        document.getElementById("resolution-honesty").hidden = false;
+        document.getElementById("resolution-note").value = state.exception.note;
+        document.getElementById("resolution-note").disabled = true;
+        document.getElementById("resolve-exception").disabled = true;
+      }
+    }
+
+    function openStep(step, options) {
+      var normalized = Math.max(1, Math.min(10, Number(step) || 1));
+      prerequisitesFor(normalized);
+      currentStep = normalized;
+      panels.forEach(function (panel) { panel.hidden = panel.id !== "step-" + normalized; });
+      stepLinks.forEach(function (link) {
+        var linkStep = Number(link.getAttribute("data-step-link"));
+        if (linkStep === normalized) link.setAttribute("aria-current", "step");
+        else link.removeAttribute("aria-current");
+        link.classList.toggle("is-complete", linkStep < normalized);
+      });
+      stepCounter.textContent = "шаг " + String(normalized).padStart(2, "0") + " / 10";
+      var surface = document.getElementById("step-" + normalized).getAttribute("data-surface");
+      controlChip.classList.toggle("is-active", surface === "control");
+      marketChip.classList.toggle("is-active", surface === "market");
+      syncUiFromState();
+      if (!options || !options.fromHash) window.location.hash = "step-" + normalized;
+      if (options && options.focus) {
+        document.getElementById("step-" + normalized).focus({ preventScroll: true });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    stepLinks.forEach(function (link) {
+      link.addEventListener("click", function () { openStep(link.getAttribute("data-step-link"), { focus: true }); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-next]"), function (button) {
+      button.addEventListener("click", function () { openStep(button.getAttribute("data-next"), { focus: true }); });
+    });
+
+    document.getElementById("onboard-button").addEventListener("click", function () {
+      state.onboarded = true;
+      syncUiFromState();
+      showToast("Магазин принят в учебный спринт");
+    });
+
+    document.getElementById("parse-csv").addEventListener("click", function () {
+      var lines = document.getElementById("csv-input").value.trim().split(/\r?\n/);
+      if (lines.length !== 5 || lines[0].indexOf("название") === -1) {
+        document.getElementById("csv-result").textContent = "Проверьте заголовок и четыре строки образца.";
+        return;
+      }
+      document.getElementById("upload-csv").disabled = false;
+      document.getElementById("csv-result").textContent = "Найдено строк: 4";
+    });
+
+    document.getElementById("upload-csv").addEventListener("click", function () {
+      document.getElementById("staged-review").hidden = false;
+      document.getElementById("upload-csv").disabled = true;
+      document.getElementById("csv-result").textContent = "Пакет поставлен в очередь ручной проверки.";
+      document.getElementById("staged-review").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.querySelector(".choose-candidate").addEventListener("click", function (event) {
+      event.currentTarget.disabled = true;
+      event.currentTarget.nextElementSibling.disabled = false;
+      event.currentTarget.textContent = "Выбрано";
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll(".approve-row"), function (button) {
+      button.addEventListener("click", function () {
+        var row = button.closest("[data-review-row]");
+        var index = Number(row.getAttribute("data-review-row"));
+        importDecisions[index] = true;
+        row.classList.add("is-decided");
+        Array.prototype.forEach.call(row.querySelectorAll("button"), function (rowButton) { rowButton.disabled = true; });
+        row.querySelector(".row-result").textContent = "Одобрено";
+        var count = importDecisions.filter(Boolean).length;
+        document.getElementById("decision-count").textContent = count + " из 4";
+        if (count === 4) {
+          state = model.completeImport(state);
+          syncUiFromState();
+          showToast("Все строки получили решение человека");
+        }
+      });
+    });
+
+    document.getElementById("submit-count").addEventListener("click", function () {
+      if (Number(document.getElementById("count-quantity").value) !== 6) {
+        document.getElementById("count-result").textContent = "Для сценария образца введите 6.";
+        return;
+      }
+      document.getElementById("count-proposal").hidden = false;
+      document.getElementById("count-result").textContent = "Пересчёт отправлен. Остаток ещё не изменён.";
+    });
+
+    document.getElementById("approve-count").addEventListener("click", function () {
+      state = model.completeRecount(state);
+      syncUiFromState();
+      showToast("Менеджер одобрил корректировку");
+    });
+    document.getElementById("reject-count").addEventListener("click", function () {
+      document.getElementById("count-proposal").hidden = true;
+      document.getElementById("count-result").textContent = "Отклонено. Остаток не изменён.";
+    });
+
+    document.getElementById("review-offer").addEventListener("click", function () {
+      var quantity = Number(document.getElementById("offer-quantity").value);
+      var price = Number(document.getElementById("offer-price").value);
+      var reference = Number(document.getElementById("reference-price").value);
+      var start = document.getElementById("pickup-start").value;
+      var end = document.getElementById("pickup-end").value;
+      if (quantity !== 3 || price !== 12000 || reference !== 24000 || start !== "18:00" || end !== "21:00") {
+        document.getElementById("offer-form-result").textContent = "Для чистого сценария используйте данные образца.";
+        return;
+      }
+      document.getElementById("publish-offer").disabled = false;
+      document.getElementById("offer-form-result").textContent = "Поля проверены. Требуется решение менеджера.";
+    });
+
+    document.getElementById("publish-offer").addEventListener("click", function () {
+      state = model.publishOffer(state);
+      syncUiFromState();
+      showToast("Менеджер одобрил публикацию");
+    });
+
+    document.getElementById("reserve-offer").addEventListener("click", function () {
+      state = model.reserveOffer(state);
+      syncUiFromState();
+      showToast("Бронь создана в памяти демонстрации");
+    });
+
+    document.getElementById("report-mismatch").addEventListener("click", function () {
+      if (!document.getElementById("mismatch-reason").value.trim()) {
+        document.getElementById("mismatch-result").textContent = "Укажите причину перед отправкой расхождения.";
+        return;
+      }
+      state = model.reportMismatch(state);
+      syncUiFromState();
+      showToast("Расхождение подтверждено менеджером");
+    });
+
+    document.getElementById("resolution-note").addEventListener("input", function (event) {
+      document.getElementById("resolve-exception").disabled = !event.currentTarget.value.trim();
+    });
+    document.getElementById("resolve-exception").addEventListener("click", function () {
+      try {
+        state = model.resolveException(state, document.getElementById("resolution-note").value);
+        syncUiFromState();
+        showToast("Исключение закрыто с комментарием");
+      } catch (error) {
+        document.getElementById("resolution-result").textContent = "Добавьте корректный комментарий к решению.";
+      }
+    });
+
+    function resetDemo() {
+      state = model.initialState();
+      importDecisions = [false, false, false, false];
+      window.location.hash = "step-1";
+      window.location.reload();
+    }
+    document.getElementById("reset-demo").addEventListener("click", resetDemo);
+    document.getElementById("restart-story").addEventListener("click", resetDemo);
+
+    document.getElementById("copy-step-link").addEventListener("click", function () {
+      var value = window.location.href.split("#")[0] + "#step-10";
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(value).then(function () { showToast("Ссылка скопирована"); });
+      } else {
+        showToast("Ссылка на шаг: #step-10");
+      }
+    });
+
+    window.addEventListener("hashchange", function () {
+      var match = window.location.hash.match(/^#step-(10|[1-9])$/);
+      if (match && Number(match[1]) !== currentStep) openStep(Number(match[1]), { fromHash: true, focus: true });
+    });
+
+    var hashMatch = initialHash.match(/^#step-(10|[1-9])$/);
+    var startStep = hashMatch ? Number(hashMatch[1]) : 1;
+    directNote.hidden = startStep === 1;
+    openStep(startStep, { fromHash: true });
+    if (!hashMatch) window.location.hash = "step-1";
+  }());
+  </script>
+</body>
+</html>

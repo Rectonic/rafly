@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Rafly | Story</title>
+  <!-- Screenshot at exactly 1080 x 1920 pixels. -->
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --warm: #FF8C42;
+      --deep-teal: #0E8A6C;
+      --line: #C9D3CF;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 1080px; height: 1920px; margin: 0; overflow: hidden; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--body); }
+    .story { position: relative; width: 1080px; height: 1920px; padding: 92px 72px 82px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 78px; overflow: hidden; }
+    .story::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 32px;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, var(--teal) 0 118px, var(--ink) 118px 134px, var(--paper) 134px 178px);
+    }
+    .brand { display: flex; align-items: center; gap: 22px; }
+    .brand svg { width: 70px; height: 70px; display: block; }
+    .wordmark { font: 900 50px/1 var(--display); letter-spacing: -0.06em; }
+    .hero p { margin: 0 0 34px; font: 800 19px/1.2 var(--mono); letter-spacing: 0.1em; color: var(--deep-teal); }
+    h1 { margin: 0; max-width: 900px; font: 900 104px/0.96 var(--display); letter-spacing: -0.065em; }
+    h1 span { color: var(--deep-teal); }
+    .trail { align-self: stretch; display: grid; align-content: center; gap: 0; padding-left: 44px; border-left: 4px solid var(--ink); }
+    .label { position: relative; width: 830px; min-height: 178px; padding: 38px 42px; border: 4px solid var(--ink); }
+    .label::before { content: ""; position: absolute; left: -62px; top: 82px; width: 58px; height: 4px; background: var(--ink); }
+    .label + .label { margin-top: -4px; }
+    .label:nth-child(1) { background: var(--teal); transform: translateX(-4px); }
+    .label:nth-child(2) { background: var(--ink); color: var(--paper); transform: translateX(34px); }
+    .label:nth-child(3) { background: #FFE6D4; border-color: var(--warm); transform: translateX(4px); }
+    .label b { display: block; margin-bottom: 14px; font: 900 20px/1.2 var(--mono); }
+    .label span { display: block; font: 900 46px/1.02 var(--display); letter-spacing: -0.04em; }
+    .footer { border-top: 4px solid var(--ink); padding-top: 32px; }
+    .footer strong { display: block; max-width: 800px; margin-bottom: 24px; font: 900 42px/1.08 var(--display); letter-spacing: -0.035em; }
+    .footer p { margin: 0; font: 700 20px/1.4 var(--mono); color: var(--deep-teal); }
+  </style>
+</head>
+<body>
+  <main class="story">
+    <header class="brand">
+      <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+      <span class="wordmark">Rafly</span>
+    </header>
+    <section class="hero">
+      <p>50 МАГАЗИНОВ · СТАРТОВАЯ КОГОРТА</p>
+      <h1>Запускаем <span>контроль запасов</span> под ключ.</h1>
+    </section>
+    <section class="trail" aria-label="Путь от полки до оффера">
+      <div class="label"><b>КАТАЛОГ</b><span>Восстановить</span></div>
+      <div class="label"><b>ПОЛНЫЙ УЧЁТ</b><span>Провести</span></div>
+      <div class="label"><b>КОНТРОЛЬ</b><span>Включить</span></div>
+    </section>
+    <footer class="footer">
+      <strong>Запуск начинается сейчас.</strong>
+      <p>Любой POS или без POS · мониторинг и аналитика · Store Control Sprint 7-10 дней</p>
+    </footer>
+  </main>
+</body>
+</html>

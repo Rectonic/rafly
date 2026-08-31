@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rafly | Company one-pager</title>
+  <meta name="description" content="Rafly: stock control for physical shops and a marketplace for verified offers.">
+  <style>
+    :root {
+      --display: "Arial Black", "Arial Narrow", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --teal: #16C79A;
+      --deep-teal: #0E8A6C;
+      --ink: #101418;
+      --paper: #F4F6F5;
+      --white: #FCFDFC;
+      --warm: #FF8C42;
+      --muted: #52605C;
+      --line: #C9D3CF;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #D9DEDC; color: var(--ink); }
+    body { font-family: var(--body); }
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 11mm 12mm 9mm;
+      overflow: hidden;
+      background: var(--paper);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 6mm;
+      page-break-after: avoid;
+      position: relative;
+    }
+    .sheet::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 4mm;
+      height: 100%;
+      background: repeating-linear-gradient(to bottom, var(--teal) 0 8mm, var(--ink) 8mm 9mm, var(--paper) 9mm 13mm);
+    }
+    .topline { display: flex; align-items: flex-start; justify-content: space-between; gap: 10mm; }
+    .brand { display: flex; align-items: center; gap: 4mm; }
+    .brand svg { width: 14mm; height: 14mm; display: block; flex: 0 0 auto; }
+    .brand-name { margin: 0; font: 900 27pt/0.92 var(--display); letter-spacing: -0.06em; }
+    .meta {
+      margin: 1mm 0 0;
+      text-align: right;
+      font: 700 7.5pt/1.45 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--deep-teal);
+    }
+    .positioning {
+      margin: 0;
+      max-width: 165mm;
+      font: 800 20pt/1.08 var(--display);
+      letter-spacing: -0.035em;
+    }
+    .positioning strong { color: var(--deep-teal); }
+    .layout { display: grid; grid-template-columns: 1.06fr 0.94fr; gap: 7mm; min-height: 0; }
+    .column { display: flex; flex-direction: column; gap: 5mm; min-width: 0; }
+    section { border-top: 0.45mm solid var(--ink); padding-top: 2.4mm; }
+    section.accent { border-top-color: var(--teal); border-top-width: 1.2mm; }
+    h2 {
+      margin: 0 0 1.8mm;
+      font: 800 9.2pt/1.1 var(--display);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    p { margin: 0; font-size: 8.55pt; line-height: 1.36; }
+    .problem p { font-size: 10.1pt; line-height: 1.38; }
+    .products { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+    .product { min-height: 38mm; padding: 3.4mm; background: var(--white); border: 0.35mm solid var(--line); }
+    .product:first-child { border-top: 2mm solid var(--teal); }
+    .product:last-child { border-top: 2mm solid var(--warm); }
+    .product h3 { margin: 0 0 2mm; font: 800 11pt/1 var(--display); }
+    .sprint { background: var(--ink); color: var(--paper); padding: 4mm; border-top: 0; }
+    .sprint h2 { color: var(--teal); }
+    .sprint .days { float: right; margin: 0 0 2mm 4mm; font: 900 19pt/1 var(--mono); color: var(--warm); }
+    ul { margin: 0; padding: 0; list-style: none; }
+    .trust li {
+      position: relative;
+      padding: 0 0 0 6mm;
+      margin: 0 0 2.5mm;
+      font-size: 8.4pt;
+      line-height: 1.34;
+    }
+    .trust li:last-child { margin-bottom: 0; }
+    .trust li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: -0.3mm;
+      width: 4mm;
+      height: 4mm;
+      background: var(--teal);
+      color: var(--ink);
+      font: 900 8pt/4mm var(--mono);
+      text-align: center;
+    }
+    .status { padding: 3.6mm; background: #DDF4EC; border: 0.4mm solid var(--deep-teal); }
+    .status h2 { color: var(--deep-teal); }
+    .status-line { margin-top: 2.2mm; font: 700 7.7pt/1.4 var(--mono); }
+    .model li {
+      display: grid;
+      grid-template-columns: 24mm 1fr;
+      gap: 2.5mm;
+      padding: 1.8mm 0;
+      border-bottom: 0.25mm solid var(--line);
+      font-size: 8pt;
+      line-height: 1.3;
+    }
+    .model li:last-child { border-bottom: 0; }
+    .model b { font-family: var(--mono); color: var(--deep-teal); }
+    .ask { padding: 3.8mm; background: #FFE6D4; border: 0.4mm solid var(--warm); }
+    .footer {
+      display: grid;
+      grid-template-columns: 35mm 1fr 1fr;
+      align-items: end;
+      gap: 5mm;
+      padding-top: 3mm;
+      border-top: 1.2mm solid var(--ink);
+    }
+    .footer .label { font: 900 9pt/1.15 var(--display); text-transform: uppercase; }
+    .contact { font: 700 7.7pt/1.55 var(--mono); }
+    .contact span { display: block; }
+    .page-note { color: var(--muted); font: 600 6.7pt/1.4 var(--mono); text-align: right; }
+    @media print {
+      html, body { width: 210mm; height: 297mm; background: var(--paper); }
+      .sheet { margin: 0; }
+    }
+    @page{size:A4 portrait;margin:0}
+  </style>
+</head>
+<body>
+  <article class="sheet">
+    <header class="topline">
+      <div class="brand">
+        <svg viewBox="0 0 64 64" role="img" aria-label="Знак Rafly"><path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/><path fill="#101418" d="M25 20h6v6h-6z"/></svg>
+        <h1 class="brand-name">Rafly</h1>
+      </div>
+      <p class="meta">Enterprise solutions<br>Tashkent, 2026</p>
+    </header>
+
+    <p class="positioning">Rafly brings order to shop inventory, then turns <strong>verified surplus</strong> into discounted offers.</p>
+
+    <main class="layout">
+      <div class="column">
+        <section class="problem accent">
+          <h2>The problem</h2>
+          <p>In independent shops, stock truth often lives in one person’s head while catalog errors and expiry losses stay hidden. A marketplace cannot repair weak source data, so the shop needs a working control loop first.</p>
+        </section>
+
+        <section>
+          <h2>Two products, one engine</h2>
+          <div class="products">
+            <article class="product">
+              <h3>Control</h3>
+              <p>The shop workspace: catalog import, product identity, recount, expiry watch, exception resolution, and an owner digest.</p>
+            </article>
+            <article class="product">
+              <h3>Market</h3>
+              <p>The buyer surface: human-approved offers only, with price, pickup window, availability, reservation, and pickup code.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="sprint">
+          <span class="days">7-10 days</span>
+          <h2>How a shop starts</h2>
+          <p>An operator delivers a paid Store Control Sprint: completes a fast full inventory, builds the working catalog, sets recount and expiry routines, trains staff, and launches the shop end to end.</p>
+        </section>
+
+        <section class="ask">
+          <h2>The ask</h2>
+          <p>We are scaling the 50-shop launch cohort. PTA partners can accelerate field delivery with retail expertise and investment support for the next stage of growth.</p>
+        </section>
+      </div>
+
+      <div class="column">
+        <section class="trust accent">
+          <h2>Accountability by design</h2>
+          <ul>
+            <li>Cameras and algorithms surface flags and rank risk, then an accountable employee decides.</li>
+            <li>Buyers see an offer only after explicit approval by shop staff.</li>
+            <li>Every recount, publication, and exception retains the actor, time, and full decision trail.</li>
+          </ul>
+        </section>
+
+        <section class="status">
+          <h2>Launching 50 shops</h2>
+          <p>Agreements are in place with 50 shops and launch is under way. The pilot covers stock monitoring, stock analytics, fast full inventory, and turnkey support. Rafly works with any POS or none: the team extracts available data and builds a working catalog.</p>
+          <p class="status-line">195 backend integration tests / 693 frontend tests / strict typecheck clean / lint clean</p>
+        </section>
+
+        <section class="model">
+          <h2>Business model</h2>
+          <ul>
+            <li><b>Sprint</b><span>Fixed implementation fee, priced against the agreed scope.</span></li>
+            <li><b>Control</b><span>Monthly subscription and operational support after the Sprint.</span></li>
+            <li><b>Market</b><span>Transaction fee on approved offers.</span></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="label">Contact<br>the team</div>
+      <div class="contact">
+        <span>[FOUNDER NAME]</span>
+        <span>[founder@rafly.example]</span>
+        <span>[@telegram]</span>
+      </div>
+      <div class="page-note">
+        <span>[+998 XX XXX XX XX]</span><br>
+        <span>[rafly.example]</span><br>
+        Status as of 31 Aug 2026
+      </div>
+    </footer>
+  </article>
+</body>
+</html>

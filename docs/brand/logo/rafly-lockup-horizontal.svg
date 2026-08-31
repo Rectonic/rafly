@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 64" role="img" aria-labelledby="title desc">
+  <title id="title">Горизонтальный логотип Rafly</title>
+  <desc id="desc">Знак Rafly и латинский вордмарк рядом</desc>
+  <g transform="translate(2 2) scale(.9375)">
+    <path fill="#16C79A" fill-rule="evenodd" d="M8 6h26c12.4 0 20 6.9 20 18 0 7.9-4.1 13.3-11 16l14 18H43L32 42H21v16H8V6Zm13 11v14h13c5 0 8-2.6 8-7s-3-7-8-7H21Z"/>
+    <path fill="#16C79A" d="M25 20h6v6h-6z"/>
+  </g>
+  <text x="76" y="49" fill="#101418" font-family="Arial Rounded MT Bold, Avenir Next, Inter, Arial, sans-serif" font-size="52" font-weight="750" letter-spacing="-2.2">Rafly</text>
+</svg>
