@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rafly</title>
+<style>
+:root{
+  --bg:#0C1116; --ink:#0C1116; --paper:#F4F6F5;
+  --teal:#16C79A; --deep:#0E8A6C; --warm:#FF8C42; --coral:#FF6B6B; --cream:#FFD9A8;
+  --display:"Arial Black",Arial,sans-serif; --body:Arial,Helvetica,sans-serif; --mono:ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:var(--body);color:var(--paper)}
+.slide{position:absolute;inset:0;display:none;padding:84px 104px;flex-direction:column}
+.slide.on{display:flex}
+.glow{position:absolute;inset:0;pointer-events:none}
+.glow::before,.glow::after{content:"";position:absolute;width:1200px;height:1200px;border-radius:50%;filter:blur(10px)}
+.glow::before{right:-420px;top:-560px;background:radial-gradient(circle,rgba(22,199,154,.20),transparent 62%)}
+.glow::after{left:-460px;bottom:-620px;background:radial-gradient(circle,rgba(255,140,66,.16),transparent 62%)}
+.glow.flip::before{background:radial-gradient(circle,rgba(255,140,66,.20),transparent 62%)}
+.glow.flip::after{background:radial-gradient(circle,rgba(22,199,154,.16),transparent 62%)}
+.grid-tex{position:absolute;inset:0;background-image:linear-gradient(rgba(244,246,245,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(244,246,245,.028) 1px,transparent 1px);background-size:64px 64px;pointer-events:none}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:40px;position:relative;z-index:2}
+h1{font:900 68px/1.04 var(--display);letter-spacing:-1.5px;max-width:1430px}
+h1 .t{color:var(--teal)}h1 .o{color:var(--warm)}
+.badge{border:2.5px solid var(--warm);color:var(--warm);font:800 21px/1 var(--mono);letter-spacing:.12em;padding:13px 20px;border-radius:999px;white-space:nowrap}
+.badge.teal{border-color:var(--teal);color:var(--teal)}
+main{flex:1;display:grid;align-content:center;gap:40px;position:relative;z-index:2}
+.cards{display:grid;gap:34px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.card{border-radius:26px;padding:44px 40px;display:grid;gap:20px;align-content:start;border:1px solid rgba(244,246,245,.13);background:rgba(244,246,245,.045)}
+.card.tint-t{background:linear-gradient(160deg,rgba(22,199,154,.16),rgba(22,199,154,.05));border-color:rgba(22,199,154,.45)}
+.card.tint-o{background:linear-gradient(160deg,rgba(255,140,66,.16),rgba(255,140,66,.05));border-color:rgba(255,140,66,.45)}
+.card.tint-r{background:linear-gradient(160deg,rgba(255,107,107,.16),rgba(255,107,107,.05));border-color:rgba(255,107,107,.45)}
+.card.tint-c{background:linear-gradient(160deg,rgba(255,217,168,.14),rgba(255,217,168,.04));border-color:rgba(255,217,168,.4)}
+.ic{width:86px;height:86px;border-radius:22px;display:grid;place-items:center;font-size:42px;background:rgba(22,199,154,.16);border:2.5px solid var(--teal)}
+.ic.o{background:rgba(255,140,66,.16);border-color:var(--warm)}
+.ic.r{background:rgba(255,107,107,.16);border-color:var(--coral)}
+.ic.c{background:rgba(255,217,168,.14);border-color:var(--cream)}
+h2{font:850 34px/1.14 var(--display)}
+.card p{color:rgba(244,246,245,.72);font-size:23.5px;line-height:1.45}
+.big{font:900 118px/1.02 var(--display);letter-spacing:-3px;text-align:center}
+.big .t{color:var(--teal)}.big .o{color:var(--warm)}.big .r{color:var(--coral)}
+.sub{text-align:center;color:rgba(244,246,245,.62);font-size:31px}
+.band{background:linear-gradient(90deg,var(--teal),#12b389);color:var(--ink);border-radius:20px;padding:28px 32px;text-align:center;font:900 31px var(--display)}
+.band.warm{background:linear-gradient(90deg,var(--warm),#f57e30)}
+.chips{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.chip{border-radius:999px;padding:15px 26px;font:800 24px var(--mono)}
+.chip.k{background:#0C1116;color:var(--paper);border:2px solid rgba(244,246,245,.35)}
+.chip.r{background:var(--coral);color:var(--ink)}.chip.o{background:var(--warm);color:var(--ink)}.chip.t{background:var(--teal);color:var(--ink)}
+.tile{border-radius:22px;padding:40px 20px;text-align:center;font:900 42px var(--display);color:var(--ink)}
+.kpi{border-radius:24px;padding:34px 24px;text-align:center;display:grid;gap:10px;border:1px solid rgba(244,246,245,.13);background:rgba(244,246,245,.045)}
+.kpi .n{font:900 78px/1 var(--display)}
+.kpi .l{color:rgba(244,246,245,.66);font-size:22.5px;line-height:1.3}
+.kpi.t .n{color:var(--teal)}.kpi.o .n{color:var(--warm)}.kpi.r .n{color:var(--coral)}.kpi.c .n{color:var(--cream)}
+.foot{color:rgba(244,246,245,.55);font-size:22px;text-align:center}
+.foot b{color:var(--teal)}
+.mark{width:120px;height:120px;border-radius:28px;background:linear-gradient(150deg,var(--teal),#0fa47e);display:grid;place-items:center;color:var(--ink);font:900 62px var(--display);margin:0 auto 34px;box-shadow:0 0 90px rgba(22,199,154,.45)}
+.offer{background:#fff;color:var(--ink);border-radius:28px;padding:46px 50px;max-width:960px;margin:0 auto;display:grid;gap:18px;box-shadow:0 0 110px rgba(22,199,154,.22)}
+.offer .row{display:flex;justify-content:space-between;align-items:center;gap:24px}
+.offer .nm{font:900 46px var(--display)}
+.offer .pr{font:900 56px var(--mono)}.offer .pr s{color:#8a948f;font-size:34px;font-weight:700}
+.offer .meta{color:#5d6763;font-size:24px}
+.offer .btn{background:var(--teal);border-radius:16px;text-align:center;padding:22px;font:900 30px var(--display)}
+.flow{display:flex;align-items:center;justify-content:center;gap:22px}
+.fstep{border-radius:18px;padding:22px 34px;font:850 28px var(--display);background:rgba(244,246,245,.06);border:1px solid rgba(244,246,245,.2)}
+.fstep.hot{background:rgba(22,199,154,.18);border-color:var(--teal);color:var(--teal)}
+.farr{font:900 40px var(--display);color:rgba(244,246,245,.4)}
+.gauge{height:26px;border-radius:999px;background:rgba(244,246,245,.09);overflow:hidden;max-width:1100px;width:100%;margin:0 auto}
+.gauge i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--warm),var(--teal));border-radius:999px}
+/* reveal engine: data-d = delay ms, data-k = kind */
+[data-d]{opacity:0;transform:translateY(26px)}
+[data-k="pop"]{transform:scale(.86)}
+[data-k="left"]{transform:translateX(-40px)}
+</style>
+</head>
+<body>
+
+<!-- 01 -->
+<section class="slide" data-slide="0"><div class="glow"></div><div class="grid-tex"></div>
+<main style="text-align:center">
+  <div><div class="mark" data-d="200" data-k="pop">R</div>
+  <div class="big" data-d="600">Rafly</div>
+  <p class="sub" data-d="1300" style="margin-top:18px">The shop that knows its shelf, and earns from it</p></div>
+  <div class="chips" data-d="2000"><span class="chip t">CONTROL</span><span class="chip o">MARKET</span><span class="chip k">AI</span></div>
+</main></section>
+
+<!-- 02 -->
+<section class="slide" data-slide="1"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Every evening a shop <span class="o">loses money in silence</span></h1><div class="badge" data-d="500">EVERY EVENING</div></div>
+<main><div class="cards c3">
+  <div class="card tint-r" data-d="700"><div class="ic r">🧠</div><h2>Stock lives in a head</h2><p>The shop's only database walks home with the owner every night.</p></div>
+  <div class="card tint-o" data-d="1000"><div class="ic o">⏳</div><h2>Expiry is a surprise</h2><p>Dates live on labels. They surface when it's too late to sell.</p></div>
+  <div class="card tint-c" data-d="1300"><div class="ic c">📉</div><h2>Losses are invisible</h2><p>What isn't counted doesn't exist. Until the next stocktake.</p></div>
+</div></main></section>
+
+<!-- 03 -->
+<section class="slide" data-slide="2"><div class="glow"></div><div class="grid-tex"></div>
+<main><div class="big" data-d="200">Invisible<br><span class="r">doesn't sell.</span></div>
+<div class="big" data-d="1100" style="font-size:96px">Visible <span class="t">sells.</span></div>
+<p class="sub" data-d="1900">Rafly makes surplus visible before it becomes a loss</p></main></section>
+
+<!-- 04 -->
+<section class="slide" data-slide="3"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">The shelf turns <span class="t">into revenue</span></h1><div class="badge teal" data-d="500">ONE SYSTEM</div></div>
+<main>
+<div class="cards c2">
+  <div class="card tint-t" data-d="700"><div class="ic">🛠</div><h2>Rafly Control</h2><p>The shop's workspace: a live catalogue, recounts, expiry, exceptions, the owner's brief.</p></div>
+  <div class="card tint-o" data-d="1000"><div class="ic o">🛍</div><h2>Rafly Market</h2><p>A storefront of verified offers: booking, a pickup window, a pickup code.</p></div>
+</div>
+<div class="band" data-d="1500">ONE ENGINE OF STOCK TRUTH</div>
+</main></section>
+
+<!-- 05 -->
+<section class="slide" data-slide="4"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">A catalogue <span class="t">in one import</span></h1><div class="badge teal" data-d="500">NO POS NEEDED</div></div>
+<main>
+<div class="flow" data-d="700"><span class="fstep">Notebook</span><span class="farr">→</span><span class="fstep">CSV</span><span class="farr">→</span><span class="fstep hot">Live catalogue</span></div>
+<div class="cards c2">
+  <div class="card tint-t" data-d="1100"><div class="ic">⚡</div><h2>From any data</h2><p>A supplier sheet, a till export, a paper notebook. Rafly matches the rows itself.</p></div>
+  <div class="card tint-o" data-d="1400"><div class="ic o">🙋</div><h2>Ambiguity goes to a human</h2><p>Look-alike products are never merged silently. A doubtful row waits for the manager.</p></div>
+</div>
+</main></section>
+
+<!-- 06 -->
+<section class="slide" data-slide="5"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">The shelf becomes <span class="t">a fact</span></h1><div class="badge teal" data-d="400">RECOUNT</div></div>
+<main>
+<div class="big" data-d="600"><span class="t" id="cnt">0 of 6</span></div>
+<p class="sub" data-d="900">units confirmed by a physical recount</p>
+<div class="gauge" data-d="1200"><i id="gaugeFill"></i></div>
+<div class="band" data-d="2600">CONFIDENCE GROWS — THE OFFER LIMIT UNLOCKS</div>
+</main></section>
+
+<!-- 07 -->
+<section class="slide" data-slide="6"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">The system tells you <span class="o">what to discount today</span></h1><div class="badge teal" data-d="500">AUTOMATIC</div></div>
+<main>
+<div class="cards c4">
+  <div class="tile" data-d="700" style="background:var(--coral)">1 day</div>
+  <div class="tile" data-d="900" style="background:var(--warm)">2 days</div>
+  <div class="tile" data-d="1100" style="background:var(--cream)">4 days</div>
+  <div class="tile" data-d="1300" style="background:#E7F7F2">7 days</div>
+</div>
+<div class="chips" data-d="1700"><span class="chip k">Remove from shelf</span><span class="chip r">−50%</span><span class="chip o">−30%</span><span class="chip t">−15%</span></div>
+<p class="foot" data-d="2100">The rules are explainable. A <b>human</b> always approves the price.</p>
+</main></section>
+
+<!-- 08 -->
+<section class="slide" data-slide="7"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Surplus turns <span class="t">into a sale</span></h1><div class="badge teal" data-d="400">RAFLY MARKET</div></div>
+<main>
+<div class="offer" data-d="700" data-k="pop">
+  <div class="row"><span class="nm">Dutch cheese, 200 g</span><span class="chip t" style="font-size:22px">−50%</span></div>
+  <div class="pr">12,000 UZS <s>24,000</s></div>
+  <p class="meta">Pickup 18:00–21:00 · 3 left · Code issued after booking</p>
+  <div class="btn" data-d="1500">Book now</div>
+</div>
+<p class="foot" data-d="2000">Only what the shop has <b>verified by hand</b> reaches the Market.</p>
+</main></section>
+
+<!-- 09 -->
+<section class="slide" data-slide="8"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">No unit ever <span class="r">sells twice</span></h1><div class="badge teal" data-d="500">DEAL PROTECTION</div></div>
+<main><div class="cards c4">
+  <div class="card tint-r" data-d="700"><div class="ic r">🔒</div><h2>Exception</h2><p>A count mismatch pauses the deal.</p></div>
+  <div class="card tint-o" data-d="950"><div class="ic o">🧊</div><h2>Reserve frozen</h2><p>The unit stays locked until a decision.</p></div>
+  <div class="card tint-t" data-d="1200"><div class="ic">📷</div><h2>Camera witness</h2><p>Computer vision records the change.</p></div>
+  <div class="card tint-c" data-d="1450"><div class="ic c">✍️</div><h2>A human decides</h2><p>A mandatory note. The trail stays forever.</p></div>
+</div></main></section>
+
+<!-- 10 -->
+<section class="slide" data-slide="9"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">The whole shop <span class="t">in one morning message</span></h1><div class="badge teal" data-d="500">AUTO ANALYTICS</div></div>
+<main>
+<div class="cards c4">
+  <div class="kpi t" data-d="700"><div class="n">6</div><div class="l">recounts confirmed</div></div>
+  <div class="kpi o" data-d="900"><div class="n">1</div><div class="l">offer approved</div></div>
+  <div class="kpi c" data-d="1100"><div class="n">1</div><div class="l">reservation fulfilled</div></div>
+  <div class="kpi r" data-d="1300"><div class="n">1</div><div class="l">exception closed</div></div>
+</div>
+<p class="foot" data-d="1800">Plus weekly metrics and daily priorities, Telegram-ready. <b>Decisions take minutes.</b></p>
+</main></section>
+
+<!-- 11 -->
+<section class="slide" data-slide="10"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Next: <span class="t">the Rafly AI layer</span></h1><div class="badge" data-d="500">ROADMAP</div></div>
+<main>
+<div class="cards c3">
+  <div class="card tint-t" data-d="700"><div class="ic">📷</div><h2>Camera-based AI inventory</h2><p>The shelf counts itself: vision reconciles fact against records continuously, a human approves.</p></div>
+  <div class="card tint-o" data-d="1000"><div class="ic o">📈</div><h2>Sell-through analytics</h2><p>A demand forecast per product: what moves, what stalls, where margin leaks.</p></div>
+  <div class="card tint-c" data-d="1300"><div class="ic c">🧠</div><h2>Purchasing advisor</h2><p>Data-driven reorder advice: sales history and expiry become a supplier order plan.</p></div>
+</div>
+<p class="foot" data-d="1800">The foundation already works: <b>stock truth</b> from these ten steps.</p>
+</main></section>
+
+
+<!-- 12 COMPETITION -->
+<section class="slide" data-slide="11"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Others store data. <span class="t">Rafly creates truth.</span></h1><div class="badge" data-d="500">VS ALTERNATIVES</div></div>
+<main>
+<div class="cards c4">
+  <div class="card" data-d="700" style="opacity:0"><div class="ic" style="background:rgba(244,246,245,.08);border-color:rgba(244,246,245,.3)">📋</div><h2 style="color:rgba(244,246,245,.75)">Spreadsheets</h2><p>Store guesses. No recount, no accountability, no sales channel.</p></div>
+  <div class="card" data-d="950" style="opacity:0"><div class="ic" style="background:rgba(244,246,245,.08);border-color:rgba(244,246,245,.3)">🖥</div><h2 style="color:rgba(244,246,245,.75)">POS systems</h2><p>Store transactions, and only when maintained. The shelf stays unverified.</p></div>
+  <div class="card" data-d="1200" style="opacity:0"><div class="ic" style="background:rgba(244,246,245,.08);border-color:rgba(244,246,245,.3)">🛒</div><h2 style="color:rgba(244,246,245,.75)">Surprise-bag apps</h2><p>Publish offers on top of stock nobody verified. Trust breaks at pickup.</p></div>
+  <div class="card tint-t" data-d="1500" data-k="pop" style="box-shadow:0 0 90px rgba(22,199,154,.25)"><div class="ic">✅</div><h2>Rafly</h2><p>Verified stock, human accountability and a sales channel — on one core.</p></div>
+</div>
+<p class="foot" data-d="2100">We own the layer <b>beneath</b> the marketplace: stock truth before anything goes public.</p>
+</main></section>
+
+<!-- 13 INVESTMENT -->
+<section class="slide" data-slide="12"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Where the investment <span class="o">goes</span></h1><div class="badge" data-d="500">USE OF FUNDS</div></div>
+<main>
+<div class="cards c3">
+  <div class="card tint-t" data-d="700"><div class="kpi t" style="border:none;background:none;padding:0"><div class="n">35%</div></div><h2>Shop launches</h2><p>Inventory sprints, field visits, training and QA for the first wave of the cohort.</p></div>
+  <div class="card tint-o" data-d="1000"><div class="kpi o" style="border:none;background:none;padding:0"><div class="n">35%</div></div><h2>Engineering & AI</h2><p>Reliability, speed, observability, and the AI layer: cameras, forecasting, reorder advice.</p></div>
+  <div class="card tint-c" data-d="1300"><div class="kpi c" style="border:none;background:none;padding:0"><div class="n">30%</div></div><h2>Field team & readiness</h2><p>Operators, support and sales that make every turnkey launch repeatable.</p></div>
+</div>
+<div class="band" data-d="1800">MILESTONE-BASED TRANCHES, EACH UNLOCKS THE NEXT</div>
+</main></section>
+
+<!-- 14 FINALE -->
+<section class="slide" data-slide="13"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Launching <span class="t">now</span></h1></div>
+<main>
+<div class="cards c2">
+  <div class="kpi t" data-d="500"><div class="n" style="font-size:120px">50</div><div class="l" style="font-size:26px">shops in the starting cohort</div></div>
+  <div class="kpi o" data-d="800"><div class="n" style="font-size:120px">7–10</div><div class="l" style="font-size:26px">days to a turnkey launch · Store Control Sprint</div></div>
+</div>
+<div class="band warm" data-d="1400">CONTROL FOR THE SHOP. A VERIFIED OFFER FOR THE BUYER.</div>
+</main></section>
+
+<script>
+/* Deterministic timeline: __show(i) toggles slide, __seek(ms) drives reveals of active slide. */
+(function(){
+  var active = 0;
+  var slides = [].slice.call(document.querySelectorAll('.slide'));
+  function ease(p){ return 1 - Math.pow(1-p, 3); }
+  window.__show = function(i){
+    active = i;
+    slides.forEach(function(s,k){ s.classList.toggle('on', k===i); });
+    window.__seek(0);
+  };
+  window.__seek = function(ms){
+    var s = slides[active];
+    [].forEach.call(s.querySelectorAll('[data-d]'), function(el){
+      var d = +el.dataset.d, dur = +(el.dataset.dur || 620);
+      var p = Math.max(0, Math.min(1, (ms - d) / dur)), e = ease(p);
+      var k = el.dataset.k;
+      el.style.opacity = p;
+      if (k === 'pop') el.style.transform = 'scale(' + (0.86 + 0.14*e) + ')';
+      else if (k === 'left') el.style.transform = 'translateX(' + (-40*(1-e)) + 'px)';
+      else el.style.transform = 'translateY(' + (26*(1-e)) + 'px)';
+    });
+    var cnt = s.querySelector('#cnt');
+    if (cnt) {
+      var p6 = Math.max(0, Math.min(1, (ms - 1300) / 1600));
+      cnt.textContent = Math.round(6 * p6) + ' of 6';
+      var g = s.querySelector('#gaugeFill');
+      if (g) g.style.width = (100 * p6) + '%';
+    }
+  };
+  /* live viewing: arrows navigate, autoplay reveals */
+  var t0 = null;
+  function loop(ts){ if(t0===null) t0=ts; window.__seek(ts-t0); requestAnimationFrame(loop); }
+  if (!location.search.includes('capture')) { window.__show(0); requestAnimationFrame(loop); }
+  document.addEventListener('keydown', function(e){
+    if (e.key==='ArrowRight'||e.key===' ') { active=Math.min(active+1,slides.length-1); window.__show(active); t0=null; }
+    if (e.key==='ArrowLeft') { active=Math.max(active-1,0); window.__show(active); t0=null; }
+  });
+  if (location.search.includes('capture')) window.__show(0);
+})();
+</script>
+</body>
+</html>
