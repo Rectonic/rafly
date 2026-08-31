@@ -72,6 +72,13 @@ h2{font:850 34px/1.14 var(--display)}
 [data-d]{opacity:0;transform:translateY(26px)}
 [data-k="pop"]{transform:scale(.86)}
 [data-k="left"]{transform:translateX(-40px)}
+@media print{
+ @page{size:508mm 285.75mm;margin:0}
+ html,body{width:auto;height:auto;overflow:visible}
+ .slide{display:flex!important;position:relative;width:1920px;height:1080px;page-break-after:always;break-inside:avoid;overflow:hidden}
+ .slide:last-of-type{page-break-after:auto}
+ [data-d]{opacity:1!important;transform:none!important}
+}
 </style>
 </head>
 <body>
@@ -119,6 +126,17 @@ h2{font:850 34px/1.14 var(--display)}
 <div class="cards c2">
   <div class="card tint-t" data-d="1100"><div class="ic">⚡</div><h2>From any data</h2><p>A supplier sheet, a till export, a paper notebook. Rafly matches the rows itself.</p></div>
   <div class="card tint-o" data-d="1400"><div class="ic o">🙋</div><h2>Ambiguity goes to a human</h2><p>Look-alike products are never merged silently. A doubtful row waits for the manager.</p></div>
+</div>
+</main></section>
+
+<!-- 06 ANY POS -->
+<section class="slide"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Any POS. Any shop. <span class="t">Zero friction.</span></h1><div class="badge teal" data-d="500">TURNKEY</div></div>
+<main>
+<div class="chips" data-d="700"><span class="chip t">Grocery</span><span class="chip o">Bakery</span><span class="chip r">Minimarket</span><span class="chip k">Deli</span><span class="chip t">Kiosk</span></div>
+<div class="cards c2">
+  <div class="card tint-t" data-d="1100"><div class="ic">🔌</div><h2>Any POS — or none</h2><p>Rafly works on top of whatever till the shop already has. No integration project, no replacement, no downtime.</p></div>
+  <div class="card tint-o" data-d="1400"><div class="ic o">🚀</div><h2>Connected by our team</h2><p>Data extraction, catalogue build and staff training are done for you. Live in 7–10 days, turnkey.</p></div>
 </div>
 </main></section>
 
@@ -180,6 +198,19 @@ h2{font:850 34px/1.14 var(--display)}
   <div class="kpi r" data-d="1300"><div class="n">1</div><div class="l">exception closed</div></div>
 </div>
 <p class="foot" data-d="1800">Plus weekly metrics and daily priorities, Telegram-ready. <b>Decisions take minutes.</b></p>
+</main></section>
+
+<!-- FLYWHEEL -->
+<section class="slide"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1 data-d="150">Shop data powers <span class="o">the digital market</span></h1><div class="badge teal" data-d="500">FLYWHEEL</div></div>
+<main>
+<div class="flow" data-d="700"><span class="fstep">Shops</span><span class="farr">→</span><span class="fstep">Verified stock</span><span class="farr">→</span><span class="fstep">Analytics</span><span class="farr">→</span><span class="fstep hot">Digital Market</span></div>
+<div class="cards c3">
+  <div class="card tint-t" data-d="1200"><div class="ic">🏪</div><h2>Every shop feeds it</h2><p>Recounts, expiry and decisions stream in from each connected shop.</p></div>
+  <div class="card tint-c" data-d="1450"><div class="ic c">📊</div><h2>Analytics refines it</h2><p>The platform turns raw shelf data into demand, risk and pricing signals.</p></div>
+  <div class="card tint-o" data-d="1700"><div class="ic o">🛍</div><h2>The market sells it</h2><p>Verified surplus flows into one digital storefront buyers can trust.</p></div>
+</div>
+<p class="foot" data-d="2200">More shops → more data → <b>a stronger market for everyone</b>.</p>
 </main></section>
 
 <!-- 11 -->
@@ -270,7 +301,58 @@ h2{font:850 34px/1.14 var(--display)}
     if (e.key==='ArrowLeft') { active=Math.max(active-1,0); window.__show(active); t0=null; }
   });
   if (location.search.includes('capture')) window.__show(0);
+  if (location.search.includes('print')) {
+    slides.forEach(function(s,k){ window.__show(k); window.__seek(99999); });
+    var c=document.getElementById('cnt'); if(c) c.textContent='6 of 6';
+    var g=document.getElementById('gaugeFill'); if(g) g.style.width='100%';
+  }
 })();
 </script>
+
+<!-- PRINT-ONLY: MARKET -->
+<section class="slide print-only"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1>A big market, <span class="t">a precise first segment</span></h1><div class="badge teal">OFFICIAL DATA</div></div>
+<main>
+<div class="cards c4">
+  <div class="kpi t"><div class="n" style="font-size:64px">227,910</div><div class="l">retail organisations, Uzbekistan, 2024</div></div>
+  <div class="kpi o"><div class="n" style="font-size:64px">47,462</div><div class="l">TAM: shops after segment filters</div></div>
+  <div class="kpi c"><div class="n" style="font-size:64px">8,459</div><div class="l">SAM: Tashkent independent grocery</div></div>
+  <div class="kpi r"><div class="n" style="font-size:64px">346.7</div><div class="l">SOM: active shops in 24 months, plan</div></div>
+</div>
+<p class="foot">Source: National Statistics Committee of Uzbekistan, SIAT 1.07.02.0030, 2024. TAM, SAM and SOM: Rafly base plan.</p>
+</main></section>
+
+<!-- PRINT-ONLY: ECONOMICS -->
+<section class="slide print-only"><div class="glow flip"></div><div class="grid-tex"></div>
+<div class="top"><h1>Three revenues, <span class="o">one shop economy</span></h1><div class="badge">BASE PLAN</div></div>
+<main>
+<div class="cards c3">
+  <div class="card tint-t"><div class="kpi t" style="border:none;background:none;padding:0"><div class="n" style="font-size:58px">590,000</div></div><h2>Store Control Sprint</h2><p>One-off turnkey launch. Contribution per shop after operator work, travel and acquisition, UZS.</p></div>
+  <div class="card tint-o"><div class="kpi o" style="border:none;background:none;padding:0"><div class="n" style="font-size:58px">380,000</div></div><h2>Control subscription</h2><p>Monthly contribution per shop after support and infrastructure, UZS.</p></div>
+  <div class="card tint-c"><div class="kpi c" style="border:none;background:none;padding:0"><div class="n" style="font-size:58px">240,000</div></div><h2>Market commission</h2><p>Monthly contribution per active marketplace shop at planned GMV and take rate, UZS.</p></div>
+</div>
+<div class="band">FIRST-MONTH CONTRIBUTION WITH MARKET: 1,210,000 UZS PER SHOP, PLAN</div>
+</main></section>
+
+<!-- PRINT-ONLY: TEAM -->
+<section class="slide print-only"><div class="glow"></div><div class="grid-tex"></div>
+<div class="top"><h1>The team connects <span class="t">sales, engineering and launch</span></h1><div class="badge">3–8 PEOPLE</div></div>
+<main>
+<div class="cards c3">
+  <div class="card tint-t"><div class="ic">👤</div><h2>Founder / CEO</h2><p>[Name, role. Retail and launch experience.]</p></div>
+  <div class="card tint-o"><div class="ic o">🛠</div><h2>Product & Engineering</h2><p>[Name, role. Built Rafly Control and Market.]</p></div>
+  <div class="card tint-c"><div class="ic c">🚚</div><h2>Pilot Operations</h2><p>[Name, role. Field launches, training, process.]</p></div>
+</div>
+<p class="foot">A registered legal entity. Best Startup Project track requires a team of 3 to 8.</p>
+</main></section>
+
+<!-- PRINT-ONLY: CONTACTS -->
+<section class="slide print-only"><div class="glow flip"></div><div class="grid-tex"></div>
+<main style="text-align:center">
+<div><div class="mark">R</div><div class="big" style="font-size:96px">Rafly</div>
+<p class="sub" style="margin-top:16px">Control for the shop. A verified offer for the buyer.</p></div>
+<div class="chips"><span class="chip k">[Founder name]</span><span class="chip k">[Phone]</span><span class="chip k">[Email]</span><span class="chip t">github.com/Rectonic/rafly</span></div>
+</main></section>
+
 </body>
 </html>
