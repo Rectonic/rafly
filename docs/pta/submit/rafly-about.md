@@ -20,6 +20,12 @@ Rafly is a stock-truth system for independent grocery shops. Rafly Control gives
 
 Turnkey launch in 7-10 days by the Rafly team, works with any POS or none. The starting cohort is 50 shops with confirmed agreements. Next comes the AI layer: camera-based inventory, sell-through analytics and a purchasing advisor built on the data foundation already in place.
 
+## Команда
+
+Boisxon Kattaxodjayev, Founder, CEO & CTO (Data Engineering team lead, Agrobank). Sarvarxon Kattaxodjayev, CFO & Sales (Ostex Group). Nozimxon Kattaxodjayev, CMO (Westminster University).
+
+Контакт: Boisxon Kattaxodjayev, +998 97 704 54 48, boiskattakhodjaev@gmail.com
+
 ## Ссылки
 
 - Репозиторий: https://github.com/Rectonic/rafly (сейчас private, для жюри открыть доступ или сделать публичным после проверки истории)
