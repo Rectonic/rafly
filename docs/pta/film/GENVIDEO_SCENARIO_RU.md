@@ -1,165 +1,154 @@
-# Генеративный фильм «Рафли», 103 секунды, производственный сценарий
+# Генеративный фильм «Рафли», 103 секунды, сценарий v2
 
-Дата: 31.08.2026. Решение основателя: демо делается видеогенеративными моделями, анимация допустима. Этот файл: полный конвейер от стиля до финального рендера. Тайминг и закадровый текст из VOICEOVER_RU.md, 13 блоков, менять нельзя, вся вместимость речи уже посчитана.
+Дата: 31.08.2026. Решение основателя: демо делается видеогенеративными моделями, планка «не к чему придраться». v2 убирает два главных риска v1: дефолтную AI-эстетику clay-мира и эпизодичную драматургию. Тайминг и закадровый текст из VOICEOVER_RU.md, 13 блоков, не меняются.
 
-## Главное правило, одно
+## Четыре решения v2
 
-В генеративных кадрах нет ни одной буквы и ни одного интерфейса. Кириллицу и UI модели плавят, жюри техконкурса это видит мгновенно. Весь текст (титры, цифры, субтитры) кладётся поверх на монтаже настоящей типографикой. Смысл сцены несут закадровый голос и субтитры, картинка несёт метафору. На буткемпе в декабре продукт показывается вживую, фильм это заявленный «как это работает» explainer, а не скринкаст, здесь нет подмены.
+1. Герой-объект. Одна баночка йогурта проходит весь фильм от вечерней непосчитанной полки до утренней проданной. Каждая сцена это следующая глава её судьбы, стыки сцен по возможности match-cut по баночке. Фильм становится историей, не набором иллюстраций.
+2. Место. Не абстрактный минимаркет, а ташкентский махалля-магазинчик: узорная кирпичная кладка, синяя керамика, деревянная резная дверь, ящики с гранатами и арбузами, лепёшки, чинара за окном. Локальная фактура снимает «стоковость» и попадает в жюри домашним узнаванием.
+3. Свет как язык системы. Правило мира: что система знает, освещено тёплым, что не знает, тонет в синей тени. Граница света сдвигается от сцены к сцене, финал весь тёплый. Арка читается без слов.
+4. Продукт в кадре через оверлеи. Генеративная модель никогда не рисует интерфейс. Реальные UI-карточки Рафли (дизайн из дека и демо) кладутся на монтаже поверх кадра как парящие панели у полки. Настоящая кириллица, настоящие строки продукта, ноль риска расплавленного текста.
 
-## Арт-дирекция, стиль-библия
+## Герой-объект, каноническое описание
 
-Один стиль на все 13 сцен, иначе фильм рассыпается на клипы. Рекомендация: мягкий стилизованный 3D, «игрушечный магазин» (soft 3D, clay/toy render). Причины: генеративные модели держат этот стиль стабильнее фотореализма и намного стабильнее плоской 2D-векторки, еда в нём выглядит тёплой и аппетитной, никакой зловещей долины, и он сразу отличает ролик от шаблонных стоковых видео.
+В каждый промпт дословно: `a small cream-colored yogurt cup with a teal lid`. Без этикетки, без букв. Если модель рисует этикетку, перегенерация.
 
-Суффикс стиля, добавлять в каждый промпт дословно:
+## Стиль-библия v2
 
-```text
-soft 3D render, stylized miniature toy world, clay-like materials, rounded edges, warm cinematic lighting, teal and warm-orange accent palette, shallow depth of field, high detail, smooth animation, no text, no letters, no labels, no logos, no UI, no watermark
-```
-
-Негативный промпт, тоже в каждый:
-
-```text
-text, letters, numbers, captions, signage, labels, UI, interface, screens with text, watermark, human faces close-up, extra fingers, glitch, low quality
-```
-
-Палитра для цветокора на монтаже: teal #16C79A, deep #0E8A6C, orange #FF8C42, coral #FF6B6B, ink #101418. В промпты хексы не писать, модели их игнорируют, задаём словами и правим грейдом.
-
-## Конвейер, четыре шага
-
-1. Кейфреймы. Сначала генерятся 13 стартовых стиллов в image-модели (Midjourney, Imagen, любая под рукой) одним батчем с общим суффиксом. Это дёшево и быстро, стиль утверждается по картинкам до того, как потрачена хоть одна видеогенерация.
-2. Анимация. Каждый утверждённый стилл скармливается в Kling (image-to-video) с motion-промптом. I2v держит композицию и стиль, это главный инструмент консистентности. Sora 2 использовать для сцен 2, 8, 13, где нужна сложная связная динамика с текстового промпта. Seedance для быстрых пересъёмов и перебивок, если лимиты Kling кончились.
-3. Отбор. На каждую сцену закладывать 3–5 генераций, брать лучшую. Реалистичный бюджет: 40–60 генераций на фильм.
-4. Монтаж. CapCut или Resolve, 1920x1080, 25 fps. Поверх: субтитры (можно экспортом из film/index.html, там 15 готовых реплик), титул и финал типографикой, VO по VOICEOVER_RU.md, музыка минимал с нарастанием к сцене 8 и разрешением на 13.
-
-## Покадровый план, 13 сцен
-
-Хронометраж жёсткий, из SCENES-таблицы фильма. В столбце «Кадр» описание для стилла, в «Движении» motion-промпт для i2v. Все промпты на английском, модели так точнее.
-
-### 1. Титул, 0:00–0:04, GFX поверх кадра сцены 13
-
-Титул «Рафли» и знак R кладутся типографикой поверх расфокусированного финального кадра. Отдельная генерация не нужна.
-
-### 2. Магазин вечером, 0:04–0:13, Sora 2
-
-Кадр: миниатюрный продуктовый магазинчик в разрезе, как кукольный домик, полки с молочкой и хлебом, тёплый свет гаснет ряд за рядом, снаружи сумерки.
+Суффикс в каждый промпт, дословно:
 
 ```text
-A miniature cross-section grocery shop like a dollhouse, tiny shelves stocked with dairy, bread and produce, warm interior lights switching off row by row as dusk falls outside, slow gentle camera push-in
+handcrafted miniature diorama, stop-motion film look, Uzbek mahalla corner shop, patterned brickwork, blue ceramic tile accents, carved wood details, soft practical lighting, warm amber light against cool blue shadow, teal and warm-orange brand accents, shallow depth of field, filmic grain, no text, no letters, no numbers, no labels, no logos, no UI, no watermark, no human faces
 ```
 
-### 3. Незнание, 0:13–0:22, Kling i2v
-
-Кадр: та же полка, товары уходят в серую дымку, над ними мягкие светящиеся знаки вопроса из тумана (объёмные, без шрифта, как облачка).
+Негативный промпт, дословно:
 
 ```text
-Products on the miniature shelf fade into grey mist, soft glowing question-mark shaped wisps of fog float above them, camera slowly drifts sideways, melancholic cool light
+text, letters, numbers, captions, signage, labels, logos, UI, interface, watermark, human faces close-up, extra fingers, deformed hands, glitch, low quality, plastic toy look, generic supermarket
 ```
 
-### 4. Импорт каталога, 0:22–0:33, Kling i2v
+«Handcrafted diorama, stop-motion» вместо «clay toy world»: читается как макетная съёмка и кукольный фильм, а не как типовой AI-рендер. «Filmic grain» склеивает генерации между собой.
 
-Кадр: конвейерная лента, по ней едут маленькие коробочки-товары, механические манипуляторы аккуратно сортируют их по парам, одна коробочка останавливается на красной подсветке и ждёт.
+## Покадровый план v2
+
+Хронометраж из SCENES-таблицы film/index.html. GEN: генерация. OVERLAY: настоящая UI-карточка поверх на монтаже. GFX: типографика.
+
+### 1. Титул, 0:00–0:04. GFX поверх кадра сцены 13
+
+Логотип и «Рафли» поверх расфокусированного финального кадра. Отдельной генерации нет.
+
+### 2. Вечер, магазин закрывается, 0:04–0:13. GEN Sora 2, 8 с
+
+Баночка появляется в первой же сцене, на прилавке, неубранная.
 
 ```text
-Tiny product boxes ride a conveyor belt, small mechanical arms gently pair and sort them into slots, one box stops under a soft red spotlight and waits, the belt pauses, calm rhythmic motion
+Evening falls on a handcrafted miniature diorama of an Uzbek mahalla corner shop, warm lamps glow inside over shelves of flatbread, melons and pomegranate crates, a small cream-colored yogurt cup with a teal lid sits forgotten on the counter edge, the shopkeeper's hand turns the door sign and the lights dim one by one to a low warm glow, silhouettes stay readable, slow gentle push-in toward the yogurt cup
 ```
 
-### 5. Решение человека, 0:33–0:40, Kling i2v
-
-Кадр: крупная стилизованная рука (варежка-клэй, без лица в кадре) выбирает одну из двух коробочек и ставит её в ячейку, ячейка подсвечивается тёплым светом.
+### 3. Незнание, 0:13–0:22. GEN Kling i2v, 9 с
 
 ```text
-A stylized soft clay hand picks one of two identical product boxes and places it into a shelf slot, the slot glows warm teal, gentle confident motion, close-up on hands only
+The miniature shop interior sinks into cool blue shadow, shelves become dim silhouettes, cold mist drifts along the shelf line, only the small cream-colored yogurt cup with a teal lid catches a last thin edge of warm light before the blue takes it, slow drift sideways, melancholic quiet
 ```
 
-### 6. Пересчёт, 0:40–0:47, Kling i2v
+OVERLAY в конце сцены: тонкая красная строка-плашка «Потеря не измерена» из GFX-слоя (реальная типографика).
 
-Кадр: рука касается товаров на полке по одному, каждый тронутый загорается тёплым ободком, над полкой растёт столбик света.
+### 4. Импорт каталога, 0:22–0:33. GEN Kling i2v, 11 с
 
 ```text
-A clay hand touches miniature products on a shelf one by one, each touched item lights up with a warm glowing rim, a soft column of light above the shelf grows taller with each touch
+Inside the blue shadow a warm beam of light sweeps across the miniature shop shelves like a scanner, where the beam passes products emerge from darkness into warm amber light one by one, the small cream-colored yogurt cup with a teal lid emerges last and the beam pauses on it, gentle rhythmic motion
 ```
 
-### 7. Вахта просрочки, 0:47–0:56, Kling i2v
+OVERLAY: над полкой паркуется настоящая карточка Рафли «Импорт CSV, строки на проверке» с кнопками, та же вёрстка, что в деке слайд 07. Пауза луча на баночке = «неоднозначное совпадение, система ждёт человека».
 
-Кадр: четыре товара выстроены в ряд от красной подсветки к зелёной, невидимая сила мягко переставляет их по порядку срочности, первый плавно снимается с полки.
+### 5. Решение человека, 0:33–0:40. GEN Kling i2v, 7 с
 
 ```text
-Four miniature products lined up on a shelf, lit from urgent red to calm green, they gently reorder themselves by urgency, the most urgent one lifts softly off the shelf, smooth choreographed motion
+A human hand in soft focus reaches into the miniature shop scene and gently straightens the small cream-colored yogurt cup with a teal lid on the shelf, as the fingers touch it the cup's shelf spot lights up warm teal, close-up, tactile, calm confidence
 ```
 
-### 8. Проверенный оффер, 0:56–1:03, Sora 2
+Живая рука в макетном мире: приём кукольных фильмов, подчёркивает «решает человек». OVERLAY: карточка выбора товара.
 
-Кадр: одна коробочка получает мягкую печать-отметку сверху (световой штамп без букв) и пересекает светящуюся границу из тени магазина на яркую публичную витрину.
+### 6. Пересчёт, 0:40–0:47. GEN Kling i2v, 7 с
 
 ```text
-A single product box receives a glowing stamp of light from above, then glides across a luminous boundary line from a dim private storeroom side into a bright public storefront side, cinematic threshold moment
+The hand touches miniature dairy products on the shelf one by one, each touched item lights up with a warm amber rim against the blue shadow, the small cream-colored yogurt cup with a teal lid glows brightest, a soft column of warm light grows above the shelf with each touch
 ```
 
-### 9. Покупатель, 1:03–1:12, Kling i2v
+OVERLAY: счётчик пересчёта из GFX (реальные цифры типографикой).
 
-Кадр: миниатюрная витрина снаружи, к ней подходит стилизованная фигурка (со спины), тянется к подсвеченной коробочке, коробочка мягко перелетает в её сумку.
+### 7. Вахта просрочки, 0:47–0:56. GEN Kling i2v, 9 с
 
 ```text
-A stylized miniature figure seen from behind approaches a glowing storefront shelf, reaches for the highlighted product box, the box floats gently into their shopping bag, warm evening light
+Four miniature dairy products stand in a row on the shelf lit in a gradient from urgent red to calm teal, an unseen force gently slides them into order of urgency, the most urgent one lifts softly off the shelf and floats forward, the small cream-colored yogurt cup with a teal lid stays second in line glowing amber
 ```
 
-### 10. Расхождение, 1:12–1:23, Kling i2v
+OVERLAY: плашки «Снять с полки, скидка 50, 30, 15 процентов» настоящей типографикой.
 
-Кадр: на полке три ячейки, в одной пусто, над пустой загорается мягкий красный купол-колпак, вокруг остальных товаров появляется защитная светящаяся рамка.
+### 8. Проверенный оффер, 0:56–1:03. GEN Sora 2, 8 с
 
 ```text
-Three shelf slots, one is empty, a soft red dome of light closes over the empty slot like a protective lock, a gentle glowing frame appears around the remaining products, tense but calm mood
+The small cream-colored yogurt cup with a teal lid receives a soft stamp of warm light from above, then glides across a luminous boundary line from the dim blue private storeroom side of the miniature diorama into the bright warm public storefront side, cinematic threshold moment, no ribbon, no gift wrap
 ```
 
-### 11. Камера-свидетель, 1:23–1:30, Kling i2v
+«No ribbon, no gift wrap» лечит бантик из пилота.
 
-Кадр: маленькая купольная камера под потолком миниатюрного магазина, от неё расходится мягкий конус света, в конусе на полке один товар подсвечен оранжевым флажком света.
+### 9. Покупатель, 1:03–1:12. GEN Kling i2v, 9 с
 
 ```text
-A tiny dome security camera on the miniature shop ceiling casts a soft cone of light onto a shelf, one product inside the cone is highlighted with a small orange flag of light, everything else still, quiet watchful mood
+Seen from behind, a miniature figure in a patterned skullcap approaches the warm storefront window of the mahalla shop at dusk, reaches for the glowing small cream-colored yogurt cup with a teal lid on the display shelf, the cup floats gently into a woven shopping bag, warm evening light
 ```
 
-### 12. Сводка владельца, 1:30–1:37, Kling i2v
+OVERLAY, усиленный: это главная витрина покупательской поверхности в фильме. Последовательно три настоящие buyer-карточки: лента офферов с ценой и скидкой, пин на карте с радиусом, бронь с кодом выдачи. Реальная вёрстка Rafly Market, покупательская сторона читается как продукт, не только как фигурка в кадре.
 
-Кадр: утро, стилизованная фигурка с чашкой смотрит на парящую над столом стопку из четырёх светящихся карточек-плиток (пустых, без текста), карточки по одной складываются в аккуратную стопку с мягким кивком.
+### 10. Расхождение, 1:12–1:23. GEN Kling i2v, 11 с
 
 ```text
-Morning light, a stylized figure with a tiny cup watches four glowing blank cards floating above a desk, the cards flip and settle into a neat stack one by one, satisfying calm rhythm
+On the miniature shelf three spots for dairy cups, one spot is empty, a soft dome of red light closes over the empty spot like a protective lock, a gentle glowing frame appears around the remaining products, the blue shadow presses in but the locked zone holds, tense quiet
 ```
 
-Цифры сводки (пересчитано 6, оффер 1, резерв 1, исключение закрыто 1) кладутся титрами поверх на монтаже.
+OVERLAY: «Исключение открыто, резерв заблокирован, заметка обязательна».
 
-### 13. Финал, 1:37–1:43, Sora 2
-
-Кадр: утренний свет заливает идеально ровную полку миниатюрного магазина, все товары лицом, тёплое свечение, камера медленно отъезжает, магазинчик целиком.
+### 11. Камера-свидетель, 1:23–1:30. GEN Kling i2v, 7 с
 
 ```text
-Morning sunlight floods a perfectly ordered miniature shop shelf, every product faced and aligned and softly glowing, slow dolly out revealing the whole cozy dollhouse shop, hopeful warm finale
+A tiny dome security camera under the wooden ceiling of the miniature mahalla shop casts a soft cone of pale light onto the shelf, one product inside the cone is marked by a small floating orange flag of light, everything else motionless, watchful calm
 ```
 
-Поверх: финальный тезис и логотип «Рафли» типографикой.
+### 12. Утренняя сводка, 1:30–1:37. GEN Kling i2v, 7 с
 
-## Роли моделей, итог
+```text
+Morning light through the shop window, a steaming piala of tea on the counter beside the shelf, four warm glowing blank cards float above the counter and settle into a neat stack one by one, cozy calm rhythm, the miniature mahalla shop waking up
+```
 
-| Модель | Сцены | Зачем |
-|---|---|---|
-| Image-модель (стиллы) | все | Стиль-лок до видеогенераций, дёшево |
-| Kling 2.x i2v | 3, 4, 5, 6, 7, 9, 10, 11, 12 | Держит композицию стилла, консистентность стиля |
-| Sora 2 | 2, 8, 13 | Сложная связная динамика, герой-моменты |
-| Seedance | пересъёмы | Быстро и дёшево добить неудачные дубли |
+Пиала вместо западной кружки. OVERLAY: реальный текст сводки владельца (моноширинный дайджест из продукта).
+
+### 13. Финал, 1:37–1:43. GEN Sora 2, 8 с
+
+```text
+Morning sunlight floods the handcrafted miniature diorama of the Uzbek mahalla corner shop, every shelf ordered and glowing warm, flatbread, melons, pomegranates and dairy all faced and aligned, the small cream-colored yogurt cup with a teal lid stands front and center fully lit, a content miniature figure with a woven shopping bag walks away from the storefront while the shopkeeper's silhouette tidies shelves inside, slow dolly out revealing the whole shop with plane tree leaves at the window, hopeful warm finale
+```
+
+Обе стороны платформы в одном закрывающем кадре: владелец внутри при полном свете, покупатель снаружи с покупкой. GFX поверх: строка «Магазину контроль. Покупателю проверенный оффер.», затем финальный тезис и логотип.
+
+## Конвейер
+
+1. Кейфреймы: 12 стиллов FLUX по промптам v2 одним батчем, контакт-лист, утверждение стиля до видеогенераций.
+2. Анимация: Kling i2v от утверждённых стиллов (сцены 3–7, 9–12), Sora 2 текстом (сцены 2, 8, 13). Черновики 720p, финалы 1080p или sora-2-pro.
+3. Отбор: 3–5 генераций на сцену, бюджет 40–60 генераций.
+4. Монтаж: CapCut или Resolve, 1920x1080, 25 fps. Дорожки: видео, OVERLAY-карточки (экспорт вёрстки продукта с альфой или скрин-фрагменты дека), GFX-титры, VO по VOICEOVER_RU.md, музыка (минимал, нарастание к 8, разрешение на 13), субтитры обязательны.
+5. Цветокор: единый грейд, тёплый янтарь против синей тени, teal-акценты.
+
+## Правила консистентности
+
+1. Описание баночки дословно одинаковое в каждом промпте.
+2. Стиль-суффикс дословно одинаковый в каждом промпте.
+3. Стыки сцен: баночка в последней трети кадра уходящей сцены и в первой трети входящей, монтаж по ней.
+4. Кадр с этикеткой, буквами, лишними пальцами или сломанной геометрией: перегенерация, не ретушь.
+5. Стиль поплыл: назад к кейфреймам, не чинить на монтаже.
 
 ## Стоп-правила
 
-1. Кадр с буквами, лишними пальцами или ломаной геометрией: перегенерация, не ретушь.
-2. Стиль поплыл между сценами: вернуться к шагу кейфреймов, не чинить на монтаже.
-3. К дедлайну готовы не все сцены: собирать фильм из готовых генеративных плюс GFX-типографика на недостающие биты. Запасной полностью готовый вариант: текущий film/index.html, он записывается с экрана за один проход и уже честный.
-4. Ничего из фильма не обещает того, чего продукт не делает: сверка каждой сцены с VOICEOVER_RU.md, а голос сверен с реальными фичами репозитория.
-
-## Сборка, чек-лист
-
-1. VO: начитка 13 блоков по таймкодам, 120 слов в минуту, старт блока строго на входе сцены.
-2. Субтитры: обязательны, фильм должен читаться без звука.
-3. Музыка: без вокала, нарастание к 8, разрешение на 13.
-4. Цветокор: единый грейд, teal в светах, тёплые тени.
-5. Экспорт: H.264, 1920x1080, 25 fps, 8–12 Mbps, стерео.
-6. Контрольный просмотр: со звуком, без звука, и на телефоне.
+1. К дедлайну готовы не все сцены: собирать из готовых плюс GFX-типографика на недостающие биты. Полностью готовый запасной вариант: film/index.html, записывается за один проход.
+2. Ничего в фильме не обещает того, чего продукт не делает. OVERLAY-карточки только с реальными строками интерфейса из репозитория.
+3. Фильм и живое демо на буткемпе показывают один продукт.
